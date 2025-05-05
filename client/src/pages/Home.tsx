@@ -13,7 +13,8 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
         <header className="mb-8 text-center">
-          <h1 className="text-2xl md:text-3xl font-medium mb-2">Stencil Generator</h1>
+          <h1 className="text-2xl md:text-4xl font-bold mb-2 text-blue-500">TattooStencilPro</h1>
+          <h2 className="text-xl md:text-2xl font-medium text-gray-300 mb-3">by Darwin Enriquez</h2>
           <p className="text-gray-400">Create stencil art from your images with customizable options</p>
         </header>
 
@@ -34,7 +35,7 @@ export default function Home() {
         
         {/* Footer */}
         <footer className="mt-8 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} Stencil Generator. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} TattooStencilPro by Darwin Enriquez. All rights reserved.</p>
         </footer>
       </div>
     </div>
