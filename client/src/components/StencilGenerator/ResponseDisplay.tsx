@@ -108,22 +108,8 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   
   return (
     <div className="bg-[#1E1E1E] rounded-lg p-6 shadow-lg">
-      <h2 className="text-xl font-medium mb-4 flex items-center">
-        <svg 
-          className="w-5 h-5 mr-2" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24" 
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M7 21h10a2 2 0 002-2V9l-6-6H9a2 2 0 00-2 2v2m0 14h10a2 2 0 002-2V9a2 2 0 00-2-2h-1M7 3v2m0 14v2m0-16l6 6m-3 10h.01" 
-          />
-        </svg>
-        Resultado
+      <h2 className="text-xl font-medium mb-4 text-center">
+        Tu Stencil
       </h2>
       
       {/* Loading State */}
@@ -147,19 +133,6 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
       {/* Success State - Initial Response */}
       {!isLoading && response && (
         <div>
-          <div className="bg-green-900 bg-opacity-20 border border-green-800 rounded-md p-4 mb-4">
-            <div className="flex">
-              <CheckCircle className="h-5 w-5 text-[#4CAF50] mr-2" />
-              <div>
-                <p className="font-medium text-[#4CAF50]">Solicitud enviada correctamente</p>
-                <p className="text-gray-400 text-sm">
-                  {(jobStatus?.status === 'completed' || jobStatus?.status === 'success') 
-                    ? 'Tu stencil está listo para descargar' 
-                    : 'Tu stencil está siendo procesado'}
-                </p>
-              </div>
-            </div>
-          </div>
           
           {/* Job Status Loading or Processing */}
           {(statusLoading || (jobStatus && jobStatus.status === 'processing')) && (
@@ -213,20 +186,6 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           {/* Stencil Image Result */}
           {(jobStatus?.status === 'completed' || jobStatus?.status === 'success') && (
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-medium text-white">Stencil Generado</h3>
-                {jobStatus?.outputs?.image && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center text-blue-500 hover:text-blue-400"
-                    onClick={handleDownload}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Descargar
-                  </Button>
-                )}
-              </div>
               
               {/* Verificamos si existe jobStatus.outputs.image (que nuestro backend debería haber extraído) */}
               {jobStatus?.outputs?.image ? (
@@ -245,6 +204,19 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                       }
                     }}
                   />
+                  
+                  {/* Botón de descarga centrado */}
+                  <div className="flex justify-center mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center text-blue-500 hover:text-blue-400 px-4"
+                      onClick={handleDownload}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar Stencil
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-[#2D2D2D] p-4 rounded-md text-center">
@@ -258,52 +230,21 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             </div>
           )}
 
-          {/* Job Status Details */}
-          {jobStatus && (
-            <div className="mb-4">
-              <h3 className="text-sm text-gray-400 mb-1">Estado del trabajo</h3>
-              <div className="bg-[#2D2D2D] rounded p-3 font-mono text-sm">
-                {jobStatus.status}
-                {!jobStatus?.outputs?.image && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-2 flex items-center"
-                    onClick={handleRefresh}
-                    disabled={statusLoading}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-1 ${statusLoading ? 'animate-spin' : ''}`} />
-                    Actualizar
-                  </Button>
-                )}
-              </div>
+          {/* Botón de actualización para trabajos sin imagen */}
+          {jobStatus && !jobStatus?.outputs?.image && !statusLoading && (
+            <div className="flex justify-center mb-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center px-4"
+                onClick={handleRefresh}
+                disabled={statusLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${statusLoading ? 'animate-spin' : ''}`} />
+                Actualizar estado
+              </Button>
             </div>
           )}
-          
-          <div className="space-y-4">
-            {/* Run ID/Request ID */}
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">ID de solicitud</h3>
-              <div className="bg-[#2D2D2D] rounded p-3 font-mono text-sm break-all">
-                {response.run_id || response.request_id}
-              </div>
-            </div>
-            
-            {/* Technical Details (Expandable) */}
-            <details className="group">
-              <summary className="text-sm text-gray-400 cursor-pointer hover:text-gray-300 flex items-center">
-                Detalles técnicos
-                <svg className="h-4 w-4 ml-1 transform group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </summary>
-              <div className="mt-2">
-                <pre className="bg-[#2D2D2D] rounded p-3 overflow-x-auto text-xs font-mono">
-                  {JSON.stringify(jobStatus || response, null, 2)}
-                </pre>
-              </div>
-            </details>
-          </div>
         </div>
       )}
       
