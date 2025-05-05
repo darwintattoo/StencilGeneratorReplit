@@ -5,11 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
+  const { t } = useLanguage();
   const [loginForm, setLoginForm] = useState({
     username: "",
     password: "",
@@ -59,8 +61,8 @@ export default function AuthPage() {
       <div className="flex items-center justify-center w-full md:w-1/2 p-6">
         <Tabs defaultValue="login" className="w-full max-w-md">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Iniciar sesión</TabsTrigger>
-            <TabsTrigger value="register">Registrarse</TabsTrigger>
+            <TabsTrigger value="login">{t("auth.login")}</TabsTrigger>
+            <TabsTrigger value="register">{t("auth.register")}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">

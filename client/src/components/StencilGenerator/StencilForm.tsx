@@ -93,8 +93,8 @@ export function StencilForm({
     // Validate form - a file must be provided
     if (!selectedFile) {
       toast({
-        title: "Error",
-        description: "Please upload an image file",
+        title: t("form.error"),
+        description: t("form.error_no_file"),
         variant: "destructive"
       });
       return;
@@ -119,8 +119,8 @@ export function StencilForm({
       setError(err as StencilError);
       
       toast({
-        title: "Error",
-        description: (err as Error).message || "Failed to generate stencil",
+        title: t("form.error"),
+        description: (err as Error).message || t("form.error_generate"),
         variant: "destructive"
       });
     } finally {

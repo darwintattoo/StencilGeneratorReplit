@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 type Language = "en" | "es";
 
@@ -8,78 +8,118 @@ type LanguageContextType = {
   t: (key: string) => string;
 };
 
-// Diccionario de traducciones
-const translations: Record<Language, Record<string, string>> = {
-  en: {
-    // Formulario principal
-    "upload.title": "Upload your image",
-    "upload.dragdrop": "Drag & drop your image here",
-    "upload.orclick": "or click to select a file",
-    "upload.supports": "Supports JPG, PNG, WEBP",
-    "upload.browse": "Browse Files",
-    "linecolor.title": "Line Color",
-    "transparency.title": "Transparent Background",
-    "transparency.description": "Enable this option to generate a stencil with transparent background, ideal for tattoo applications",
-    "button.generate": "Generate Stencil",
-    "button.processing": "Processing...",
-    "button.save": "Save stencil",
-    "button.saving": "Saving...",
-    // Navegación
-    "nav.mystencils": "My Stencils",
-    "nav.signin": "Sign in",
-    "nav.signout": "Sign out",
-    // Misc
-    "app.description": "Professional AI-powered stencil creator",
-  },
-  es: {
-    // Formulario principal
-    "upload.title": "Selecciona tu imagen",
-    "upload.dragdrop": "Arrastra y suelta tu imagen aquí",
-    "upload.orclick": "o haz clic para seleccionar un archivo",
-    "upload.supports": "Soporta JPG, PNG, WEBP",
-    "upload.browse": "Explorar archivos",
-    "linecolor.title": "Color de Línea",
-    "transparency.title": "Fondo Transparente",
-    "transparency.description": "Activa esta opción para generar un stencil con fondo transparente, ideal para aplicaciones de tatuaje",
-    "button.generate": "Generar Stencil",
-    "button.processing": "Procesando...",
-    "button.save": "Guardar stencil",
-    "button.saving": "Guardando...",
-    // Navegación
-    "nav.mystencils": "Mis Stencils",
-    "nav.signin": "Iniciar sesión",
-    "nav.signout": "Cerrar sesión",
-    // Misc
-    "app.description": "Creador profesional de stencils con IA",
-  },
+// English translations
+const enTranslations: Record<string, string> = {
+  // Navigation
+  "nav.mystencils": "My Stencils",
+  "nav.signin": "Sign In",
+  "nav.signout": "Sign Out",
+  
+  // Form labels
+  "form.upload_label": "Upload your image",
+  "form.drag_drop": "Drag & drop your image here",
+  "form.or_click": "or click to select a file",
+  "form.supported_formats": "Supports JPG, PNG, WEBP",
+  "form.browse_files": "Browse Files",
+  "form.line_color": "Line Color",
+  "form.transparent_bg": "Transparent Background",
+  "form.transparent_bg_help": "Enable this option to generate a stencil with transparent background, ideal for tattoo applications",
+  "form.processing": "Processing...",
+  "form.generate_stencil": "Generate Stencil",
+  
+  // Form errors
+  "form.error": "Error",
+  "form.error_file_type": "Please upload an image file (JPEG, PNG, etc.)",
+  "form.error_no_file": "Please upload an image file",
+  "form.error_generate": "Failed to generate stencil",
+  
+  // Auth page
+  "auth.login": "Login",
+  "auth.register": "Register",
+  "auth.username": "Username",
+  "auth.email": "Email",
+  "auth.password": "Password",
+  "auth.submit": "Submit",
+  "auth.need_account": "Need an account?",
+  "auth.have_account": "Already have an account?",
+  "auth.welcome": "Welcome to TattooStencilPro",
+  "auth.subtitle": "Create professional stencils for your tattoo designs in seconds"
 };
 
-const LanguageContext = createContext<LanguageContextType | null>(null);
+// Spanish translations
+const esTranslations: Record<string, string> = {
+  // Navigation
+  "nav.mystencils": "Mis Stencils",
+  "nav.signin": "Iniciar sesión",
+  "nav.signout": "Cerrar sesión",
+  
+  // Form labels
+  "form.upload_label": "Sube tu imagen",
+  "form.drag_drop": "Arrastra y suelta tu imagen aquí",
+  "form.or_click": "o haz clic para seleccionar un archivo",
+  "form.supported_formats": "Soporta JPG, PNG, WEBP",
+  "form.browse_files": "Explorar archivos",
+  "form.line_color": "Color de línea",
+  "form.transparent_bg": "Fondo transparente",
+  "form.transparent_bg_help": "Activa esta opción para generar un stencil con fondo transparente, ideal para aplicaciones de tatuajes",
+  "form.processing": "Procesando...",
+  "form.generate_stencil": "Generar Stencil",
+  
+  // Form errors
+  "form.error": "Error",
+  "form.error_file_type": "Por favor sube un archivo de imagen (JPEG, PNG, etc.)",
+  "form.error_no_file": "Por favor sube un archivo de imagen",
+  "form.error_generate": "Error al generar el stencil",
+  
+  // Auth page
+  "auth.login": "Iniciar sesión",
+  "auth.register": "Registrarse",
+  "auth.username": "Nombre de usuario",
+  "auth.email": "Correo electrónico",
+  "auth.password": "Contraseña",
+  "auth.submit": "Enviar",
+  "auth.need_account": "¿Necesitas una cuenta?",
+  "auth.have_account": "¿Ya tienes una cuenta?",
+  "auth.welcome": "Bienvenido a TattooStencilPro",
+  "auth.subtitle": "Crea stencils profesionales para tus diseños de tatuajes en segundos"
+};
+
+const translations: Record<Language, Record<string, string>> = {
+  en: enTranslations,
+  es: esTranslations,
+};
+
+export const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // Intentar obtener el idioma de localStorage, o usar inglés por defecto
+  // Initialize language from localStorage or default to 'en'
   const [language, setLanguageState] = useState<Language>(() => {
-    // Solo ejecutar en el cliente
-    if (typeof window !== "undefined") {
-      const savedLanguage = localStorage.getItem("language");
-      return (savedLanguage === "es" ? "es" : "en") as Language;
-    }
-    return "en";
+    const savedLanguage = localStorage.getItem("language");
+    return (savedLanguage === "en" || savedLanguage === "es") ? savedLanguage : "en";
   });
 
-  // Guardar el idioma en localStorage cuando cambie
   const setLanguage = (newLanguage: Language) => {
     setLanguageState(newLanguage);
     localStorage.setItem("language", newLanguage);
   };
 
-  // Función para traducir una clave
-  const t = (key: string): string => {
+  const t = (key: string) => {
     return translations[language][key] || key;
   };
 
+  // Save language to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem("language", language);
+  }, [language]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider
+      value={{
+        language,
+        setLanguage,
+        t,
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );
