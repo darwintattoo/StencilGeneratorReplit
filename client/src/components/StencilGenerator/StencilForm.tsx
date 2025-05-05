@@ -131,7 +131,7 @@ export function StencilForm({
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image Input Options */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Selecciona tu imagen</Label>
+          <Label className="font-medium text-lg">Upload your image</Label>
           
           {/* Drag & Drop Area */}
           <div 
@@ -169,9 +169,9 @@ export function StencilForm({
                 // Upload prompt
                 <>
                   <Upload className="h-16 w-16 text-blue-500" />
-                  <p className="text-center text-gray-300 text-lg">Arrastra y suelta tu imagen aquí</p>
-                  <p className="text-sm text-gray-400 mt-1">o haz clic para seleccionar un archivo</p>
-                  <p className="text-xs text-gray-500 mt-1">Soporta JPG, PNG, WEBP</p>
+                  <p className="text-center text-gray-300 text-lg">Drag & drop your image here</p>
+                  <p className="text-sm text-gray-400 mt-1">or click to select a file</p>
+                  <p className="text-xs text-gray-500 mt-1">Supports JPG, PNG, WEBP</p>
                 </>
               )}
               
@@ -201,7 +201,7 @@ export function StencilForm({
         
         {/* Line Color Selection */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Color de Línea</Label>
+          <Label className="font-medium text-lg">Line Color</Label>
           <div className="flex space-x-6 justify-center">
             {/* Black */}
             <div className="flex items-center">
@@ -271,7 +271,7 @@ export function StencilForm({
         {/* Transparency Toggle */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="transparency" className="font-medium text-lg">Fondo Transparente</Label>
+            <Label htmlFor="transparency" className="font-medium text-lg">Transparent Background</Label>
             <Switch
               id="transparency"
               checked={transparentBackground}
@@ -279,7 +279,7 @@ export function StencilForm({
               className="data-[state=checked]:bg-blue-600"
             />
           </div>
-          <p className="text-sm text-gray-400">Activa esta opción para generar un stencil con fondo transparente, ideal para aplicaciones de tatuaje</p>
+          <p className="text-sm text-gray-400">Enable this option to generate a stencil with transparent background, ideal for tattoo applications</p>
         </div>
         
         {/* Submit Button */}
@@ -291,10 +291,10 @@ export function StencilForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              <span>Procesando...</span>
+              <span>Processing...</span>
             </>
           ) : (
-            <span>Generar Stencil</span>
+            <span>Generate Stencil</span>
           )}
         </Button>
       </form>
