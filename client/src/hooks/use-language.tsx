@@ -43,7 +43,10 @@ const enTranslations: Record<string, string> = {
   "auth.need_account": "Need an account?",
   "auth.have_account": "Already have an account?",
   "auth.welcome": "Welcome to TattooStencilPro",
-  "auth.subtitle": "Create professional stencils for your tattoo designs in seconds"
+  "auth.subtitle": "Create professional stencils for your tattoo designs in seconds",
+
+  // Stencil page
+  "stencil.yourStencil": "Your Stencil"
 };
 
 // Spanish translations
@@ -81,7 +84,10 @@ const esTranslations: Record<string, string> = {
   "auth.need_account": "¿Necesitas una cuenta?",
   "auth.have_account": "¿Ya tienes una cuenta?",
   "auth.welcome": "Bienvenido a TattooStencilPro",
-  "auth.subtitle": "Crea stencils profesionales para tus diseños de tatuajes en segundos"
+  "auth.subtitle": "Crea stencils profesionales para tus diseños de tatuajes en segundos",
+
+  // Stencil page
+  "stencil.yourStencil": "Tu Stencil"
 };
 
 const translations: Record<Language, Record<string, string>> = {
