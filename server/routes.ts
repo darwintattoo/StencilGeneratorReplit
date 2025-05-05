@@ -1,6 +1,8 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as appStorage } from "./storage";
+import { setupAuth } from "./auth";
+import { InsertStencil } from "@shared/schema";
 import axios from "axios";
 import dotenv from "dotenv";
 import multer from "multer";
@@ -54,6 +56,8 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configuración de autenticación
+  const requireAuth = setupAuth(app);
   // API endpoint para subir una imagen
   app.post("/api/upload-image", upload.single("image"), async (req, res) => {
     try {
@@ -322,6 +326,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ 
         error: "Internal server error",
         message: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    }
+  });
+  
+  // Guardar un stencil generado en la base de datos
+  app.post("/api/save-stencil", requireAuth, async (req, res) => {
+    try {
+      const { imageUrl, lineColor, transparentBackground } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ 
+          error: "URL de imagen requerida",
+          message: "Es necesario proporcionar una URL de imagen" 
+        });
+      }
+      
+      if (!lineColor || !["black", "red", "blue"].includes(lineColor)) {
+        return res.status(400).json({ 
+          error: "Color de línea inválido", 
+          message: "El color de línea debe ser negro, rojo o azul" 
+        });
+      }
+      
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          error: "No autenticado", 
+          message: "Debe iniciar sesión para guardar stencils" 
+        });
+      }
+      
+      // Guardar el stencil en la base de datos
+      const stencil = await appStorage.saveStencil({
+        userId,
+        imageUrl,
+        lineColor,
+        transparentBackground: typeof transparentBackground === 'boolean' 
+          ? transparentBackground 
+          : transparentBackground === 'true'
+      });
+      
+      return res.status(201).json(stencil);
+    } catch (error) {
+      console.error("Error al guardar stencil:", error);
+      return res.status(500).json({ 
+        error: "Error interno del servidor", 
+        message: error instanceof Error ? error.message : "Error desconocido" 
+      });
+    }
+  });
+  
+  // Obtener todos los stencils del usuario
+  app.get("/api/my-stencils", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          error: "No autenticado", 
+          message: "Debe iniciar sesión para ver sus stencils" 
+        });
+      }
+      
+      // Obtener stencils del usuario
+      const stencils = await appStorage.getUserStencils(userId);
+      
+      return res.status(200).json(stencils);
+    } catch (error) {
+      console.error("Error al obtener stencils del usuario:", error);
+      return res.status(500).json({ 
+        error: "Error interno del servidor", 
+        message: error instanceof Error ? error.message : "Error desconocido" 
       });
     }
   });
