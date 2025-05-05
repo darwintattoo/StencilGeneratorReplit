@@ -284,7 +284,7 @@ export function StencilForm({
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-[#ff0000] hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md"
         >
           {isLoading ? (
             <>
