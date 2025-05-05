@@ -162,6 +162,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
+      console.log("ComfyDeploy API respuesta completa:", JSON.stringify(response.data, null, 2));
+      
+      // Según la documentación de ComfyDeploy, necesitamos extraer la imagen del campo output
+      if (response.data.status === 'completed' && response.data.outputs) {
+        console.log("Claves disponibles en outputs:", Object.keys(response.data.outputs));
+        
+        // Buscar en todas las propiedades posibles para encontrar la URL de la imagen
+        // Estas son posibles claves según el modelo utilizado
+        const possibleImageKeys = ['Darwin_out', 'image', 'output', 'result', 'stencil', 'stencil_output', 'stencil_image'];
+        
+        // Verificar si alguna de estas claves contiene una URL de imagen
+        for (const key of possibleImageKeys) {
+          if (response.data.outputs[key] && typeof response.data.outputs[key] === 'string' && 
+              (response.data.outputs[key].startsWith('http') || response.data.outputs[key].startsWith('data:'))) {
+            console.log(`Encontrada URL de imagen en clave ${key}:`, response.data.outputs[key]);
+            response.data.outputs.image = response.data.outputs[key];
+            break;
+          }
+        }
+        
+        // Si todavía no tenemos imagen, busca cualquier propiedad que parezca una URL
+        if (!response.data.outputs.image) {
+          for (const key of Object.keys(response.data.outputs)) {
+            const value = response.data.outputs[key];
+            if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:'))) {
+              console.log(`Encontrada posible URL de imagen en clave genérica ${key}:`, value);
+              response.data.outputs.image = value;
+              break;
+            }
+          }
+        }
+      }
+      
       return res.status(200).json(response.data);
     } catch (error) {
       console.error("Error al verificar el estado del trabajo:", error);

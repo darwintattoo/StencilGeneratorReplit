@@ -89,9 +89,14 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   const handleDownload = () => {
     if (!jobStatus?.outputs?.image) return;
     
+    // La URL puede ser un enlace directo o una URL de datos (data:image/...)
+    const imageUrl = jobStatus.outputs.image;
+    const fileName = `stencil-${response?.run_id || 'image'}.png`;
+    
     const link = document.createElement('a');
-    link.href = jobStatus.outputs.image;
-    link.download = `stencil-${response?.run_id || 'image'}.png`;
+    link.href = imageUrl;
+    link.download = fileName;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -177,27 +182,40 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           )}
 
           {/* Stencil Image Result */}
-          {jobStatus?.status === 'completed' && jobStatus?.outputs?.image && (
+          {jobStatus?.status === 'completed' && (
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-medium text-white">Stencil Generado</h3>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex items-center text-blue-500 hover:text-blue-400"
-                  onClick={handleDownload}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Descargar
-                </Button>
+                {jobStatus?.outputs?.image && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center text-blue-500 hover:text-blue-400"
+                    onClick={handleDownload}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Descargar
+                  </Button>
+                )}
               </div>
-              <div className="bg-[#2D2D2D] p-2 rounded-md">
-                <img 
-                  src={jobStatus.outputs.image} 
-                  alt="Stencil generado" 
-                  className="w-full rounded border border-gray-700"
-                />
-              </div>
+              
+              {jobStatus?.outputs?.image ? (
+                <div className="bg-[#2D2D2D] p-2 rounded-md">
+                  <img 
+                    src={jobStatus.outputs.image} 
+                    alt="Stencil generado" 
+                    className="w-full rounded border border-gray-700"
+                  />
+                </div>
+              ) : (
+                <div className="bg-[#2D2D2D] p-4 rounded-md text-center">
+                  <p className="text-yellow-500 mb-2">El trabajo se ha completado pero no se encontró la imagen del stencil.</p>
+                  <p className="text-gray-400 text-sm">Consulta los detalles técnicos para más información.</p>
+                  <pre className="mt-2 bg-[#1E1E1E] rounded p-2 overflow-x-auto text-xs font-mono text-left">
+                    {JSON.stringify(jobStatus.outputs || {}, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 
