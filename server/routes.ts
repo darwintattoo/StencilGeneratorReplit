@@ -165,78 +165,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("ComfyDeploy API respuesta completa:", JSON.stringify(response.data, null, 2));
       
       // Según la documentación de ComfyDeploy, necesitamos extraer la imagen del campo output
-      if (response.data.status === 'completed' && response.data.outputs) {
-        console.log("Claves disponibles en outputs:", Object.keys(response.data.outputs));
-        
-        // Buscar en todas las propiedades posibles para encontrar la URL de la imagen
-        // Estas son posibles claves según el modelo utilizado
-        const possibleImageKeys = ['Darwin_out', 'image', 'output', 'result', 'stencil', 'stencil_output', 'stencil_image'];
-        
-        // Verificar si alguna de estas claves contiene una URL de imagen
-        for (const key of possibleImageKeys) {
-          if (response.data.outputs[key] && typeof response.data.outputs[key] === 'string' && 
-              (response.data.outputs[key].startsWith('http') || response.data.outputs[key].startsWith('data:'))) {
-            console.log(`Encontrada URL de imagen en clave ${key}:`, response.data.outputs[key]);
-            response.data.outputs.image = response.data.outputs[key];
-            break;
+      if (response.data.status === 'completed' || response.data.status === 'success') {
+        console.log("ComfyDeploy API respuesta status:", response.data.status);
+
+        // Caso especial: respuesta con formato de ComfyDeploy API
+        if (Array.isArray(response.data.outputs)) {
+          console.log("Procesando array de outputs, cantidad:", response.data.outputs.length);
+          
+          // Buscar en cada output si hay imágenes
+          for (const output of response.data.outputs) {
+            console.log("Analizando output id:", output.id, "output_id:", output.output_id);
+            
+            // Si hay una propiedad data.images, buscar URLs ahí
+            if (output.data && output.data.images && Array.isArray(output.data.images)) {
+              console.log("Encontradas imágenes en output:", output.data.images.length);
+              
+              for (const image of output.data.images) {
+                if (image.url && typeof image.url === 'string') {
+                  console.log("Encontrada URL de imagen:", image.url);
+                  
+                  // Asegurarse de que outputs sea un objeto si no lo es
+                  if (!response.data.outputs || Array.isArray(response.data.outputs)) {
+                    response.data.outputs = {};
+                  }
+                  
+                  // Almacenar la URL en outputs.image para compatibilidad con el frontend
+                  response.data.outputs.image = image.url;
+                  break;
+                }
+              }
+              
+              // Si encontramos una imagen, salir del bucle
+              if (response.data.outputs.image) break;
+            }
           }
         }
         
-        // Si todavía no tenemos imagen, busca cualquier propiedad que parezca una URL
-        if (!response.data.outputs.image) {
-          // Primero busca en los 'outputs' del array si existe
-          if (Array.isArray(response.data.outputs)) {
-            for (const output of response.data.outputs) {
-              // Comprueba si hay imágenes en el output
-              if (output?.data?.images && Array.isArray(output.data.images)) {
-                for (const image of output.data.images) {
-                  if (image?.url && typeof image.url === 'string') {
-                    console.log(`Encontrada URL de imagen en outputs array:`, image.url);
-                    response.data.outputs.image = image.url;
-                    break;
-                  }
-                }
-              }
-            }
+        // Si después de comprobar los outputs, aún no tenemos imagen, buscar en cualquier lugar
+        if (!response.data.outputs || !response.data.outputs.image) {
+          console.log("Buscando URL de imagen en cualquier parte de la respuesta...");
+          
+          // Asegurarse de que outputs sea un objeto
+          if (!response.data.outputs || Array.isArray(response.data.outputs)) {
+            response.data.outputs = {};
           }
           
-          // Si sigue sin encontrarse, busca en cualquier propiedad
-          if (!response.data.outputs.image) {
-            const searchForImageUrls = (obj: any, path = ''): string | null => {
-              if (!obj || typeof obj !== 'object') return null;
-              
-              // Si es un objeto, busca en sus propiedades
-              if (!Array.isArray(obj)) {
-                for (const [key, value] of Object.entries(obj)) {
-                  const currentPath = path ? `${path}.${key}` : key;
-                  
-                  // Si encontramos una URL directamente
-                  if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('data:'))) {
-                    console.log(`Encontrada URL de imagen en ${currentPath}:`, value);
-                    return value;
-                  }
-                  
-                  // Recursivamente busca en objetos o arrays anidados
-                  const result = searchForImageUrls(value, currentPath);
-                  if (result) return result;
-                }
-              } 
-              // Si es un array, busca en sus elementos
-              else {
-                for (let i = 0; i < obj.length; i++) {
-                  const currentPath = `${path}[${i}]`;
-                  const result = searchForImageUrls(obj[i], currentPath);
-                  if (result) return result;
-                }
-              }
-              
-              return null;
-            };
+          // Función recursiva para buscar en cualquier nivel
+          const searchForImageUrls = (obj: any, path = ''): string | null => {
+            if (!obj || typeof obj !== 'object') return null;
             
-            const imageUrl = searchForImageUrls(response.data);
-            if (imageUrl) {
-              response.data.outputs.image = imageUrl;
+            // Si es un objeto, busca en sus propiedades
+            if (!Array.isArray(obj)) {
+              for (const [key, value] of Object.entries(obj)) {
+                const currentPath = path ? `${path}.${key}` : key;
+                
+                // Si encontramos una URL directamente
+                if (typeof value === 'string' && 
+                    (value.startsWith('http') || value.startsWith('data:')) &&
+                    (value.includes('.png') || value.includes('.jpg') || value.includes('.jpeg') || value.includes('.webp'))) {
+                  console.log(`Encontrada URL de imagen en ${currentPath}:`, value);
+                  return value;
+                }
+                
+                // Recursivamente busca en objetos anidados
+                const result = searchForImageUrls(value, currentPath);
+                if (result) return result;
+              }
+            } 
+            // Si es un array, busca en sus elementos
+            else {
+              for (let i = 0; i < obj.length; i++) {
+                const currentPath = `${path}[${i}]`;
+                const result = searchForImageUrls(obj[i], currentPath);
+                if (result) return result;
+              }
             }
+            
+            return null;
+          };
+          
+          const imageUrl = searchForImageUrls(response.data);
+          if (imageUrl) {
+            response.data.outputs.image = imageUrl;
+            console.log("URL de imagen encontrada y guardada en outputs.image");
+          } else {
+            console.log("ADVERTENCIA: No se encontró URL de imagen en la respuesta");
           }
         }
       }
