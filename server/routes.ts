@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           headers: {
             "Content-Type": "application/json",
-            "API_KEY": apiKey
+            "Authorization": `Bearer ${apiKey}`
           }
         }
       );
@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           headers: {
             "Content-Type": "application/json",
-            "API_KEY": apiKey
+            "Authorization": `Bearer ${apiKey}`
           }
         }
       );
