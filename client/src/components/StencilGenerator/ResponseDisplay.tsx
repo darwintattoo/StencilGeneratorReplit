@@ -135,14 +135,12 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
         <div>
           
           {/* Job Status Loading or Processing */}
-          {(statusLoading || (jobStatus && jobStatus.status === 'processing')) && (
+          {!jobStatus?.outputs?.image && (
             <div className="py-4">
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
-                  {statusLoading 
-                    ? "Verificando estado del trabajo..." 
-                    : "Procesando imagen..."}
+                  Procesando imagen...
                 </p>
               </div>
               

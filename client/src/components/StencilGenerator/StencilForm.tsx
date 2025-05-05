@@ -20,8 +20,8 @@ export function StencilForm({
   isLoading,
   setIsLoading
 }: StencilFormProps) {
-  const [lineColor, setLineColor] = useState("black");
-  const [transparentBackground, setTransparentBackground] = useState(false);
+  const [lineColor, setLineColor] = useState("red");
+  const [transparentBackground, setTransparentBackground] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
