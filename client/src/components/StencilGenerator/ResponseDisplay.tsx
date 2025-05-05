@@ -4,6 +4,7 @@ import { StencilResponse, StencilError, StencilJobStatus } from "@/types";
 import { useEffect, useState } from "react";
 import { checkJobStatus } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/use-language";
 
 interface ResponseDisplayProps {
   response: StencilResponse | null;
@@ -15,6 +16,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   const [jobStatus, setJobStatus] = useState<StencilJobStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const { t } = useLanguage();
   
   // Poll for job status when we have a run_id
   useEffect(() => {
@@ -109,14 +111,14 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   return (
     <div className="bg-[#1E1E1E] rounded-lg p-6 shadow-lg">
       <h2 className="text-xl font-medium mb-4 text-center">
-        Tu Stencil
+        {t("stencil.yourStencil")}
       </h2>
       
       {/* Loading State */}
       {isLoading && (
         <div className="py-8 flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-400">Procesando tu solicitud...</p>
+          <p className="text-gray-400">Processing your request...</p>
         </div>
       )}
       
@@ -125,7 +127,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
         <div className="py-8 text-center">
           <div className="bg-[#2D2D2D] rounded-lg p-6 inline-flex flex-col items-center">
             <Info className="h-8 w-8 text-gray-500 mb-2" />
-            <p className="text-gray-400">Sube una imagen para generar tu stencil</p>
+            <p className="text-gray-400">{t("stencil.uploadImage")}</p>
           </div>
         </div>
       )}
@@ -140,7 +142,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
-                  Procesando imagen...
+                  Processing image...
                 </p>
               </div>
               
@@ -148,7 +150,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
               {jobStatus?.progress !== undefined && (
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Progreso</span>
+                    <span>Progress</span>
                     <span>{Math.round(jobStatus.progress * 100)}%</span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-2.5">
@@ -159,13 +161,13 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                   </div>
                   {jobStatus?.live_status && (
                     <p className="text-xs text-gray-400 mt-1">
-                      {jobStatus.live_status === "Executing CLIPVisionLoader" && "Analizando contornos..."}
-                      {jobStatus.live_status === "Executing ComfyDeployOutputImage" && "Refinando la imagen..."}
-                      {jobStatus.live_status === "Executing Image Input Switch" && "Aplicando efectos finales..."}
-                      {jobStatus.live_status === "Executing ControlNetApply" && "Detectando bordes..."}
-                      {jobStatus.live_status === "Executing LineArt" && "Dibujando líneas..."}
-                      {jobStatus.live_status === "Executing KSamplerAdvanced" && "Creando diseño..."}
-                      {jobStatus.live_status === "Executing EmptyLatentImage" && "Preparando lienzo..."}
+                      {jobStatus.live_status === "Executing CLIPVisionLoader" && "Analyzing contours..."}
+                      {jobStatus.live_status === "Executing ComfyDeployOutputImage" && "Refining image..."}
+                      {jobStatus.live_status === "Executing Image Input Switch" && "Applying final effects..."}
+                      {jobStatus.live_status === "Executing ControlNetApply" && "Detecting edges..."}
+                      {jobStatus.live_status === "Executing LineArt" && "Drawing lines..."}
+                      {jobStatus.live_status === "Executing KSamplerAdvanced" && "Creating design..."}
+                      {jobStatus.live_status === "Executing EmptyLatentImage" && "Preparing canvas..."}
                       {![
                         "Executing CLIPVisionLoader",
                         "Executing ComfyDeployOutputImage",
@@ -174,7 +176,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                         "Executing LineArt",
                         "Executing KSamplerAdvanced",
                         "Executing EmptyLatentImage"
-                      ].includes(jobStatus.live_status) && "Procesando stencil..."}
+                      ].includes(jobStatus.live_status) && "Processing stencil..."}
                     </p>
                   )}
                 </div>
