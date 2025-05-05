@@ -158,7 +158,24 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                     ></div>
                   </div>
                   {jobStatus?.live_status && (
-                    <p className="text-xs text-gray-400 mt-1">{jobStatus.live_status}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {jobStatus.live_status === "Executing CLIPVisionLoader" && "Analizando contornos..."}
+                      {jobStatus.live_status === "Executing ComfyDeployOutputImage" && "Refinando la imagen..."}
+                      {jobStatus.live_status === "Executing Image Input Switch" && "Aplicando efectos finales..."}
+                      {jobStatus.live_status === "Executing ControlNetApply" && "Detectando bordes..."}
+                      {jobStatus.live_status === "Executing LineArt" && "Dibujando líneas..."}
+                      {jobStatus.live_status === "Executing KSamplerAdvanced" && "Creando diseño..."}
+                      {jobStatus.live_status === "Executing EmptyLatentImage" && "Preparando lienzo..."}
+                      {![
+                        "Executing CLIPVisionLoader",
+                        "Executing ComfyDeployOutputImage",
+                        "Executing Image Input Switch",
+                        "Executing ControlNetApply",
+                        "Executing LineArt",
+                        "Executing KSamplerAdvanced",
+                        "Executing EmptyLatentImage"
+                      ].includes(jobStatus.live_status) && "Procesando stencil..."}
+                    </p>
                   )}
                 </div>
               )}
