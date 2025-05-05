@@ -32,8 +32,12 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
         const status = await checkJobStatus(response.run_id);
         setJobStatus(status);
         
+        console.log("Estado del trabajo:", status.status);
+        console.log("Outputs disponibles:", status.outputs);
+        
         // If job is complete, stop polling
-        if (status.status === 'completed') {
+        if (status.status === 'completed' || status.status === 'success') {
+          console.log("¡Trabajo completado! Estado final:", status.status);
           clearInterval(intervalId);
         }
         
@@ -149,7 +153,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
               <div>
                 <p className="font-medium text-[#4CAF50]">Solicitud enviada correctamente</p>
                 <p className="text-gray-400 text-sm">
-                  {jobStatus?.status === 'completed' 
+                  {(jobStatus?.status === 'completed' || jobStatus?.status === 'success') 
                     ? 'Tu stencil está listo para descargar' 
                     : 'Tu stencil está siendo procesado'}
                 </p>
@@ -207,7 +211,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           )}
 
           {/* Stencil Image Result */}
-          {jobStatus?.status === 'completed' && (
+          {(jobStatus?.status === 'completed' || jobStatus?.status === 'success') && (
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-medium text-white">Stencil Generado</h3>
@@ -224,12 +228,22 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                 )}
               </div>
               
+              {/* Verificamos si existe jobStatus.outputs.image (que nuestro backend debería haber extraído) */}
               {jobStatus?.outputs?.image ? (
                 <div className="bg-[#2D2D2D] p-2 rounded-md">
                   <img 
                     src={jobStatus.outputs.image} 
                     alt="Stencil generado" 
                     className="w-full rounded border border-gray-700"
+                    onError={(e) => {
+                      console.error("Error al cargar la imagen:", e);
+                      if (jobStatus?.outputs?.image) {
+                        console.log("URL de la imagen:", jobStatus.outputs.image);
+                        // Intentar nuevamente con un timestamp para evitar el caché
+                        const imgElement = e.target as HTMLImageElement;
+                        imgElement.src = `${jobStatus.outputs.image}?t=${new Date().getTime()}`;
+                      }
+                    }}
                   />
                 </div>
               ) : (
