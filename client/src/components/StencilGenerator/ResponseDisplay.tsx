@@ -195,7 +195,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                 onClick={handleRefresh}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Reintentar
+                Retry
               </Button>
             </div>
           )}
@@ -231,14 +231,14 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                       onClick={handleDownload}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Descargar Stencil
+                      Download Stencil
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="bg-[#2D2D2D] p-4 rounded-md text-center">
-                  <p className="text-yellow-500 mb-2">El trabajo se ha completado pero no se encontró la imagen del stencil.</p>
-                  <p className="text-gray-400 text-sm">Consulta los detalles técnicos para más información.</p>
+                  <p className="text-yellow-500 mb-2">The job completed but no stencil image was found.</p>
+                  <p className="text-gray-400 text-sm">Check the technical details for more information.</p>
                   <pre className="mt-2 bg-[#1E1E1E] rounded p-2 overflow-x-auto text-xs font-mono text-left">
                     {JSON.stringify(jobStatus.outputs || {}, null, 2)}
                   </pre>
@@ -258,7 +258,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                 disabled={statusLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${statusLoading ? 'animate-spin' : ''}`} />
-                Actualizar estado
+                Refresh Status
               </Button>
             </div>
           )}
@@ -272,16 +272,16 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             <div className="flex">
               <AlertCircle className="h-5 w-5 text-[#F44336] mr-2" />
               <div>
-                <p className="font-medium text-[#F44336]">Error en la solicitud</p>
+                <p className="font-medium text-[#F44336]">Request Error</p>
                 <p className="text-gray-400 text-sm">
-                  {error.message || "Ocurrió un error al procesar tu solicitud"}
+                  {error.message || "An error occurred while processing your request"}
                 </p>
               </div>
             </div>
           </div>
           
           <div>
-            <h3 className="text-sm text-gray-400 mb-1">Detalles del error</h3>
+            <h3 className="text-sm text-gray-400 mb-1">Error Details</h3>
             <pre className="bg-[#2D2D2D] rounded p-3 overflow-x-auto text-xs font-mono">
               {JSON.stringify(error, null, 2)}
             </pre>
