@@ -1,13 +1,137 @@
-import type { Express } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as appStorage } from "./storage";
 import axios from "axios";
 import dotenv from "dotenv";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 
+// Configuración para guardar archivos subidos
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const uploadsDir = path.join(__dirname, "../uploads");
+
+// Aseguramos que el directorio de uploads exista
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configuración de multer para subida de archivos
+const multerStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    // Genera un nombre único para cada archivo
+    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  },
+});
+
+// Filtro para permitir solo archivos de imagen
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("El archivo debe ser una imagen (JPEG, PNG, etc.)")); 
+  }
+};
+
+const upload = multer({ 
+  storage: multerStorage, 
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // Limite de 5MB
+  },
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // API endpoint to generate stencil
+  // API endpoint para subir una imagen
+  app.post("/api/upload-image", upload.single("image"), async (req, res) => {
+    try {
+      // Si no hay archivo
+      if (!req.file) {
+        return res.status(400).json({ 
+          error: "No se ha subido ninguna imagen",
+          message: "Es necesario subir una imagen"
+        });
+      }
+      
+      const { lineColor, transparentBackground } = req.body;
+      
+      if (!lineColor || !['black', 'red', 'blue'].includes(lineColor)) {
+        return res.status(400).json({ 
+          error: "Color de línea inválido",
+          message: "El color de línea debe ser negro, rojo o azul"
+        });
+      }
+      
+      // Construir URL para el archivo subido (relativa a nuestro servidor)
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const baseUrl = `${protocol}://${host}`;
+      const fileUrl = `${baseUrl}/uploads/${path.basename(req.file.path)}`;
+      
+      // Obtener la API key
+      const apiKey = process.env.API_KEY;
+      
+      if (!apiKey) {
+        return res.status(500).json({ 
+          error: "API_KEY no configurada",
+          message: "No se ha configurado la API_KEY en el servidor"
+        });
+      }
+      
+      // Llamar a la API externa con la URL del archivo subido
+      const parsedTransparency = transparentBackground === 'true';
+      const response = await axios.post(
+        "https://api.comfydeploy.com/api/run/deployment/queue",
+        {
+          deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
+          inputs: {
+            "Darwin Enriquez": fileUrl,
+            line_color: lineColor,
+            activar_transparencia: parsedTransparency
+          }
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "API_KEY": apiKey
+          }
+        }
+      );
+      
+      return res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error al procesar la imagen subida:", error);
+      
+      if (axios.isAxiosError(error)) {
+        return res.status(error.response?.status || 500).json({
+          error: error.response?.data || "Error al generar el stencil",
+          message: error.message
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Error interno del servidor",
+        message: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+  
+  // API endpoint para acceder a los archivos subidos
+  app.use('/uploads', express.static(uploadsDir));
+  
+  // API endpoint to generate stencil from URL
   app.post("/api/generate-stencil", async (req, res) => {
     try {
       const { imageUrl, lineColor, transparentBackground } = req.body;
