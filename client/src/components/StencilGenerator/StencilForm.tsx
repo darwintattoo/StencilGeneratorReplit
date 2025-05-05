@@ -127,15 +127,15 @@ export function StencilForm({
   };
 
   return (
-    <div className="bg-[#1E1E1E] rounded-lg p-6 shadow-lg mb-8">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="bg-[#0d0d0d] rounded-xl p-8 shadow-xl mb-8 border border-gray-800">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image Input Options */}
         <div className="space-y-4">
-          <Label className="font-medium">Image Source</Label>
+          <Label className="font-medium text-lg">Selecciona tu imagen</Label>
           
           {/* Drag & Drop Area */}
           <div 
-            className={`border-2 border-dashed rounded-lg p-6 transition-colors ${isDragging ? 'border-[#ff0000] bg-red-900 bg-opacity-10' : 'border-gray-700 hover:border-gray-500'}`}
+            className={`border-2 border-dashed rounded-xl p-8 transition-colors ${isDragging ? 'border-blue-500 bg-blue-900 bg-opacity-10' : 'border-gray-700 hover:border-blue-400'}`}
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -168,9 +168,10 @@ export function StencilForm({
               ) : (
                 // Upload prompt
                 <>
-                  <Upload className="h-12 w-12 text-gray-500" />
-                  <p className="text-center text-gray-400">Drag & drop your image here or click to browse</p>
-                  <p className="text-xs text-gray-500">Supports JPG, PNG, WEBP</p>
+                  <Upload className="h-16 w-16 text-blue-500" />
+                  <p className="text-center text-gray-300 text-lg">Arrastra y suelta tu imagen aquí</p>
+                  <p className="text-sm text-gray-400 mt-1">o haz clic para seleccionar un archivo</p>
+                  <p className="text-xs text-gray-500 mt-1">Soporta JPG, PNG, WEBP</p>
                 </>
               )}
               
@@ -199,9 +200,9 @@ export function StencilForm({
         </div>
         
         {/* Line Color Selection */}
-        <div className="space-y-2">
-          <Label className="font-medium">Line Color</Label>
-          <div className="flex space-x-4">
+        <div className="space-y-4">
+          <Label className="font-medium text-lg">Color de Línea</Label>
+          <div className="flex space-x-6 justify-center">
             {/* Black */}
             <div className="flex items-center">
               <input
@@ -268,31 +269,32 @@ export function StencilForm({
         </div>
         
         {/* Transparency Toggle */}
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="transparency" className="font-medium">Transparent Background</Label>
+            <Label htmlFor="transparency" className="font-medium text-lg">Fondo Transparente</Label>
             <Switch
               id="transparency"
               checked={transparentBackground}
               onCheckedChange={setTransparentBackground}
+              className="data-[state=checked]:bg-blue-600"
             />
           </div>
-          <p className="text-xs text-gray-400">Toggle to enable or disable transparent background for your stencil</p>
+          <p className="text-sm text-gray-400">Activa esta opción para generar un stencil con fondo transparente, ideal para aplicaciones de tatuaje</p>
         </div>
         
         {/* Submit Button */}
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-full text-lg mt-6"
         >
           {isLoading ? (
             <>
-              <span>Processing...</span>
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <span>Procesando...</span>
             </>
           ) : (
-            <span>Generate Stencil</span>
+            <span>Generar Stencil</span>
           )}
         </Button>
       </form>
