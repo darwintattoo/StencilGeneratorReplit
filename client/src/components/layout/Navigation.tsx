@@ -1,9 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
+import { GlobeIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navigation() {
   const { user, logoutMutation } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   
   return (
     <nav className="bg-black text-white py-3 px-4 border-b border-gray-800">
@@ -30,11 +39,26 @@ export default function Navigation() {
         <div className="flex items-center space-x-4">
           {user && (
             <Link href="/my-stencils" className="hover:text-blue-400 transition text-sm mr-2">
-              Mis Stencils
+              {t("nav.mystencils")}
             </Link>
           )}
           
-          <span className="text-sm text-gray-400 mx-2">ES</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                <GlobeIcon className="h-4 w-4" />
+                <span className="uppercase">{language}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setLanguage("en")} className={language === "en" ? "bg-muted" : ""}>
+                English
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage("es")} className={language === "es" ? "bg-muted" : ""}>
+                Español
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {user ? (
             <div className="flex items-center space-x-2">
@@ -47,12 +71,12 @@ export default function Navigation() {
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
-                {logoutMutation.isPending ? "..." : "Salir"}
+                {logoutMutation.isPending ? "..." : t("nav.signout")}
               </Button>
             </div>
           ) : (
             <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full" size="sm" asChild>
-              <Link href="/auth">Iniciar sesión</Link>
+              <Link href="/auth">{t("nav.signin")}</Link>
             </Button>
           )}
         </div>
