@@ -1,6 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { Loader2, Info, CheckCircle, AlertCircle } from "lucide-react";
-import { StencilResponse, StencilError } from "@/types";
+import { Loader2, Info, CheckCircle, AlertCircle, RefreshCw, Download } from "lucide-react";
+import { StencilResponse, StencilError, StencilJobStatus } from "@/types";
+import { useEffect, useState } from "react";
+import { checkJobStatus } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface ResponseDisplayProps {
   response: StencilResponse | null;
@@ -9,6 +12,91 @@ interface ResponseDisplayProps {
 }
 
 export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayProps) {
+  const [jobStatus, setJobStatus] = useState<StencilJobStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  
+  // Poll for job status when we have a run_id
+  useEffect(() => {
+    let intervalId: number;
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes (5s interval * 60)
+
+    const fetchJobStatus = async () => {
+      if (!response?.run_id) return;
+      
+      setStatusLoading(true);
+      setStatusError(null);
+      
+      try {
+        const status = await checkJobStatus(response.run_id);
+        setJobStatus(status);
+        
+        // If job is complete, stop polling
+        if (status.status === 'completed') {
+          clearInterval(intervalId);
+        }
+        
+        // Increment attempts
+        attempts++;
+        
+        // If max attempts reached, stop polling
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId);
+          setStatusError('Tiempo de espera agotado. Por favor, intenta de nuevo.');
+        }
+      } catch (error) {
+        console.error('Error checking job status:', error);
+        setStatusError('Error al verificar el estado del trabajo');
+      } finally {
+        setStatusLoading(false);
+      }
+    };
+    
+    // Initial check
+    if (response?.run_id) {
+      fetchJobStatus();
+      
+      // Set up interval for polling
+      intervalId = window.setInterval(fetchJobStatus, 5000); // Check every 5 seconds
+    }
+    
+    // Clean up interval on unmount
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [response]);
+  
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    if (!response?.run_id) return;
+    
+    setStatusLoading(true);
+    setStatusError(null);
+    
+    try {
+      const status = await checkJobStatus(response.run_id);
+      setJobStatus(status);
+    } catch (error) {
+      console.error('Error refreshing job status:', error);
+      setStatusError('Error al actualizar el estado del trabajo');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+  
+  // Handle download image
+  const handleDownload = () => {
+    if (!jobStatus?.outputs?.image) return;
+    
+    const link = document.createElement('a');
+    link.href = jobStatus.outputs.image;
+    link.download = `stencil-${response?.run_id || 'image'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   return (
     <div className="bg-[#1E1E1E] rounded-lg p-6 shadow-lg">
       <h2 className="text-xl font-medium mb-4 flex items-center">

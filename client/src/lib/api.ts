@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import { StencilResponse } from "@/types";
+import { StencilResponse, StencilJobStatus } from "@/types";
 
 interface StencilParams {
   imageUrl: string;
@@ -40,6 +40,15 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
     const errorData = await response.json();
     throw new Error(errorData.message || "Error al subir la imagen");
   }
+  
+  return response.json();
+}
+
+export async function checkJobStatus(runId: string): Promise<StencilJobStatus> {
+  const response = await apiRequest(
+    "GET", 
+    `/api/job-status/${runId}`
+  );
   
   return response.json();
 }

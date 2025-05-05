@@ -131,6 +131,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint para acceder a los archivos subidos
   app.use('/uploads', express.static(uploadsDir));
   
+  // API endpoint para verificar el estado de un trabajo
+  app.get("/api/job-status/:runId", async (req, res) => {
+    try {
+      const { runId } = req.params;
+      
+      if (!runId) {
+        return res.status(400).json({ 
+          error: "ID de trabajo requerido",
+          message: "Es necesario proporcionar un ID de trabajo válido"
+        });
+      }
+      
+      const apiKey = process.env.API_KEY;
+      
+      if (!apiKey) {
+        return res.status(500).json({ 
+          error: "API_KEY no configurada",
+          message: "No se ha configurado la API_KEY en el servidor"
+        });
+      }
+      
+      // Llamar a la API externa para verificar el estado
+      const response = await axios.get(
+        `https://api.comfydeploy.com/api/run/${runId}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`
+          }
+        }
+      );
+      
+      return res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Error al verificar el estado del trabajo:", error);
+      
+      if (axios.isAxiosError(error)) {
+        return res.status(error.response?.status || 500).json({
+          error: error.response?.data || "Error al verificar el estado",
+          message: error.message
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Error interno del servidor",
+        message: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+  
   // API endpoint to generate stencil from URL
   app.post("/api/generate-stencil", async (req, res) => {
     try {
