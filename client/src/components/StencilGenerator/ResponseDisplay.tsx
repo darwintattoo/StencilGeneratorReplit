@@ -157,11 +157,36 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             </div>
           </div>
           
-          {/* Job Status Loading */}
-          {statusLoading && (
-            <div className="flex justify-center items-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-              <p className="text-gray-400">Verificando estado del trabajo...</p>
+          {/* Job Status Loading or Processing */}
+          {(statusLoading || (jobStatus && jobStatus.status === 'processing')) && (
+            <div className="py-4">
+              <div className="flex justify-center items-center mb-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                <p className="text-gray-400">
+                  {statusLoading 
+                    ? "Verificando estado del trabajo..." 
+                    : "Procesando imagen..."}
+                </p>
+              </div>
+              
+              {/* Progress Bar - Only show when we have progress data */}
+              {jobStatus?.progress !== undefined && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Progreso</span>
+                    <span>{Math.round(jobStatus.progress * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+                      style={{ width: `${jobStatus.progress * 100}%` }}
+                    ></div>
+                  </div>
+                  {jobStatus?.live_status && (
+                    <p className="text-xs text-gray-400 mt-1">{jobStatus.live_status}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
