@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { generateStencil } from "@/lib/api";
+import { generateStencil, uploadImageForStencil } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -112,25 +112,14 @@ export function StencilForm({
       let response;
       
       if (selectedFile) {
-        // If a file is selected, we need to upload it first
-        const formData = new FormData();
-        formData.append('image', selectedFile);
-        formData.append('lineColor', lineColor);
-        formData.append('transparentBackground', transparentBackground.toString());
-        
-        // Use fetch directly for FormData
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData,
+        // Si hay un archivo seleccionado, usa la función de subida
+        response = await uploadImageForStencil({
+          image: selectedFile,
+          lineColor,
+          transparentBackground
         });
-        
-        if (!uploadResponse.ok) {
-          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-        }
-        
-        response = await uploadResponse.json();
       } else {
-        // Use the URL path if a direct URL is provided
+        // Usa la URL si se proporciona un enlace directo
         response = await generateStencil({
           imageUrl,
           lineColor,
