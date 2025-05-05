@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
 import { uploadImageForStencil } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ export function StencilForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Handle drag events
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -70,8 +72,8 @@ export function StencilForm({
     // Check if the file is an image
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Error",
-        description: "Please upload an image file (JPEG, PNG, etc.)",
+        title: t("form.error"),
+        description: t("form.error_file_type"),
         variant: "destructive"
       });
       return;
@@ -131,7 +133,7 @@ export function StencilForm({
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Image Input Options */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Upload your image</Label>
+          <Label className="font-medium text-lg">{t("form.upload_label")}</Label>
           
           {/* Drag & Drop Area */}
           <div 
@@ -169,9 +171,9 @@ export function StencilForm({
                 // Upload prompt
                 <>
                   <Upload className="h-16 w-16 text-blue-500" />
-                  <p className="text-center text-gray-300 text-lg">Drag & drop your image here</p>
-                  <p className="text-sm text-gray-400 mt-1">or click to select a file</p>
-                  <p className="text-xs text-gray-500 mt-1">Supports JPG, PNG, WEBP</p>
+                  <p className="text-center text-gray-300 text-lg">{t("form.drag_drop")}</p>
+                  <p className="text-sm text-gray-400 mt-1">{t("form.or_click")}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t("form.supported_formats")}</p>
                 </>
               )}
               
@@ -192,7 +194,7 @@ export function StencilForm({
                   className="mt-2" 
                   onClick={() => document.getElementById('fileInput')?.click()}
                 >
-                  Browse Files
+                  {t("form.browse_files")}
                 </Button>
               )}
             </div>
@@ -201,7 +203,7 @@ export function StencilForm({
         
         {/* Line Color Selection */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Line Color</Label>
+          <Label className="font-medium text-lg">{t("form.line_color")}</Label>
           <div className="flex space-x-6 justify-center">
             {/* Black */}
             <div className="flex items-center">
@@ -271,7 +273,7 @@ export function StencilForm({
         {/* Transparency Toggle */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="transparency" className="font-medium text-lg">Transparent Background</Label>
+            <Label htmlFor="transparency" className="font-medium text-lg">{t("form.transparent_bg")}</Label>
             <Switch
               id="transparency"
               checked={transparentBackground}
@@ -279,7 +281,7 @@ export function StencilForm({
               className="data-[state=checked]:bg-blue-600"
             />
           </div>
-          <p className="text-sm text-gray-400">Enable this option to generate a stencil with transparent background, ideal for tattoo applications</p>
+          <p className="text-sm text-gray-400">{t("form.transparent_bg_help")}</p>
         </div>
         
         {/* Submit Button */}
@@ -291,10 +293,10 @@ export function StencilForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              <span>Processing...</span>
+              <span>{t("form.processing")}</span>
             </>
           ) : (
-            <span>Generate Stencil</span>
+            <span>{t("form.generate_stencil")}</span>
           )}
         </Button>
       </form>
