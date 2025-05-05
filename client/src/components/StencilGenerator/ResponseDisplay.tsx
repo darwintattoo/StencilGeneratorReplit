@@ -114,14 +114,14 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             d="M7 21h10a2 2 0 002-2V9l-6-6H9a2 2 0 00-2 2v2m0 14h10a2 2 0 002-2V9a2 2 0 00-2-2h-1M7 3v2m0 14v2m0-16l6 6m-3 10h.01" 
           />
         </svg>
-        API Response
+        Resultado
       </h2>
       
       {/* Loading State */}
       {isLoading && (
         <div className="py-8 flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ff0000] mb-4"></div>
-          <p className="text-gray-400">Processing your request...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-400">Procesando tu solicitud...</p>
         </div>
       )}
       
@@ -130,48 +130,122 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
         <div className="py-8 text-center">
           <div className="bg-[#2D2D2D] rounded-lg p-6 inline-flex flex-col items-center">
             <Info className="h-8 w-8 text-gray-500 mb-2" />
-            <p className="text-gray-400">Submit the form to see the API response here</p>
+            <p className="text-gray-400">Sube una imagen para generar tu stencil</p>
           </div>
         </div>
       )}
       
-      {/* Success State */}
+      {/* Success State - Initial Response */}
       {!isLoading && response && (
         <div>
           <div className="bg-green-900 bg-opacity-20 border border-green-800 rounded-md p-4 mb-4">
             <div className="flex">
               <CheckCircle className="h-5 w-5 text-[#4CAF50] mr-2" />
               <div>
-                <p className="font-medium text-[#4CAF50]">Request successful</p>
-                <p className="text-gray-400 text-sm">Your stencil is being processed</p>
+                <p className="font-medium text-[#4CAF50]">Solicitud enviada correctamente</p>
+                <p className="text-gray-400 text-sm">
+                  {jobStatus?.status === 'completed' 
+                    ? 'Tu stencil está listo para descargar' 
+                    : 'Tu stencil está siendo procesado'}
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="space-y-4">
-            {/* Request ID */}
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Request ID</h3>
-              <div className="bg-[#2D2D2D] rounded p-3 font-mono text-sm break-all">
-                {response.request_id}
+          {/* Job Status Loading */}
+          {statusLoading && (
+            <div className="flex justify-center items-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+              <p className="text-gray-400">Verificando estado del trabajo...</p>
+            </div>
+          )}
+
+          {/* Job Status Error */}
+          {statusError && (
+            <div className="bg-red-900 bg-opacity-20 border border-red-800 rounded-md p-4 mb-4">
+              <p className="text-[#F44336] text-sm">{statusError}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 flex items-center"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reintentar
+              </Button>
+            </div>
+          )}
+
+          {/* Stencil Image Result */}
+          {jobStatus?.status === 'completed' && jobStatus?.outputs?.image && (
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-medium text-white">Stencil Generado</h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center text-blue-500 hover:text-blue-400"
+                  onClick={handleDownload}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Descargar
+                </Button>
+              </div>
+              <div className="bg-[#2D2D2D] p-2 rounded-md">
+                <img 
+                  src={jobStatus.outputs.image} 
+                  alt="Stencil generado" 
+                  className="w-full rounded border border-gray-700"
+                />
               </div>
             </div>
-            
-            {/* Status */}
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Status</h3>
+          )}
+
+          {/* Job Status Details */}
+          {jobStatus && (
+            <div className="mb-4">
+              <h3 className="text-sm text-gray-400 mb-1">Estado del trabajo</h3>
               <div className="bg-[#2D2D2D] rounded p-3 font-mono text-sm">
-                {response.status}
+                {jobStatus.status}
+                {!jobStatus?.outputs?.image && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-2 flex items-center"
+                    onClick={handleRefresh}
+                    disabled={statusLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-1 ${statusLoading ? 'animate-spin' : ''}`} />
+                    Actualizar
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="space-y-4">
+            {/* Run ID/Request ID */}
+            <div>
+              <h3 className="text-sm text-gray-400 mb-1">ID de solicitud</h3>
+              <div className="bg-[#2D2D2D] rounded p-3 font-mono text-sm break-all">
+                {response.run_id || response.request_id}
               </div>
             </div>
             
-            {/* Full Response */}
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Full Response</h3>
-              <pre className="bg-[#2D2D2D] rounded p-3 overflow-x-auto text-xs font-mono">
-                {JSON.stringify(response, null, 2)}
-              </pre>
-            </div>
+            {/* Technical Details (Expandable) */}
+            <details className="group">
+              <summary className="text-sm text-gray-400 cursor-pointer hover:text-gray-300 flex items-center">
+                Detalles técnicos
+                <svg className="h-4 w-4 ml-1 transform group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="mt-2">
+                <pre className="bg-[#2D2D2D] rounded p-3 overflow-x-auto text-xs font-mono">
+                  {JSON.stringify(jobStatus || response, null, 2)}
+                </pre>
+              </div>
+            </details>
           </div>
         </div>
       )}
@@ -183,16 +257,16 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             <div className="flex">
               <AlertCircle className="h-5 w-5 text-[#F44336] mr-2" />
               <div>
-                <p className="font-medium text-[#F44336]">Request failed</p>
+                <p className="font-medium text-[#F44336]">Error en la solicitud</p>
                 <p className="text-gray-400 text-sm">
-                  {error.message || "Something went wrong while processing your request"}
+                  {error.message || "Ocurrió un error al procesar tu solicitud"}
                 </p>
               </div>
             </div>
           </div>
           
           <div>
-            <h3 className="text-sm text-gray-400 mb-1">Error Details</h3>
+            <h3 className="text-sm text-gray-400 mb-1">Detalles del error</h3>
             <pre className="bg-[#2D2D2D] rounded p-3 overflow-x-auto text-xs font-mono">
               {JSON.stringify(error, null, 2)}
             </pre>
