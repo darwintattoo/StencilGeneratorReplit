@@ -67,7 +67,6 @@ export default function Home() {
         <header className="mb-12 text-center pt-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 text-blue-500">TattooStencilPro</h1>
           <h2 className="text-2xl md:text-3xl font-light text-gray-300 mb-6">by Darwin Enriquez</h2>
-          <h3 className="text-4xl md:text-5xl font-bold mb-4 mt-8">Revolutionize Your Tattoo Designs</h3>
           <p className="text-xl text-gray-400 mb-8">Professional AI-powered stencil creator</p>
         </header>
 
@@ -97,12 +96,12 @@ export default function Home() {
                 {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Guardando...
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Guardar stencil
+                    Save stencil
                   </>
                 )}
               </Button>
