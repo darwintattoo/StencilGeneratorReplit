@@ -1,11 +1,10 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { generateStencil, uploadImageForStencil } from "@/lib/api";
-import { Input } from "@/components/ui/input";
+import { uploadImageForStencil } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Link, Upload, ImageIcon } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { StencilResponse, StencilError } from "@/types";
 
 interface StencilFormProps {
@@ -21,7 +20,6 @@ export function StencilForm({
   isLoading,
   setIsLoading
 }: StencilFormProps) {
-  const [imageUrl, setImageUrl] = useState("");
   const [lineColor, setLineColor] = useState("black");
   const [transparentBackground, setTransparentBackground] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -85,20 +83,16 @@ export function StencilForm({
     // Create a preview URL for the image
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
-    
-    // We can either upload directly or keep the file to be sent on form submission
-    // For now, we'll keep it in state and handle upload on form submission
-    setImageUrl(""); // Clear direct URL input when file is selected
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form - either URL or file must be provided
-    if (!imageUrl && !selectedFile) {
+    // Validate form - a file must be provided
+    if (!selectedFile) {
       toast({
         title: "Error",
-        description: "Please enter an image URL or upload an image file",
+        description: "Please upload an image file",
         variant: "destructive"
       });
       return;
@@ -109,23 +103,12 @@ export function StencilForm({
     setError(null);
 
     try {
-      let response;
-      
-      if (selectedFile) {
-        // Si hay un archivo seleccionado, usa la función de subida
-        response = await uploadImageForStencil({
-          image: selectedFile,
-          lineColor,
-          transparentBackground
-        });
-      } else {
-        // Usa la URL si se proporciona un enlace directo
-        response = await generateStencil({
-          imageUrl,
-          lineColor,
-          transparentBackground
-        });
-      }
+      // Usar la función de subida con el archivo seleccionado
+      const response = await uploadImageForStencil({
+        image: selectedFile,
+        lineColor,
+        transparentBackground
+      });
       
       setResponse(response);
       setError(null);
@@ -212,39 +195,6 @@ export function StencilForm({
                 </Button>
               )}
             </div>
-          </div>
-          
-          {/* OR Divider */}
-          <div className="flex items-center my-4">
-            <div className="flex-grow border-t border-gray-700"></div>
-            <span className="px-3 text-sm text-gray-500 uppercase">OR</span>
-            <div className="flex-grow border-t border-gray-700"></div>
-          </div>
-          
-          {/* Image URL Input */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl" className="font-medium">Image URL</Label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                <Link className="h-4 w-4 text-gray-400" />
-              </span>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={imageUrl}
-                onChange={(e) => {
-                  setImageUrl(e.target.value);
-                  // Clear file selection if URL is entered
-                  if (e.target.value && selectedFile) {
-                    setSelectedFile(null);
-                    setImagePreview(null);
-                  }
-                }}
-                placeholder="https://example.com/image.jpg"
-                className="w-full bg-[#2D2D2D] border-gray-700 pl-10 focus:ring-2 focus:ring-[#ff0000] focus:border-transparent"
-              />
-            </div>
-            <p className="text-xs text-gray-400">Enter a direct link to the image you want to convert</p>
           </div>
         </div>
         
