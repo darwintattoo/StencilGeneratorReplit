@@ -40,10 +40,14 @@ const multerStorage = multer.diskStorage({
 
 // Filtro para permitir solo archivos de imagen
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (file.mimetype.startsWith("image/")) {
+  // Lista explícita de tipos MIME permitidos
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+  
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("El archivo debe ser una imagen (JPEG, PNG, etc.)")); 
+    console.log("Tipo de archivo rechazado:", file.mimetype, "nombre:", file.originalname);
+    cb(new Error(`El archivo debe ser una imagen en formato permitido. Recibido: ${file.mimetype}`)); 
   }
 };
 

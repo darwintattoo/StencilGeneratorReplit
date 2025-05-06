@@ -30,6 +30,8 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
   formData.append("lineColor", params.lineColor);
   formData.append("transparentBackground", params.transparentBackground.toString());
   
+  console.log("Enviando archivo:", params.image.name, "tipo:", params.image.type, "tamaño:", params.image.size);
+  
   // Utilizamos fetch directamente ya que apiRequest no maneja FormData correctamente
   const response = await fetch("/api/upload-image", {
     method: "POST",
@@ -38,6 +40,7 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
   
   if (!response.ok) {
     const errorData = await response.json();
+    console.error("Error al subir imagen:", errorData);
     throw new Error(errorData.message || "Error al subir la imagen");
   }
   

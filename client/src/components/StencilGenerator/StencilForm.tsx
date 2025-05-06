@@ -69,11 +69,16 @@ export function StencilForm({
   };
 
   const handleFileSelect = (file: File) => {
-    // Check if the file is an image
-    if (!file.type.startsWith('image/')) {
+    // Lista explícita de tipos MIME permitidos
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+    
+    console.log("Tipo de archivo seleccionado:", file.type, "nombre:", file.name);
+    
+    // Check if the file is an allowed image type
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: t("form.error"),
-        description: t("form.error_file_type"),
+        description: `${t("form.error_file_type")} (${file.type})`,
         variant: "destructive"
       });
       return;
