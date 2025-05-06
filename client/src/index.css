@@ -56,3 +56,32 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Fix para el rectángulo blanco durante el procesamiento */
+.progress-container {
+  background-color: #111111 !important;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.progress-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #111111;
+  z-index: -1;
+}
+
+.progress-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #111111;
+  z-index: -2;
+}
+
+/* Asegurar que cualquier elemento interno no cause problemas */
+.progress-container * {
+  background-color: transparent !important;
+}

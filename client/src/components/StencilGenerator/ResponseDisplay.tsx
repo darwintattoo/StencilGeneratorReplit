@@ -139,8 +139,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           
           {/* Job Status Loading or Processing */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner dark:bg-opacity-50 relative">
-              <div className="absolute inset-0 bg-[#121212] rounded-lg z-[-1]"></div>
+            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner progress-container">
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
