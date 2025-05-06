@@ -30,6 +30,7 @@ const enTranslations: Record<string, string> = {
   // Form errors
   "form.error": "Error",
   "form.error_file_type": "Please upload an image file (JPEG, PNG, etc.)",
+  "form.error_file_size": "Image file size must be less than 15MB",
   "form.error_no_file": "Please upload an image file",
   "form.error_generate": "Failed to generate stencil",
   
@@ -71,6 +72,7 @@ const esTranslations: Record<string, string> = {
   // Form errors
   "form.error": "Error",
   "form.error_file_type": "Por favor sube un archivo de imagen (JPEG, PNG, etc.)",
+  "form.error_file_size": "El tamaño de la imagen debe ser menor a 15MB",
   "form.error_no_file": "Por favor sube un archivo de imagen",
   "form.error_generate": "Error al generar el stencil",
   
