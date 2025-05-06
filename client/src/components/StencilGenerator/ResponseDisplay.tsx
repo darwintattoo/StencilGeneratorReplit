@@ -16,6 +16,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   const [jobStatus, setJobStatus] = useState<StencilJobStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+
   const { t } = useLanguage();
   
   // Poll for job status when we have a run_id
@@ -138,7 +139,8 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           
           {/* Job Status Loading or Processing */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner">
+            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner dark:bg-opacity-50 relative">
+              <div className="absolute inset-0 bg-[#121212] rounded-lg z-[-1]"></div>
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
@@ -153,7 +155,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                     <span>Progress</span>
                     <span>{Math.round(jobStatus.progress * 100)}%</span>
                   </div>
-                  <div className="w-full bg-[#333333] rounded-full h-2.5">
+                  <div className="w-full bg-[#222222] rounded-full h-2.5 overflow-hidden">
                     <div 
                       className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
                       style={{ width: `${jobStatus.progress * 100}%` }}
