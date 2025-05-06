@@ -109,7 +109,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   };
   
   return (
-    <div className="bg-[#1E1E1E] rounded-lg p-6 shadow-lg">
+    <div className="bg-[#1A1A1A] rounded-lg p-6 shadow-lg border border-gray-800">
       <h2 className="text-xl font-medium mb-4 text-center">
         {t("stencil.yourStencil")}
       </h2>
@@ -138,7 +138,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           
           {/* Job Status Loading or Processing */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-4 bg-[#1E1E1E] rounded-lg">
+            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner">
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
