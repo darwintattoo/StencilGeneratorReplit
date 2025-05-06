@@ -138,7 +138,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
           
           {/* Job Status Loading or Processing */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-4">
+            <div className="py-4 bg-[#1E1E1E] rounded-lg">
               <div className="flex justify-center items-center mb-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
                 <p className="text-gray-400">
@@ -148,12 +148,12 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
               
               {/* Progress Bar - Only show when we have progress data */}
               {jobStatus?.progress !== undefined && (
-                <div className="mt-2">
+                <div className="mt-2 px-4">
                   <div className="flex justify-between text-xs text-gray-400 mb-1">
                     <span>Progress</span>
                     <span>{Math.round(jobStatus.progress * 100)}%</span>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                  <div className="w-full bg-[#333333] rounded-full h-2.5">
                     <div 
                       className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
                       style={{ width: `${jobStatus.progress * 100}%` }}
