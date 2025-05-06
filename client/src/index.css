@@ -81,7 +81,12 @@
   z-index: -2;
 }
 
-/* Asegurar que cualquier elemento interno no cause problemas */
-.progress-container * {
+/* Asegurar que cualquier elemento interno no cause problemas excepto la barra de progreso */
+.progress-container *:not(.bg-blue-500) {
   background-color: transparent !important;
+}
+
+/* Asegurar que la barra de progreso siga siendo azul */
+.progress-container .bg-blue-500 {
+  background-color: #3b82f6 !important;
 }
