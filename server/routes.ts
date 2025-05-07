@@ -211,9 +211,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const output of response.data.outputs) {
             console.log("Analizando output id:", output.id, "output_id:", output.output_id);
             
-            // Si hay una propiedad data.images, buscar URLs ahí
+            // Buscar imágenes en formato de nodo ComfyUI
+            if (output.data && output.node_meta && output.node_meta.node_class === "SaveImage") {
+              console.log("Encontrado nodo SaveImage");
+              
+              // SaveImage guarda imágenes en data.images
+              if (output.data.images && Array.isArray(output.data.images)) {
+                console.log("Encontradas imágenes en output:", output.data.images.length);
+                
+                for (const image of output.data.images) {
+                  if (image.url && typeof image.url === 'string') {
+                    console.log("Encontrada URL de imagen en SaveImage:", image.url);
+                    
+                    // Asegurarse de que outputs sea un objeto si no lo es
+                    if (!response.data.outputs || Array.isArray(response.data.outputs)) {
+                      response.data.outputs = {};
+                    }
+                    
+                    // Almacenar la URL en outputs.image para compatibilidad con el frontend
+                    response.data.outputs.image = image.url;
+                    break;
+                  } else if (typeof image === 'string' && (image.startsWith('http') || image.startsWith('data:'))) {
+                    console.log("Encontrada URL de imagen en SaveImage (string directo):", image);
+                    
+                    if (!response.data.outputs || Array.isArray(response.data.outputs)) {
+                      response.data.outputs = {};
+                    }
+                    
+                    response.data.outputs.image = image;
+                    break;
+                  }
+                }
+                
+                // Si encontramos una imagen, salir del bucle
+                if (response.data.outputs.image) break;
+              }
+            }
+            
+            // Buscar en ComfyDeployOutputImage - formato específico de ComfyDeploy
+            if (output.node_meta && output.node_meta.node_class === "ComfyDeployOutputImage") {
+              console.log("Encontrado nodo ComfyDeployOutputImage");
+              
+              if (output.data && typeof output.data === 'object') {
+                if (typeof output.data.image === 'string') {
+                  console.log("Encontrada URL de imagen en ComfyDeployOutputImage:", output.data.image);
+                  
+                  if (!response.data.outputs || Array.isArray(response.data.outputs)) {
+                    response.data.outputs = {};
+                  }
+                  
+                  response.data.outputs.image = output.data.image;
+                  break;
+                }
+              }
+            }
+            
+            // Si hay una propiedad data.images genérica, buscar URLs ahí
             if (output.data && output.data.images && Array.isArray(output.data.images)) {
-              console.log("Encontradas imágenes en output:", output.data.images.length);
+              console.log("Encontradas imágenes en output.data.images:", output.data.images.length);
               
               for (const image of output.data.images) {
                 if (image.url && typeof image.url === 'string') {
@@ -253,6 +308,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!Array.isArray(obj)) {
               for (const [key, value] of Object.entries(obj)) {
                 const currentPath = path ? `${path}.${key}` : key;
+                
+                // Evitar buscar en workflow_inputs (que contiene la imagen original, no el resultado)
+                if (currentPath.includes('workflow_inputs')) {
+                  continue;
+                }
                 
                 // Si encontramos una URL directamente
                 if (typeof value === 'string' && 
