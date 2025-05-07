@@ -33,7 +33,7 @@ export function StencilForm({
   const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors"); // "estilo de linea"
   
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Handle drag events
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -235,7 +235,7 @@ export function StencilForm({
         {/* SECCIÓN: OPCIONES BÁSICAS - Los más usados primero */}
         <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
           <div className="border-b border-gray-800 pb-1 mb-4">
-            <h3 className="text-md font-medium text-gray-300">Opciones Básicas</h3>
+            <h3 className="text-md font-medium text-gray-300">{t("form.basic_options")}</h3>
           </div>
           
           {/* line_color - El parámetro más usado primero */}
@@ -310,7 +310,7 @@ export function StencilForm({
           {/* activar_transparencia */}
           <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="transparency" className="font-medium">Activar Fondo Transparente</Label>
+              <Label htmlFor="transparency" className="font-medium">{t("form.transparent_bg")}</Label>
               <div className="flex items-center">
                 <span className="text-xs text-gray-400 mr-2">activar_transparencia</span>
                 <Switch

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Importamos el logo oficial
-import logoImage from "../../assets/tattoo-stencil-pro-logo.png";
+import logoImage from "../../assets/tattoo-stencil-pro-logo-white.png";
 
 export default function Navigation() {
   const { user, logoutMutation } = useAuth();
