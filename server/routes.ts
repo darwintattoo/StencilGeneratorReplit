@@ -98,8 +98,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Llamar a la API externa con la URL del archivo subido
+      // Extraer y validar los parámetros nuevos
       const parsedTransparency = transparentBackground === 'true';
+      const enhanceShadows = req.body.enhanceShadows === 'true';
+      const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
+      const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
+      
+      // Llamar a la API externa con la URL del archivo subido
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
         {
@@ -107,7 +112,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           inputs: {
             "Darwin Enriquez": fileUrl,
             line_color: lineColor,
-            activar_transparencia: parsedTransparency
+            activar_transparencia: parsedTransparency,
+            "iluminar sombras": enhanceShadows,
+            "estilo de linea": presetLora,
+            "AI Model": aiModel
           }
         },
         {
@@ -298,6 +306,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "API_KEY is not configured" });
       }
 
+      // Extraer y validar los parámetros nuevos
+      const enhanceShadows = false; // valor por defecto
+      const aiModel = "SDXL-Flash.safetensors"; // valor por defecto
+      const presetLora = "LoraLineart/Darwinstencil3-000007.safetensors"; // valor por defecto
+      
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
         {
@@ -305,7 +318,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           inputs: {
             "Darwin Enriquez": imageUrl,
             line_color: lineColor,
-            activar_transparencia: transparentBackground
+            activar_transparencia: transparentBackground,
+            "iluminar sombras": enhanceShadows,
+            "estilo de linea": presetLora,
+            "AI Model": aiModel
           }
         },
         {

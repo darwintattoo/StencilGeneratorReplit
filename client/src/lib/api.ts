@@ -11,6 +11,9 @@ interface UploadStencilParams {
   image: File;
   lineColor: string;
   transparentBackground: boolean;
+  aiModel?: string;
+  enhanceShadows?: boolean;
+  presetLora?: string;
 }
 
 export async function generateStencil(params: StencilParams): Promise<StencilResponse> {
@@ -29,6 +32,19 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
   formData.append("image", params.image);
   formData.append("lineColor", params.lineColor);
   formData.append("transparentBackground", params.transparentBackground.toString());
+  
+  // Agregar los nuevos parámetros opcionales si están presentes
+  if (params.aiModel) {
+    formData.append("aiModel", params.aiModel);
+  }
+  
+  if (params.enhanceShadows !== undefined) {
+    formData.append("enhanceShadows", params.enhanceShadows.toString());
+  }
+  
+  if (params.presetLora) {
+    formData.append("presetLora", params.presetLora);
+  }
   
   console.log("Enviando archivo:", params.image.name, "tipo:", params.image.type, "tamaño:", params.image.size);
   

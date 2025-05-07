@@ -5,8 +5,10 @@ import { uploadImageForStencil } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Upload, Settings } from "lucide-react";
 import { StencilResponse, StencilError } from "@/types";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface StencilFormProps {
   setResponse: (response: StencilResponse | null) => void;
@@ -26,6 +28,10 @@ export function StencilForm({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");
+  const [enhanceShadows, setEnhanceShadows] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors");
   
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -124,7 +130,10 @@ export function StencilForm({
       const response = await uploadImageForStencil({
         image: selectedFile,
         lineColor,
-        transparentBackground
+        transparentBackground,
+        aiModel,
+        enhanceShadows,
+        presetLora: selectedPreset
       });
       
       setResponse(response);
@@ -215,6 +224,65 @@ export function StencilForm({
             </div>
           </div>
         </div>
+        
+        {/* Ajustes desplegables */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="ajustes">
+            <AccordionTrigger className="flex items-center text-lg font-medium py-2">
+              <span className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-blue-500" />
+                Ajustes
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-6 pt-4">
+              {/* Modelo de IA */}
+              <div className="space-y-2">
+                <Label className="text-base">Modelo de IA</Label>
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger className="w-full bg-[#171717] border-gray-700">
+                    <SelectValue placeholder="Selecciona un modelo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#171717] border-gray-700">
+                    <SelectItem value="SDXL-Flash.safetensors">StencilPro v1</SelectItem>
+                    <SelectItem value="Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors">StencilPro v2 (beta)</SelectItem>
+                    <SelectItem value="Lineart/aamXLAnimeMix_v10.safetensors">Lineart v1</SelectItem>
+                    <SelectItem value="Lineart/furryLineartXl_v30.safetensors">Lineart v2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Aclarar zonas oscuras */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="enhanceShadows" className="text-base">Aclarar zonas oscuras</Label>
+                  <Switch
+                    id="enhanceShadows"
+                    checked={enhanceShadows}
+                    onCheckedChange={setEnhanceShadows}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                </div>
+                <p className="text-sm text-gray-400">Mejora la visibilidad en áreas con sombras profundas</p>
+              </div>
+              
+              {/* Preset/Lora */}
+              <div className="space-y-2">
+                <Label className="text-base">Preset</Label>
+                <Select value={selectedPreset} onValueChange={setSelectedPreset}>
+                  <SelectTrigger className="w-full bg-[#171717] border-gray-700">
+                    <SelectValue placeholder="Selecciona un preset" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#171717] border-gray-700">
+                    <SelectItem value="LoraLineart/Darwinstencil3-000007.safetensors">Preset 1</SelectItem>
+                    <SelectItem value="LoraLineart/lineart_flux.safetensors">Preset 2</SelectItem>
+                    <SelectItem value="anime-detailer-xl.safetensors">Preset 3</SelectItem>
+                    <SelectItem value="araminta_k_colorized_blockprint.safetensors">Preset 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
         
         {/* Line Color Selection */}
         <div className="space-y-4">
