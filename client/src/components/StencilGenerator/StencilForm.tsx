@@ -363,9 +363,9 @@ export function StencilForm({
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between">
                   <Label className="font-medium">{t("form.ai_model")}</Label>
-                  <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "SDXL-Flash" : 
-                    aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "DreamshaperXL" : 
-                    aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "AnimeXL" : "FurryLineartXL"}</span>
+                  <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
+                    aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2 (beta)" : 
+                    aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -374,7 +374,7 @@ export function StencilForm({
                     onClick={() => setAiModel("SDXL-Flash.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    SDXL-Flash
+                    StencilPro v1
                   </button>
                   
                   <button
@@ -382,7 +382,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    DreamshaperXL
+                    StencilPro v2 (beta)
                   </button>
                   
                   <button
@@ -390,7 +390,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    AnimeXL
+                    Lineart v1
                   </button>
                   
                   <button
@@ -398,7 +398,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    FurryLineartXL
+                    Lineart v2
                   </button>
                 </div>
               </div>
