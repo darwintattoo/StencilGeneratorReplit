@@ -240,7 +240,7 @@ export function StencilForm({
           
           {/* line_color - El parámetro más usado primero */}
           <div className="space-y-2 mb-4">
-            <Label className="font-medium text-lg">line_color</Label>
+            <Label className="font-medium text-lg">{t("form.line_color")}</Label>
             <div className="flex space-x-6 justify-center">
               {/* Black */}
               <div className="flex items-center">
@@ -312,7 +312,7 @@ export function StencilForm({
             <div className="flex items-center justify-between">
               <Label htmlFor="transparency" className="font-medium">{t("form.transparent_bg")}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">activar_transparencia</span>
+                <span className="text-xs text-gray-400 mr-2">{t("form.param_transparency")}</span>
                 <Switch
                   id="transparency"
                   checked={transparentBackground}
@@ -329,7 +329,7 @@ export function StencilForm({
             <div className="flex items-center justify-between">
               <Label htmlFor="enhanceShadows" className="font-medium">{t("form.enhance_shadows")}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">iluminar sombras</span>
+                <span className="text-xs text-gray-400 mr-2">{t("form.param_enhance_shadows")}</span>
                 <Switch
                   id="enhanceShadows"
                   checked={enhanceShadows}

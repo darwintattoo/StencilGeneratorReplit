@@ -35,6 +35,9 @@ const enTranslations: Record<string, string> = {
   "form.enhance_shadows_help": "Improves visibility in areas with deep shadows",
   "form.line_style": "Line Style",
   "form.ai_model": "AI Model",
+  "form.param_transparency": "activar_transparencia",
+  "form.param_enhance_shadows": "iluminar sombras",
+  "form.param_line_color": "line_color",
   
   // Form errors
   "form.error": "Error",
@@ -86,6 +89,9 @@ const esTranslations: Record<string, string> = {
   "form.enhance_shadows_help": "Mejora la visibilidad en áreas con sombras profundas",
   "form.line_style": "Estilo de línea",
   "form.ai_model": "Modelo de IA",
+  "form.param_transparency": "activar_transparencia",
+  "form.param_enhance_shadows": "iluminar sombras",
+  "form.param_line_color": "line_color",
   
   // Form errors
   "form.error": "Error",
