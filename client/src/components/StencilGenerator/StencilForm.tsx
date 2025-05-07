@@ -27,7 +27,7 @@ export function StencilForm({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);      // "Darwin Enriquez"
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
   const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");         // "AI Model"
   const [enhanceShadows, setEnhanceShadows] = useState(false);              // "iluminar sombras"
   const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors"); // "estilo de linea"
@@ -342,100 +342,113 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* SECCIÓN: OPCIONES AVANZADAS */}
+        {/* SECCIÓN: OPCIONES AVANZADAS (Desplegable) */}
         <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
-          <div className="border-b border-gray-800 pb-1 mb-4">
+          <button 
+            type="button"
+            onClick={() => setIsAdvancedOptionsOpen(!isAdvancedOptionsOpen)}
+            className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 transition-colors"
+          >
             <h3 className="text-md font-medium text-gray-300">Opciones Avanzadas</h3>
-          </div>
+            <div className={`transition-transform duration-200 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
           
-          {/* AI Model */}
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between">
-              <Label className="font-medium">AI Model</Label>
-              <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
-                aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
-                aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
+          {isAdvancedOptionsOpen && (
+            <div className="mt-4 pt-2 border-t border-gray-800/50 animate-in fade-in duration-200">
+              {/* AI Model */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium">AI Model</Label>
+                  <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
+                    aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
+                    aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAiModel("SDXL-Flash.safetensors")}
+                    className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    StencilPro v1
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    StencilPro v2 (beta)
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Lineart v1
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Lineart v2
+                  </button>
+                </div>
+              </div>
+              
+              {/* estilo de linea */}
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium">estilo de linea</Label>
+                  <span className="text-sm text-blue-400">
+                    {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
+                    selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
+                    selectedPreset === "anime-detailer-xl.safetensors" ? "Estilo 3" : "Estilo 4"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Estilo 1 (Clásico)
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Estilo 2 (Detallado)
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Estilo 3 (Fino)
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                  >
+                    Estilo 4 (Artístico)
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setAiModel("SDXL-Flash.safetensors")}
-                className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                StencilPro v1
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
-                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                StencilPro v2 (beta)
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
-                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Lineart v1
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
-                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Lineart v2
-              </button>
-            </div>
-          </div>
-          
-          {/* estilo de linea */}
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between">
-              <Label className="font-medium">estilo de linea</Label>
-              <span className="text-sm text-blue-400">
-                {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
-                selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
-                selectedPreset === "anime-detailer-xl.safetensors" ? "Estilo 3" : "Estilo 4"}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
-                className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Estilo 1 (Clásico)
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
-                className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Estilo 2 (Detallado)
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
-                className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Estilo 3 (Fino)
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
-                className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-              >
-                Estilo 4 (Artístico)
-              </button>
-            </div>
-          </div>
+          )}
         </div>
         
         {/* Submit Button */}
