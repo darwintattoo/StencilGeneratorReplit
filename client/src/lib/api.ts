@@ -36,15 +36,26 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
   // Agregar los nuevos parámetros opcionales si están presentes
   if (params.aiModel) {
     formData.append("aiModel", params.aiModel);
+  } else {
+    formData.append("aiModel", "SDXL-Flash.safetensors");
   }
   
-  if (params.enhanceShadows !== undefined) {
-    formData.append("enhanceShadows", params.enhanceShadows.toString());
-  }
+  // Siempre incluir enhanceShadows, incluso si es false
+  formData.append("enhanceShadows", params.enhanceShadows === true ? "true" : "false");
   
   if (params.presetLora) {
     formData.append("presetLora", params.presetLora);
+  } else {
+    formData.append("presetLora", "LoraLineart/Darwinstencil3-000007.safetensors");
   }
+  
+  console.log("Enviando parámetros:", {
+    lineColor: params.lineColor,
+    transparentBackground: params.transparentBackground,
+    aiModel: params.aiModel || "SDXL-Flash.safetensors",
+    enhanceShadows: params.enhanceShadows || false,
+    presetLora: params.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors"
+  });
   
   console.log("Enviando archivo:", params.image.name, "tipo:", params.image.type, "tamaño:", params.image.size);
   

@@ -102,8 +102,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsedTransparency = transparentBackground === 'true';
       
       // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
+      // Verificar el valor de enhanceShadows sea cual sea su formato
       let enhanceShadows = false;
-      if (req.body.enhanceShadows && (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true)) {
+      console.log("Valor original de enhanceShadows:", req.body.enhanceShadows);
+      console.log("Tipo de enhanceShadows:", typeof req.body.enhanceShadows);
+      
+      if (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1) {
         enhanceShadows = true;
       }
       
@@ -321,8 +325,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extraer y validar los parámetros nuevos
       // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
+      // Verificar el valor de enhanceShadows sea cual sea su formato
       let enhanceShadows = false;
-      if (req.body.enhanceShadows && (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true)) {
+      console.log("Valor original de enhanceShadows:", req.body.enhanceShadows);
+      console.log("Tipo de enhanceShadows:", typeof req.body.enhanceShadows);
+      
+      if (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1) {
         enhanceShadows = true;
       }
       
