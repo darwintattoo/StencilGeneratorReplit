@@ -22,6 +22,12 @@ export default function AuthPage() {
     password: "",
     email: "",
   });
+  
+  // Estado para controlar errores de registro
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+
+  // Constante para deshabilitar registro
+  const REGISTRATION_DISABLED = true; // Cambia a false para reactivar el registro
 
   // Redireccionar si el usuario ya está autenticado
   if (user) {
@@ -49,6 +55,13 @@ export default function AuthPage() {
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Si el registro está desactivado, mostrar un mensaje y no enviar la solicitud
+    if (REGISTRATION_DISABLED) {
+      setRegistrationError("El registro de nuevos usuarios está temporalmente desactivado. Por favor, contacte al administrador del sistema.");
+      return;
+    }
+    
     registerMutation.mutate(registerForm);
   };
 
@@ -62,7 +75,16 @@ export default function AuthPage() {
         <Tabs defaultValue="login" className="w-full max-w-md">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">{t("auth.login")}</TabsTrigger>
-            <TabsTrigger value="register">{t("auth.register")}</TabsTrigger>
+            <TabsTrigger value="register" disabled={REGISTRATION_DISABLED}>
+              {REGISTRATION_DISABLED ? (
+                <span className="flex items-center">
+                  {t("auth.register")}
+                  <span className="ml-2 bg-red-700 text-white text-xs px-1 py-0.5 rounded">Desactivado</span>
+                </span>
+              ) : (
+                t("auth.register")
+              )}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
@@ -125,58 +147,77 @@ export default function AuthPage() {
                   Regístrate para guardar y compartir tus diseños de stencils
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={handleRegisterSubmit}>
+              {REGISTRATION_DISABLED ? (
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-username">Nombre de usuario</Label>
-                    <Input 
-                      id="register-username" 
-                      name="username" 
-                      value={registerForm.username}
-                      onChange={handleRegisterChange}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Correo electrónico</Label>
-                    <Input 
-                      id="register-email" 
-                      name="email" 
-                      type="email" 
-                      value={registerForm.email}
-                      onChange={handleRegisterChange}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Contraseña</Label>
-                    <Input 
-                      id="register-password" 
-                      name="password" 
-                      type="password" 
-                      value={registerForm.password}
-                      onChange={handleRegisterChange}
-                      required 
-                    />
+                  <div className="bg-red-900/20 border border-red-800 rounded-md p-4 text-center">
+                    <p className="text-red-300 font-medium mb-2">Registro de Usuarios Desactivado</p>
+                    <p className="text-gray-300 text-sm">
+                      El registro de nuevos usuarios está temporalmente desactivado por razones de seguridad.
+                    </p>
+                    <p className="text-gray-300 text-sm mt-2">
+                      Si necesitas una cuenta, por favor contacta al administrador del sistema.
+                    </p>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isPendingRegister}
-                  >
-                    {isPendingRegister ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creando cuenta...
-                      </>
-                    ) : (
-                      "Crear cuenta"
+              ) : (
+                <form onSubmit={handleRegisterSubmit}>
+                  <CardContent className="space-y-4">
+                    {registrationError && (
+                      <div className="bg-red-900/20 border border-red-800 rounded-md p-4">
+                        <p className="text-red-300 text-sm">{registrationError}</p>
+                      </div>
                     )}
-                  </Button>
-                </CardFooter>
-              </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-username">Nombre de usuario</Label>
+                      <Input 
+                        id="register-username" 
+                        name="username" 
+                        value={registerForm.username}
+                        onChange={handleRegisterChange}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email">Correo electrónico</Label>
+                      <Input 
+                        id="register-email" 
+                        name="email" 
+                        type="email" 
+                        value={registerForm.email}
+                        onChange={handleRegisterChange}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">Contraseña</Label>
+                      <Input 
+                        id="register-password" 
+                        name="password" 
+                        type="password" 
+                        value={registerForm.password}
+                        onChange={handleRegisterChange}
+                        required 
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isPendingRegister}
+                    >
+                      {isPendingRegister ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creando cuenta...
+                        </>
+                      ) : (
+                        "Crear cuenta"
+                      )}
+                    </Button>
+                  </CardFooter>
+                </form>
+              )}
             </Card>
           </TabsContent>
         </Tabs>

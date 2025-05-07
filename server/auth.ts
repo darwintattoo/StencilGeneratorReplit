@@ -81,6 +81,13 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      // Registro desactivado temporalmente
+      return res.status(403).json({ 
+        message: "El registro de nuevos usuarios está temporalmente desactivado. Por favor, contacte al administrador del sistema.",
+        registrationDisabled: true
+      });
+      
+      /* CÓDIGO DESACTIVADO - SE REACTIVARÁ CUANDO SEA NECESARIO
       // Verificar si ya existe un usuario con ese nombre o email
       const existingUsername = await storage.getUserByUsername(req.body.username);
       if (existingUsername) {
@@ -108,6 +115,7 @@ export function setupAuth(app: Express) {
           role: user.role
         });
       });
+      */
     } catch (err) {
       return next(err);
     }
