@@ -251,10 +251,10 @@ export function StencilForm({
                 </Select>
               </div>
               
-              {/* Aclarar zonas oscuras */}
+              {/* Iluminar sombras */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="enhanceShadows" className="text-base">Aclarar zonas oscuras</Label>
+                  <Label htmlFor="enhanceShadows" className="text-base">Iluminar sombras</Label>
                   <Switch
                     id="enhanceShadows"
                     checked={enhanceShadows}
