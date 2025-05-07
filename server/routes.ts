@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Llamar a la API externa con la URL del archivo subido
-      // Crear un objeto payload EXACTAMENTE como lo requiere la API
+      // Crear un objeto payload EXACTAMENTE como se ve en la interfaz original
       const payload = {
         deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
         inputs: {
@@ -344,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "AI Model": aiModel
       });
       
-      // Crear un objeto payload EXACTAMENTE como lo requiere la API
+      // Crear un objeto payload EXACTAMENTE como se ve en la interfaz original
       const payload = {
         deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
         inputs: {

@@ -230,10 +230,10 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* Modelo de IA */}
+        {/* AI Model - Usando exactamente el nombre que se ve en la imagen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="font-medium text-lg">Modelo de IA</Label>
+            <Label className="font-medium text-lg">AI Model</Label>
             <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
               aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
               aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
@@ -274,10 +274,11 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* Iluminar sombras */}
+        {/* iluminar sombras - Usando exactamente el nombre que se ve en la imagen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="enhanceShadows" className="font-medium text-lg">Iluminar sombras</Label>
+            <Label htmlFor="enhanceShadows" className="font-medium text-lg">activar aclarado de sombra</Label>
+            <span className="text-xs text-gray-400">iluminar sombras</span>
             <Switch
               id="enhanceShadows"
               checked={enhanceShadows}
@@ -288,10 +289,10 @@ export function StencilForm({
           <p className="text-sm text-gray-400">Mejora la visibilidad en áreas con sombras profundas</p>
         </div>
         
-        {/* Preset/Lora */}
+        {/* estilo de linea - Usando exactamente el nombre que se ve en la imagen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="font-medium text-lg">Estilo de línea (LoRA)</Label>
+            <Label className="font-medium text-lg">estilo de linea</Label>
             <span className="text-sm text-blue-400">
               {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
                selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
@@ -333,9 +334,9 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* Line Color Selection */}
+        {/* line_color - Usando exactamente el nombre que se ve en la imagen */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">{t("form.line_color")}</Label>
+          <Label className="font-medium text-lg">line_color</Label>
           <div className="flex space-x-6 justify-center">
             {/* Black */}
             <div className="flex items-center">
@@ -402,10 +403,11 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* Transparency Toggle */}
+        {/* activar_transparencia - Usando exactamente el nombre que se ve en la imagen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="transparency" className="font-medium text-lg">{t("form.transparent_bg")}</Label>
+            <Label htmlFor="transparency" className="font-medium text-lg">Activar Fondo Transparente</Label>
+            <span className="text-xs text-gray-400">activar_transparencia</span>
             <Switch
               id="transparency"
               checked={transparentBackground}
