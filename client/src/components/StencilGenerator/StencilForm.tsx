@@ -159,10 +159,12 @@ export function StencilForm({
 
   return (
     <div className="bg-[#0d0d0d] rounded-xl p-8 shadow-xl mb-8 border border-gray-800">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Image Input Options */}
-        <div className="space-y-4">
-          <Label className="font-medium text-lg">{t("form.upload_label")}</Label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* SECCIÓN: CARGA DE IMAGEN */}
+        <div className="space-y-4 mb-4">
+          <div className="border-b border-gray-800 pb-1 mb-2">
+            <Label className="font-medium text-lg">{t("form.upload_label")}</Label>
+          </div>
           
           {/* Drag & Drop Area */}
           <div 
@@ -230,207 +232,227 @@ export function StencilForm({
           </div>
         </div>
         
-        {/* AI Model - Usando exactamente el nombre que se ve en la imagen */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="font-medium text-lg">AI Model</Label>
-            <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
-              aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
-              aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
+        {/* SECCIÓN: OPCIONES BÁSICAS - Los más usados primero */}
+        <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
+          <div className="border-b border-gray-800 pb-1 mb-4">
+            <h3 className="text-md font-medium text-gray-300">Opciones Básicas</h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setAiModel("SDXL-Flash.safetensors")}
-              className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              StencilPro v1
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
-              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              StencilPro v2 (beta)
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
-              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Lineart v1
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
-              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Lineart v2
-            </button>
-          </div>
-        </div>
-        
-        {/* iluminar sombras - Usando exactamente el nombre que se ve en la imagen */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="enhanceShadows" className="font-medium text-lg">activar aclarado de sombra</Label>
-            <span className="text-xs text-gray-400">iluminar sombras</span>
-            <Switch
-              id="enhanceShadows"
-              checked={enhanceShadows}
-              onCheckedChange={setEnhanceShadows}
-              className="data-[state=checked]:bg-blue-600"
-            />
-          </div>
-          <p className="text-sm text-gray-400">Mejora la visibilidad en áreas con sombras profundas</p>
-        </div>
-        
-        {/* estilo de linea - Usando exactamente el nombre que se ve en la imagen */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="font-medium text-lg">estilo de linea</Label>
-            <span className="text-sm text-blue-400">
-              {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
-               selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
-               selectedPreset === "anime-detailer-xl.safetensors" ? "Estilo 3" : "Estilo 4"}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
-              className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Estilo 1 (Clásico)
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
-              className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Estilo 2 (Detallado)
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
-              className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Estilo 3 (Fino)
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
-              className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
-            >
-              Estilo 4 (Artístico)
-            </button>
-          </div>
-        </div>
-        
-        {/* line_color - Usando exactamente el nombre que se ve en la imagen */}
-        <div className="space-y-4">
-          <Label className="font-medium text-lg">line_color</Label>
-          <div className="flex space-x-6 justify-center">
-            {/* Black */}
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="color-black"
-                name="lineColor"
-                value="black"
-                checked={lineColor === "black"}
-                onChange={() => setLineColor("black")}
-                className="hidden peer"
-              />
-              <label
-                htmlFor="color-black"
-                className={`flex items-center justify-center w-12 h-12 rounded-full bg-black border-2 border-gray-700 cursor-pointer ${
-                  lineColor === "black" ? "border-white ring-2 ring-[#ff0000]" : ""
-                }`}
-              >
-                <span className="sr-only">Black</span>
-              </label>
-            </div>
-            
-            {/* Red */}
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="color-red"
-                name="lineColor"
-                value="red"
-                checked={lineColor === "red"}
-                onChange={() => setLineColor("red")}
-                className="hidden peer"
-              />
-              <label
-                htmlFor="color-red"
-                className={`flex items-center justify-center w-12 h-12 rounded-full bg-red-600 border-2 border-gray-700 cursor-pointer ${
-                  lineColor === "red" ? "border-white ring-2 ring-[#ff0000]" : ""
-                }`}
-              >
-                <span className="sr-only">Red</span>
-              </label>
-            </div>
-            
-            {/* Blue */}
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="color-blue"
-                name="lineColor"
-                value="blue"
-                checked={lineColor === "blue"}
-                onChange={() => setLineColor("blue")}
-                className="hidden peer"
-              />
-              <label
-                htmlFor="color-blue"
-                className={`flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 border-2 border-gray-700 cursor-pointer ${
-                  lineColor === "blue" ? "border-white ring-2 ring-[#ff0000]" : ""
-                }`}
-              >
-                <span className="sr-only">Blue</span>
-              </label>
+          {/* line_color - El parámetro más usado primero */}
+          <div className="space-y-2 mb-4">
+            <Label className="font-medium text-lg">line_color</Label>
+            <div className="flex space-x-6 justify-center">
+              {/* Black */}
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="color-black"
+                  name="lineColor"
+                  value="black"
+                  checked={lineColor === "black"}
+                  onChange={() => setLineColor("black")}
+                  className="hidden peer"
+                />
+                <label
+                  htmlFor="color-black"
+                  className={`flex items-center justify-center w-12 h-12 rounded-full bg-black border-2 border-gray-700 cursor-pointer ${
+                    lineColor === "black" ? "border-white ring-2 ring-[#ff0000]" : ""
+                  }`}
+                >
+                  <span className="sr-only">Black</span>
+                </label>
+              </div>
+              
+              {/* Red */}
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="color-red"
+                  name="lineColor"
+                  value="red"
+                  checked={lineColor === "red"}
+                  onChange={() => setLineColor("red")}
+                  className="hidden peer"
+                />
+                <label
+                  htmlFor="color-red"
+                  className={`flex items-center justify-center w-12 h-12 rounded-full bg-red-600 border-2 border-gray-700 cursor-pointer ${
+                    lineColor === "red" ? "border-white ring-2 ring-[#ff0000]" : ""
+                  }`}
+                >
+                  <span className="sr-only">Red</span>
+                </label>
+              </div>
+              
+              {/* Blue */}
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="color-blue"
+                  name="lineColor"
+                  value="blue"
+                  checked={lineColor === "blue"}
+                  onChange={() => setLineColor("blue")}
+                  className="hidden peer"
+                />
+                <label
+                  htmlFor="color-blue"
+                  className={`flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 border-2 border-gray-700 cursor-pointer ${
+                    lineColor === "blue" ? "border-white ring-2 ring-[#ff0000]" : ""
+                  }`}
+                >
+                  <span className="sr-only">Blue</span>
+                </label>
+              </div>
             </div>
           </div>
+          
+          {/* activar_transparencia */}
+          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="transparency" className="font-medium">Activar Fondo Transparente</Label>
+              <div className="flex items-center">
+                <span className="text-xs text-gray-400 mr-2">activar_transparencia</span>
+                <Switch
+                  id="transparency"
+                  checked={transparentBackground}
+                  onCheckedChange={setTransparentBackground}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+              </div>
+            </div>
+            <p className="text-sm text-gray-400">{t("form.transparent_bg_help")}</p>
+          </div>
+          
+          {/* iluminar sombras */}
+          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="enhanceShadows" className="font-medium">activar aclarado de sombra</Label>
+              <div className="flex items-center">
+                <span className="text-xs text-gray-400 mr-2">iluminar sombras</span>
+                <Switch
+                  id="enhanceShadows"
+                  checked={enhanceShadows}
+                  onCheckedChange={setEnhanceShadows}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+              </div>
+            </div>
+            <p className="text-sm text-gray-400">Mejora la visibilidad en áreas con sombras profundas</p>
+          </div>
         </div>
         
-        {/* activar_transparencia - Usando exactamente el nombre que se ve en la imagen */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="transparency" className="font-medium text-lg">Activar Fondo Transparente</Label>
-            <span className="text-xs text-gray-400">activar_transparencia</span>
-            <Switch
-              id="transparency"
-              checked={transparentBackground}
-              onCheckedChange={setTransparentBackground}
-              className="data-[state=checked]:bg-blue-600"
-            />
+        {/* SECCIÓN: OPCIONES AVANZADAS */}
+        <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
+          <div className="border-b border-gray-800 pb-1 mb-4">
+            <h3 className="text-md font-medium text-gray-300">Opciones Avanzadas</h3>
           </div>
-          <p className="text-sm text-gray-400">{t("form.transparent_bg_help")}</p>
+          
+          {/* AI Model */}
+          <div className="space-y-3 mb-4">
+            <div className="flex items-center justify-between">
+              <Label className="font-medium">AI Model</Label>
+              <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
+                aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
+                aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setAiModel("SDXL-Flash.safetensors")}
+                className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                StencilPro v1
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
+                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                StencilPro v2 (beta)
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
+                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Lineart v1
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
+                className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Lineart v2
+              </button>
+            </div>
+          </div>
+          
+          {/* estilo de linea */}
+          <div className="space-y-3 mb-4">
+            <div className="flex items-center justify-between">
+              <Label className="font-medium">estilo de linea</Label>
+              <span className="text-sm text-blue-400">
+                {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
+                selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
+                selectedPreset === "anime-detailer-xl.safetensors" ? "Estilo 3" : "Estilo 4"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
+                className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Estilo 1 (Clásico)
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
+                className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Estilo 2 (Detallado)
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
+                className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Estilo 3 (Fino)
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
+                className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+              >
+                Estilo 4 (Artístico)
+              </button>
+            </div>
+          </div>
         </div>
         
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-full text-lg mt-6"
+          disabled={isLoading || !selectedFile}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 px-4 rounded-full text-lg mt-8 shadow-lg shadow-blue-900/20"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              <span>{t("form.processing")}</span>
+              <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+              <span className="font-medium">{t("form.processing")}</span>
             </>
+          ) : !selectedFile ? (
+            <span className="font-medium">Seleccione una imagen primero</span>
           ) : (
-            <span>{t("form.generate_stencil")}</span>
+            <span className="font-medium">{t("form.generate_stencil")}</span>
           )}
         </Button>
       </form>
