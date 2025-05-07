@@ -408,9 +408,9 @@ export function StencilForm({
                 <div className="flex items-center justify-between">
                   <Label className="font-medium">{t("form.line_style")}</Label>
                   <span className="text-sm text-blue-400">
-                    {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Darwinstencil" :
-                    selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Lineart Flux" :
-                    selectedPreset === "anime-detailer-xl.safetensors" ? "Anime Detailer" : "Blockprint"}
+                    {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Preset 1" :
+                    selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Preset 2" :
+                    selectedPreset === "anime-detailer-xl.safetensors" ? "Preset 3" : "Preset 4"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -419,7 +419,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Darwinstencil
+                    Preset 1
                   </button>
                   
                   <button
@@ -427,7 +427,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Lineart Flux
+                    Preset 2
                   </button>
                   
                   <button
@@ -435,7 +435,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Anime Detailer
+                    Preset 3
                   </button>
                   
                   <button
@@ -443,7 +443,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Blockprint
+                    Preset 4
                   </button>
                 </div>
               </div>
