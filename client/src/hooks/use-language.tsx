@@ -26,6 +26,14 @@ const enTranslations: Record<string, string> = {
   "form.transparent_bg_help": "Enable this option to generate a stencil with transparent background, ideal for tattoo applications",
   "form.processing": "Processing...",
   "form.generate_stencil": "Generate Stencil",
+  "form.select_image_first": "Select an image first",
+  
+  // Advanced options
+  "form.advanced_options": "Advanced Options",
+  "form.enhance_shadows": "Enhance Shadows",
+  "form.enhance_shadows_help": "Improves visibility in areas with deep shadows",
+  "form.line_style": "Line Style",
+  "form.ai_model": "AI Model",
   
   // Form errors
   "form.error": "Error",
@@ -68,6 +76,14 @@ const esTranslations: Record<string, string> = {
   "form.transparent_bg_help": "Activa esta opción para generar un stencil con fondo transparente, ideal para aplicaciones de tatuajes",
   "form.processing": "Procesando...",
   "form.generate_stencil": "Generar Stencil",
+  "form.select_image_first": "Seleccione una imagen primero",
+  
+  // Advanced options
+  "form.advanced_options": "Opciones Avanzadas",
+  "form.enhance_shadows": "Mejorar Sombras",
+  "form.enhance_shadows_help": "Mejora la visibilidad en áreas con sombras profundas",
+  "form.line_style": "Estilo de línea",
+  "form.ai_model": "Modelo de IA",
   
   // Form errors
   "form.error": "Error",

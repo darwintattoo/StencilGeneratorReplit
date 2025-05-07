@@ -327,7 +327,7 @@ export function StencilForm({
           {/* iluminar sombras */}
           <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="enhanceShadows" className="font-medium">activar aclarado de sombra</Label>
+              <Label htmlFor="enhanceShadows" className="font-medium">{t("form.enhance_shadows")}</Label>
               <div className="flex items-center">
                 <span className="text-xs text-gray-400 mr-2">iluminar sombras</span>
                 <Switch
@@ -338,7 +338,7 @@ export function StencilForm({
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-400">Mejora la visibilidad en áreas con sombras profundas</p>
+            <p className="text-sm text-gray-400">{t("form.enhance_shadows_help")}</p>
           </div>
         </div>
         
@@ -349,7 +349,7 @@ export function StencilForm({
             onClick={() => setIsAdvancedOptionsOpen(!isAdvancedOptionsOpen)}
             className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 transition-colors"
           >
-            <h3 className="text-md font-medium text-gray-300">Opciones Avanzadas</h3>
+            <h3 className="text-md font-medium text-gray-300">{t("form.advanced_options")}</h3>
             <div className={`transition-transform duration-200 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -362,7 +362,7 @@ export function StencilForm({
               {/* AI Model */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">AI Model</Label>
+                  <Label className="font-medium">{t("form.ai_model")}</Label>
                   <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "Model 1" : 
                     aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "Model 2" : 
                     aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Model 3" : "Model 4"}</span>
@@ -406,7 +406,7 @@ export function StencilForm({
               {/* estilo de linea */}
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">estilo de linea</Label>
+                  <Label className="font-medium">{t("form.line_style")}</Label>
                   <span className="text-sm text-blue-400">
                     {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Preset 1" :
                     selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Preset 2" :
@@ -463,7 +463,7 @@ export function StencilForm({
               <span className="font-medium">{t("form.processing")}</span>
             </>
           ) : !selectedFile ? (
-            <span className="font-medium">Seleccione una imagen primero</span>
+            <span className="font-medium">{t("form.select_image_first")}</span>
           ) : (
             <span className="font-medium">{t("form.generate_stencil")}</span>
           )}
