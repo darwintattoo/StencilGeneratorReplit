@@ -126,6 +126,12 @@ export function StencilForm({
     setError(null);
 
     try {
+      // Mostrar en consola los valores de los parámetros
+      console.log("enhanceShadows value:", enhanceShadows);
+      console.log("enhanceShadows type:", typeof enhanceShadows);
+      console.log("aiModel:", aiModel);
+      console.log("presetLora:", selectedPreset);
+      
       // Usar la función de subida con el archivo seleccionado
       const response = await uploadImageForStencil({
         image: selectedFile,

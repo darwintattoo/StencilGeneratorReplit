@@ -1,0 +1,617 @@
+7:03 p.m.
+Executing LoadImage
+
+8:37:03 p.m.
+Executing BLIP Model Loader
+
+8:37:03 p.m.
+Executing Text String
+
+8:37:07 p.m.
+Executing UpscaleModelLoader
+
+8:37:07 p.m.
+Executing ComfyUIDeployExternalBoolean
+
+8:37:07 p.m.
+Executing ComfyUIDeployExternalImage
+
+8:37:08 p.m.
+Executing ImageUpscaleWithModel
+
+8:37:18 p.m.
+Executing ImageScaleBy
+
+8:37:18 p.m.
+Executing Image Shadows and Highlights
+
+8:37:22 p.m.
+Executing ComfyUIDeployExternalBoolean
+
+8:37:22 p.m.
+Executing ImageSmartSharpen+
+
+8:37:22 p.m.
+Executing Image Input Switch
+
+8:37:24 p.m.
+Executing Image Filter Adjustments
+
+8:37:24 p.m.
+Executing LineArt_Assistant
+
+8:37:26 p.m.
+Executing PreviewImage
+
+8:37:26 p.m.
+Executing ImageDesaturate+
+
+8:37:26 p.m.
+Executing BLIP Analyze Image
+
+8:37:27 p.m.
+Executing ShowText|pysssss
+
+8:37:27 p.m.
+{
+  "text": [
+    "a man is drawing on a tablet with a pen and a pen in his hand, while a man looks on the screen\n\n"
+  ]
+}
+
+8:37:27 p.m.
+{
+  "text": [
+    "black and withe  line of ,a man is drawing on a tablet with a pen and a pen in his hand, while a man looks on the screen, LineArt:0.6>, white background, thick outlines, crisp edges"
+  ]
+}
+
+8:37:27 p.m.
+Executing Text Concatenate
+
+8:37:27 p.m.
+Executing ShowText|pysssss
+
+8:37:27 p.m.
+Executing AIO_Preprocessor
+
+8:37:28 p.m.
+Executing ImageInvert
+
+8:37:28 p.m.
+Executing PreviewImage
+
+8:37:28 p.m.
+Executing AnyLineArtPreprocessor_aux
+
+8:37:29 p.m.
+Executing PreviewImage
+
+8:37:29 p.m.
+Executing ImageInvert
+
+8:37:29 p.m.
+Executing LineArtPreprocessor
+
+8:37:29 p.m.
+Executing ComfyUIDeployExternalEnum
+
+8:37:29 p.m.
+Executing ImageInvert
+
+8:37:29 p.m.
+Executing Image Levels Adjustment
+
+8:37:29 p.m.
+Executing PreviewImage
+
+8:37:29 p.m.
+Executing VAELoader
+
+8:37:29 p.m.
+Executing VAEEncode
+
+8:37:30 p.m.
+Executing RepeatLatentBatch
+
+8:37:30 p.m.
+Executing ControlNetLoader
+
+8:37:33 p.m.
+Executing ControlNetLoader
+
+8:37:36 p.m.
+Executing ControlNetLoader
+
+8:37:37 p.m.
+Executing CM_NearestSDXLResolution
+
+8:37:37 p.m.
+Executing ComfyUIDeployExternalEnum
+
+8:37:37 p.m.
+Executing SDXLPromptStyler
+
+8:37:37 p.m.
+Executing ComfyUIDeployExternalEnum
+
+8:37:38 p.m.
+Executing CheckpointLoaderSimple
+
+8:37:45 p.m.
+Executing LoraLoader|pysssss
+
+8:37:46 p.m.
+Executing CLIPTextEncodeSDXL
+
+8:37:47 p.m.
+Executing CLIPTextEncodeSDXL
+
+8:37:47 p.m.
+Executing ControlNetApplyAdvanced
+
+8:37:47 p.m.
+Executing ControlNetApplyAdvanced
+
+8:37:47 p.m.
+Executing ControlNetApplyAdvanced
+
+8:37:47 p.m.
+Executing LoadImage
+
+8:37:48 p.m.
+Executing CLIPVisionLoader
+
+8:37:52 p.m.
+Executing IPAdapterModelLoader
+
+8:37:52 p.m.
+Executing LoadImage
+
+8:37:52 p.m.
+Executing IPAdapterAdvanced
+
+8:37:55 p.m.
+Executing KSamplerAdvanced
+
+8:38:11 p.m.
+Executing VAEDecode
+
+8:38:12 p.m.
+Executing ImageUpscaleWithModel
+
+8:38:20 p.m.
+Executing ImageScaleBy
+
+8:38:20 p.m.
+Executing Sketch_Assistant
+
+8:38:21 p.m.
+Executing MaskFromColor+
+
+8:38:21 p.m.
+Executing JoinImageWithAlpha
+
+8:38:21 p.m.
+Executing Image Input Switch
+
+8:38:21 p.m.
+Executing Image Comparer (rgthree)
+
+8:38:21 p.m.
+{
+  "a_images": [
+    {
+      "filename": "rgthree.compare._temp_ofqet_00001_.png",
+      "subfolder": "",
+      "type": "temp"
+    }
+  ],
+  "b_images": [
+    {
+      "filename": "rgthree.compare._temp_ofqet_00002_.png",
+      "subfolder": "",
+      "type": "temp"
+    }
+  ]
+}
+
+8:38:22 p.m.
+Executing ComfyDeployOutputImage
+
+8:38:22 p.m.
+[
+  {
+    "id": "5",
+    "time": 0.04873692099999971,
+    "class_type": "LoadImage",
+    "vram_used": 0
+  },
+  {
+    "id": "257",
+    "time": 0.001721318000001304,
+    "class_type": "Text String",
+    "vram_used": 0
+  },
+  {
+    "id": "207",
+    "time": 3.7400500370000014,
+    "class_type": "BLIP Model Loader",
+    "vram_used": 2528358880
+  },
+  {
+    "id": "424",
+    "time": 0.0002173760000001579,
+    "class_type": "ComfyUIDeployExternalBoolean",
+    "vram_used": 0
+  },
+  {
+    "id": "362",
+    "time": 0.3308633279999995,
+    "class_type": "UpscaleModelLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "337",
+    "time": 0.7836553549999987,
+    "class_type": "ComfyUIDeployExternalImage",
+    "vram_used": 0
+  },
+  {
+    "id": "434",
+    "time": 9.822945272,
+    "class_type": "ImageUpscaleWithModel",
+    "vram_used": 3307186716
+  },
+  {
+    "id": "435",
+    "time": 0.06179975699999929,
+    "class_type": "ImageScaleBy",
+    "vram_used": 0
+  },
+  {
+    "id": "383",
+    "time": 3.8991095330000007,
+    "class_type": "Image Shadows and Highlights",
+    "vram_used": 0
+  },
+  {
+    "id": "442",
+    "time": 0.0002534079999989558,
+    "class_type": "ComfyUIDeployExternalBoolean",
+    "vram_used": 0
+  },
+  {
+    "id": "441",
+    "time": 0.00014024099999687678,
+    "class_type": "Image Input Switch",
+    "vram_used": 0
+  },
+  {
+    "id": "385",
+    "time": 1.9877132629999998,
+    "class_type": "ImageSmartSharpen+",
+    "vram_used": 0
+  },
+  {
+    "id": "437",
+    "time": 0.06385648400000221,
+    "class_type": "Image Filter Adjustments",
+    "vram_used": 0
+  },
+  {
+    "id": "412",
+    "time": 1.4984336849999984,
+    "class_type": "LineArt_Assistant",
+    "vram_used": 0
+  },
+  {
+    "id": "413",
+    "time": 0.23423330300000345,
+    "class_type": "PreviewImage",
+    "vram_used": 0
+  },
+  {
+    "id": "247",
+    "time": 0.17246460900000216,
+    "class_type": "ImageDesaturate+",
+    "vram_used": 0
+  },
+  {
+    "id": "206",
+    "time": 0.6794104040000022,
+    "class_type": "BLIP Analyze Image",
+    "vram_used": 57479264
+  },
+  {
+    "id": "58",
+    "time": 0.0002391719999934594,
+    "class_type": "ShowText|pysssss",
+    "vram_used": 0
+  },
+  {
+    "id": "14",
+    "time": 0.00013874600000463033,
+    "class_type": "Text Concatenate",
+    "vram_used": 0
+  },
+  {
+    "id": "60",
+    "time": 0.00016453500000324084,
+    "class_type": "ShowText|pysssss",
+    "vram_used": 0
+  },
+  {
+    "id": "332",
+    "time": 0.304430859,
+    "class_type": "AIO_Preprocessor",
+    "vram_used": 0
+  },
+  {
+    "id": "333",
+    "time": 0.005940291000001707,
+    "class_type": "ImageInvert",
+    "vram_used": 0
+  },
+  {
+    "id": "334",
+    "time": 0.1816267649999972,
+    "class_type": "PreviewImage",
+    "vram_used": 0
+  },
+  {
+    "id": "329",
+    "time": 1.5241344120000022,
+    "class_type": "AnyLineArtPreprocessor_aux",
+    "vram_used": 1362119704
+  },
+  {
+    "id": "394",
+    "time": 0.0029243240000056403,
+    "class_type": "ImageInvert",
+    "vram_used": 0
+  },
+  {
+    "id": "326",
+    "time": 0.05063451200000202,
+    "class_type": "PreviewImage",
+    "vram_used": 0
+  },
+  {
+    "id": "420",
+    "time": 0.00015980900000300835,
+    "class_type": "ComfyUIDeployExternalEnum",
+    "vram_used": 0
+  },
+  {
+    "id": "295",
+    "time": 0.21406637100000125,
+    "class_type": "LineArtPreprocessor",
+    "vram_used": 1362119704
+  },
+  {
+    "id": "234",
+    "time": 0.003975290999996162,
+    "class_type": "ImageInvert",
+    "vram_used": 0
+  },
+  {
+    "id": "278",
+    "time": 0.05031155300000023,
+    "class_type": "Image Levels Adjustment",
+    "vram_used": 0
+  },
+  {
+    "id": "393",
+    "time": 0.07294333800000175,
+    "class_type": "PreviewImage",
+    "vram_used": 0
+  },
+  {
+    "id": "4",
+    "time": 0.43641206499999896,
+    "class_type": "VAELoader",
+    "vram_used": 0
+  },
+  {
+    "id": "32",
+    "time": 0.48734897099999586,
+    "class_type": "VAEEncode",
+    "vram_used": 2190305758
+  },
+  {
+    "id": "41",
+    "time": 0.00039038699999593973,
+    "class_type": "RepeatLatentBatch",
+    "vram_used": 0
+  },
+  {
+    "id": "440",
+    "time": 2.9883093070000015,
+    "class_type": "ControlNetLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "20",
+    "time": 3.4380940960000004,
+    "class_type": "ControlNetLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "21",
+    "time": 0.6000145880000005,
+    "class_type": "ControlNetLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "6",
+    "time": 0.00027882799999900953,
+    "class_type": "CM_NearestSDXLResolution",
+    "vram_used": 0
+  },
+  {
+    "id": "29",
+    "time": 0.00024358499999976857,
+    "class_type": "SDXLPromptStyler",
+    "vram_used": 0
+  },
+  {
+    "id": "443",
+    "time": 0.00012791300000003503,
+    "class_type": "ComfyUIDeployExternalEnum",
+    "vram_used": 0
+  },
+  {
+    "id": "444",
+    "time": 0.0001274379999998132,
+    "class_type": "ComfyUIDeployExternalEnum",
+    "vram_used": 0
+  },
+  {
+    "id": "3",
+    "time": 8.324484231999996,
+    "class_type": "CheckpointLoaderSimple",
+    "vram_used": 0
+  },
+  {
+    "id": "340",
+    "time": 0.9892597210000034,
+    "class_type": "LoraLoader|pysssss",
+    "vram_used": 0
+  },
+  {
+    "id": "16",
+    "time": 1.011906334999999,
+    "class_type": "CLIPTextEncodeSDXL",
+    "vram_used": 1667460884
+  },
+  {
+    "id": "17",
+    "time": 0.05322624899999795,
+    "class_type": "CLIPTextEncodeSDXL",
+    "vram_used": 34389364
+  },
+  {
+    "id": "24",
+    "time": 0.00022855899999996154,
+    "class_type": "ControlNetApplyAdvanced",
+    "vram_used": 0
+  },
+  {
+    "id": "25",
+    "time": 0.00017912399999886475,
+    "class_type": "ControlNetApplyAdvanced",
+    "vram_used": 0
+  },
+  {
+    "id": "439",
+    "time": 0.00015692399999522877,
+    "class_type": "ControlNetApplyAdvanced",
+    "vram_used": 0
+  },
+  {
+    "id": "238",
+    "time": 0.026875328000002696,
+    "class_type": "LoadImage",
+    "vram_used": 0
+  },
+  {
+    "id": "10",
+    "time": 4.042702253000002,
+    "class_type": "CLIPVisionLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "292",
+    "time": 0.5782236009999977,
+    "class_type": "IPAdapterModelLoader",
+    "vram_used": 0
+  },
+  {
+    "id": "236",
+    "time": 0.007302566999996429,
+    "class_type": "LoadImage",
+    "vram_used": 0
+  },
+  {
+    "id": "194",
+    "time": 2.6926666379999986,
+    "class_type": "IPAdapterAdvanced",
+    "vram_used": 4397744640
+  },
+  {
+    "id": "30",
+    "time": 16.60171756300001,
+    "class_type": "KSamplerAdvanced",
+    "vram_used": 11573851240
+  },
+  {
+    "id": "33",
+    "time": 0.8653414560000101,
+    "class_type": "VAEDecode",
+    "vram_used": 602546952
+  },
+  {
+    "id": "363",
+    "time": 7.81728715700001,
+    "class_type": "ImageUpscaleWithModel",
+    "vram_used": 3307039260
+  },
+  {
+    "id": "364",
+    "time": 0.03725789500001042,
+    "class_type": "ImageScaleBy",
+    "vram_used": 0
+  },
+  {
+    "id": "406",
+    "time": 0.4324459080000054,
+    "class_type": "Sketch_Assistant",
+    "vram_used": 0
+  },
+  {
+    "id": "425",
+    "time": 0.35706904299999565,
+    "class_type": "MaskFromColor+",
+    "vram_used": 0
+  },
+  {
+    "id": "426",
+    "time": 0.1507689200000044,
+    "class_type": "JoinImageWithAlpha",
+    "vram_used": 0
+  },
+  {
+    "id": "430",
+    "time": 0.00016216699999915818,
+    "class_type": "Image Input Switch",
+    "vram_used": 0
+  },
+  {
+    "id": "384",
+    "time": 0.38953282599999284,
+    "class_type": "Image Comparer (rgthree)",
+    "vram_used": 0
+  },
+  {
+    "id": "427",
+    "time": 0.3528366379999994,
+    "class_type": "ComfyDeployOutputImage",
+    "vram_used": 0
+  }
+]
+
+8:38:23 p.m.
+{
+  "images": [
+    {
+      "filename": "tattoostencilpro_00001_.png",
+      "subfolder": "",
+      "type": "output",
+      "output_id": "png transparente",
+      "url": "https://comfy-deploy-output.s3.us-east-2.amazonaws.com/outputs/runs/f87a0376-197b-4ee6-a061-847705dd277a/tattoostencilpro_00001_.png",
+      "upload_duration": 0.4450845949999973,
+      "is_public": true
+    }
+  ]
+}
