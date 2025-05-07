@@ -363,9 +363,9 @@ export function StencilForm({
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between">
                   <Label className="font-medium">{t("form.ai_model")}</Label>
-                  <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "Model 1" : 
-                    aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "Model 2" : 
-                    aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Model 3" : "Model 4"}</span>
+                  <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "SDXL-Flash" : 
+                    aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "DreamshaperXL" : 
+                    aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "AnimeXL" : "FurryLineartXL"}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -374,7 +374,7 @@ export function StencilForm({
                     onClick={() => setAiModel("SDXL-Flash.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Model 1
+                    SDXL-Flash
                   </button>
                   
                   <button
@@ -382,7 +382,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Model 2
+                    DreamshaperXL
                   </button>
                   
                   <button
@@ -390,7 +390,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Model 3
+                    AnimeXL
                   </button>
                   
                   <button
@@ -398,7 +398,7 @@ export function StencilForm({
                     onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
                     className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Model 4
+                    FurryLineartXL
                   </button>
                 </div>
               </div>
@@ -408,9 +408,9 @@ export function StencilForm({
                 <div className="flex items-center justify-between">
                   <Label className="font-medium">{t("form.line_style")}</Label>
                   <span className="text-sm text-blue-400">
-                    {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Preset 1" :
-                    selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Preset 2" :
-                    selectedPreset === "anime-detailer-xl.safetensors" ? "Preset 3" : "Preset 4"}
+                    {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Darwinstencil" :
+                    selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Lineart Flux" :
+                    selectedPreset === "anime-detailer-xl.safetensors" ? "Anime Detailer" : "Blockprint"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -419,7 +419,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Preset 1
+                    Darwinstencil
                   </button>
                   
                   <button
@@ -427,7 +427,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Preset 2
+                    Lineart Flux
                   </button>
                   
                   <button
@@ -435,7 +435,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Preset 3
+                    Anime Detailer
                   </button>
                   
                   <button
