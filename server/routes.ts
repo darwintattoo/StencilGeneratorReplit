@@ -100,9 +100,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extraer y validar los parámetros nuevos
       const parsedTransparency = transparentBackground === 'true';
-      const enhanceShadows = req.body.enhanceShadows === 'true';
+      
+      // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
+      let enhanceShadows = false;
+      if (req.body.enhanceShadows && (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true)) {
+        enhanceShadows = true;
+      }
+      
       const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
       const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
+      
+      console.log("Parámetros API:", {
+        transparentBackground: parsedTransparency,
+        enhanceShadows,
+        aiModel,
+        presetLora
+      });
       
       // Llamar a la API externa con la URL del archivo subido
       const response = await axios.post(
@@ -307,9 +320,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extraer y validar los parámetros nuevos
-      const enhanceShadows = false; // valor por defecto
-      const aiModel = "SDXL-Flash.safetensors"; // valor por defecto
-      const presetLora = "LoraLineart/Darwinstencil3-000007.safetensors"; // valor por defecto
+      // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
+      let enhanceShadows = false;
+      if (req.body.enhanceShadows && (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true)) {
+        enhanceShadows = true;
+      }
+      
+      const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
+      const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
+      
+      console.log("Parámetros API:", {
+        transparentBackground,
+        enhanceShadows,
+        aiModel,
+        presetLora
+      });
       
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
