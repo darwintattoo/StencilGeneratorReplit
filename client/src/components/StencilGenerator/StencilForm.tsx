@@ -5,7 +5,6 @@ import { uploadImageForStencil } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload } from "lucide-react";
 import { StencilResponse, StencilError } from "@/types";
 
@@ -232,18 +231,46 @@ export function StencilForm({
         
         {/* Modelo de IA */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Modelo de IA</Label>
-          <Select value={aiModel} onValueChange={setAiModel}>
-            <SelectTrigger className="w-full bg-[#171717] border-gray-700">
-              <SelectValue placeholder="Selecciona un modelo" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#171717] border-gray-700">
-              <SelectItem value="SDXL-Flash.safetensors">StencilPro v1</SelectItem>
-              <SelectItem value="Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors">StencilPro v2 (beta)</SelectItem>
-              <SelectItem value="Lineart/aamXLAnimeMix_v10.safetensors">Lineart v1</SelectItem>
-              <SelectItem value="Lineart/furryLineartXl_v30.safetensors">Lineart v2</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between">
+            <Label className="font-medium text-lg">Modelo de IA</Label>
+            <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
+              aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2" : 
+              aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setAiModel("SDXL-Flash.safetensors")}
+              className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              StencilPro v1
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
+              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              StencilPro v2 (beta)
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
+              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Lineart v1
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
+              className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Lineart v2
+            </button>
+          </div>
         </div>
         
         {/* Iluminar sombras */}
@@ -262,18 +289,47 @@ export function StencilForm({
         
         {/* Preset/Lora */}
         <div className="space-y-4">
-          <Label className="font-medium text-lg">Preset</Label>
-          <Select value={selectedPreset} onValueChange={setSelectedPreset}>
-            <SelectTrigger className="w-full bg-[#171717] border-gray-700">
-              <SelectValue placeholder="Selecciona un preset" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#171717] border-gray-700">
-              <SelectItem value="LoraLineart/Darwinstencil3-000007.safetensors">Preset 1</SelectItem>
-              <SelectItem value="LoraLineart/lineart_flux.safetensors">Preset 2</SelectItem>
-              <SelectItem value="anime-detailer-xl.safetensors">Preset 3</SelectItem>
-              <SelectItem value="araminta_k_colorized_blockprint.safetensors">Preset 4</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between">
+            <Label className="font-medium text-lg">Estilo de línea (LoRA)</Label>
+            <span className="text-sm text-blue-400">
+              {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Estilo 1" :
+               selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Estilo 2" :
+               selectedPreset === "anime-detailer-xl.safetensors" ? "Estilo 3" : "Estilo 4"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
+              className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Estilo 1 (Clásico)
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
+              className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Estilo 2 (Detallado)
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
+              className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Estilo 3 (Fino)
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
+              className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+            >
+              Estilo 4 (Artístico)
+            </button>
+          </div>
         </div>
         
         {/* Line Color Selection */}
