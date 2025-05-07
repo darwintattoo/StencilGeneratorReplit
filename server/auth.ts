@@ -81,13 +81,26 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      // Registro desactivado temporalmente
-      return res.status(403).json({ 
-        message: "El registro de nuevos usuarios está temporalmente desactivado. Por favor, contacte al administrador del sistema.",
-        registrationDisabled: true
-      });
+      // Lista de correos electrónicos autorizados que pueden registrarse aunque el registro esté desactivado
+      // Esto es útil para permitir a ciertos usuarios registrarse durante el periodo de prueba
+      const AUTHORIZED_EMAILS = [
+        'admin@tattoostencilpro.com',
+        'demo@tattoostencilpro.com',
+        'darwin@tattoostencilpro.com',
+        // Añadir más emails autorizados aquí
+      ];
       
-      /* CÓDIGO DESACTIVADO - SE REACTIVARÁ CUANDO SEA NECESARIO
+      // Comprobar si la solicitud incluye un email autorizado
+      const isAuthorizedEmail = AUTHORIZED_EMAILS.includes(req.body.email?.toLowerCase());
+      
+      // Si no es un email autorizado, rechazar el registro
+      if (!isAuthorizedEmail) {
+        return res.status(403).json({ 
+          message: "El registro de nuevos usuarios está temporalmente desactivado. Por favor, contacte al administrador del sistema.",
+          registrationDisabled: true
+        });
+      }
+      
       // Verificar si ya existe un usuario con ese nombre o email
       const existingUsername = await storage.getUserByUsername(req.body.username);
       if (existingUsername) {
@@ -99,10 +112,12 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "El email ya está registrado" });
       }
 
-      // Crear el usuario
+      // Crear el usuario (si está autorizado)
       const user = await storage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
+        // Asignar rol por defecto user, pero si es uno de los emails especiales, asignar admin
+        role: req.body.email?.toLowerCase() === 'admin@tattoostencilpro.com' ? 'admin' : 'user'
       });
 
       // Iniciar sesión automáticamente
@@ -115,7 +130,6 @@ export function setupAuth(app: Express) {
           role: user.role
         });
       });
-      */
     } catch (err) {
       return next(err);
     }

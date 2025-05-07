@@ -26,8 +26,9 @@ export default function AuthPage() {
   // Estado para controlar errores de registro
   const [registrationError, setRegistrationError] = useState<string | null>(null);
 
-  // Constante para deshabilitar registro
-  const REGISTRATION_DISABLED = true; // Cambia a false para reactivar el registro
+  // Constante para deshabilitar registro para la mayoría de usuarios
+  // NOTA: Los usuarios con emails en la lista de correos autorizados aún podrán registrarse
+  const REGISTRATION_DISABLED = true; // Cambia a false para reactivar el registro público
 
   // Redireccionar si el usuario ya está autenticado
   if (user) {
@@ -56,8 +57,18 @@ export default function AuthPage() {
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Si el registro está desactivado, mostrar un mensaje y no enviar la solicitud
-    if (REGISTRATION_DISABLED) {
+    // Lista de correos electrónicos autorizados
+    const AUTHORIZED_EMAILS = [
+      'admin@tattoostencilpro.com',
+      'demo@tattoostencilpro.com',
+      'darwin@tattoostencilpro.com'
+    ];
+    
+    // Para usuarios autorizados, permitir el registro a pesar de estar desactivado globalmente
+    const isAuthorizedEmail = AUTHORIZED_EMAILS.includes(registerForm.email.toLowerCase());
+    
+    // Si el registro está desactivado y no es un email autorizado, mostrar un mensaje
+    if (REGISTRATION_DISABLED && !isAuthorizedEmail) {
       setRegistrationError("El registro de nuevos usuarios está temporalmente desactivado. Por favor, contacte al administrador del sistema.");
       return;
     }
