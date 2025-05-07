@@ -10,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Importamos el logo oficial
+import logoImage from "../../assets/tattoo-stencil-pro-logo.png";
+
 export default function Navigation() {
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -17,23 +20,10 @@ export default function Navigation() {
   return (
     <nav className="bg-black text-white py-3 px-4 border-b border-gray-800">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-gray-800 rounded overflow-hidden flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
-              <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-              <path d="M2 2l7.586 7.586"/>
-              <circle cx="11" cy="11" r="2"/>
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <Link href="/" className="font-bold text-white">
-              <span className="text-white">Tattoo</span>
-              <span className="text-white">Stencil</span>
-              <span className="text-blue-500">Pro</span>
-            </Link>
-            <span className="text-xs text-gray-400">By Darwin Enriquez</span>
-          </div>
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center">
+            <img src={logoImage} alt="TattooStencilPro" className="h-9" />
+          </Link>
         </div>
         
         <div className="flex items-center space-x-4">
