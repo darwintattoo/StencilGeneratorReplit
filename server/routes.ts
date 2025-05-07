@@ -99,26 +99,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Extraer y validar los parámetros nuevos
-      const parsedTransparency = transparentBackground === 'true';
+      // Convertir valores a booleanos explícitos como requiere la API
+      const parsedTransparency = transparentBackground === 'true' || transparentBackground === true ? true : false;
       
       // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
       // Verificar el valor de enhanceShadows sea cual sea su formato
-      let enhanceShadows = false;
-      console.log("Valor original de enhanceShadows:", req.body.enhanceShadows);
-      console.log("Tipo de enhanceShadows:", typeof req.body.enhanceShadows);
-      
-      if (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1) {
-        enhanceShadows = true;
-      }
+      const enhanceShadows = req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1 ? true : false;
       
       const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
       const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
       
-      console.log("Parámetros API:", {
-        transparentBackground: parsedTransparency,
-        enhanceShadows,
-        aiModel,
-        presetLora
+      console.log("Parámetros API enviados a ComfyDeploy:", {
+        "Darwin Enriquez": fileUrl,
+        "line_color": lineColor,
+        "activar_transparencia": parsedTransparency,
+        "iluminar sombras": enhanceShadows,
+        "estilo de linea": presetLora,
+        "AI Model": aiModel
       });
       
       // Llamar a la API externa con la URL del archivo subido
@@ -324,24 +321,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extraer y validar los parámetros nuevos
-      // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
-      // Verificar el valor de enhanceShadows sea cual sea su formato
-      let enhanceShadows = false;
-      console.log("Valor original de enhanceShadows:", req.body.enhanceShadows);
-      console.log("Tipo de enhanceShadows:", typeof req.body.enhanceShadows);
+      // Convertir valores a booleanos explícitos como requiere la API
+      const parsedTransparency = transparentBackground === 'true' || transparentBackground === true ? true : false;
       
-      if (req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1) {
-        enhanceShadows = true;
-      }
+      // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
+      const enhanceShadows = req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1 ? true : false;
       
       const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
       const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
       
-      console.log("Parámetros API:", {
-        transparentBackground,
-        enhanceShadows,
-        aiModel,
-        presetLora
+      console.log("Parámetros API enviados a ComfyDeploy:", {
+        "Darwin Enriquez": imageUrl,
+        "line_color": lineColor,
+        "activar_transparencia": parsedTransparency,
+        "iluminar sombras": enhanceShadows,
+        "estilo de linea": presetLora,
+        "AI Model": aiModel
       });
       
       const response = await axios.post(
@@ -351,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           inputs: {
             "Darwin Enriquez": imageUrl,
             line_color: lineColor,
-            activar_transparencia: transparentBackground,
+            activar_transparencia: parsedTransparency,
             "iluminar sombras": enhanceShadows,
             "estilo de linea": presetLora,
             "AI Model": aiModel

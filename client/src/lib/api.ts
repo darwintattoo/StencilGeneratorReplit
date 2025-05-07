@@ -31,6 +31,9 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
   const formData = new FormData();
   formData.append("image", params.image);
   formData.append("lineColor", params.lineColor);
+  
+  // Asegurarnos de que los valores booleanos se envíen correctamente
+  // La API espera valores true/false explícitos y no strings "true"/"false"
   formData.append("transparentBackground", params.transparentBackground.toString());
   
   // Agregar los nuevos parámetros opcionales si están presentes
@@ -40,7 +43,7 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
     formData.append("aiModel", "SDXL-Flash.safetensors");
   }
   
-  // Siempre incluir enhanceShadows, incluso si es false
+  // Siempre incluir enhanceShadows como true/false explícito
   formData.append("enhanceShadows", params.enhanceShadows === true ? "true" : "false");
   
   if (params.presetLora) {
@@ -49,11 +52,12 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
     formData.append("presetLora", "LoraLineart/Darwinstencil3-000007.safetensors");
   }
   
-  console.log("Enviando parámetros:", {
+  // Mostrar en la consola los valores que se están enviando
+  console.log("Enviando parámetros a API:", {
     lineColor: params.lineColor,
     transparentBackground: params.transparentBackground,
     aiModel: params.aiModel || "SDXL-Flash.safetensors",
-    enhanceShadows: params.enhanceShadows || false,
+    enhanceShadows: params.enhanceShadows,
     presetLora: params.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors"
   });
   
