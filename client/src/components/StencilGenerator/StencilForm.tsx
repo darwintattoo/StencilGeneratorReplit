@@ -443,7 +443,7 @@ export function StencilForm({
                     onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
                     className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
                   >
-                    Preset 4
+                    Blockprint
                   </button>
                 </div>
               </div>
