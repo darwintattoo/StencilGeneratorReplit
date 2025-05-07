@@ -21,15 +21,16 @@ export function StencilForm({
   isLoading,
   setIsLoading
 }: StencilFormProps) {
-  const [lineColor, setLineColor] = useState("red");
-  const [transparentBackground, setTransparentBackground] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Establecer valores predeterminados exactamente como los espera la API
+  const [lineColor, setLineColor] = useState("red");                        // "line_color"
+  const [transparentBackground, setTransparentBackground] = useState(true); // "activar_transparencia"
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);      // "Darwin Enriquez"
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");
-  const [enhanceShadows, setEnhanceShadows] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors");
+  const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");         // "AI Model"
+  const [enhanceShadows, setEnhanceShadows] = useState(false);              // "iluminar sombras"
+  const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors"); // "estilo de linea"
   
   const { toast } = useToast();
   const { t } = useLanguage();

@@ -119,19 +119,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Llamar a la API externa con la URL del archivo subido
+      // Crear un objeto payload EXACTAMENTE como lo requiere la API
+      const payload = {
+        deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
+        inputs: {
+          "Darwin Enriquez": fileUrl,
+          "line_color": lineColor,
+          "activar_transparencia": parsedTransparency,
+          "iluminar sombras": enhanceShadows,
+          "estilo de linea": presetLora,
+          "AI Model": aiModel
+        }
+      };
+
+      console.log("API PAYLOAD ENVIADO:", JSON.stringify(payload, null, 2));
+
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
-        {
-          deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
-          inputs: {
-            "Darwin Enriquez": fileUrl,
-            line_color: lineColor,
-            activar_transparencia: parsedTransparency,
-            "iluminar sombras": enhanceShadows,
-            "estilo de linea": presetLora,
-            "AI Model": aiModel
-          }
-        },
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -339,19 +344,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "AI Model": aiModel
       });
       
+      // Crear un objeto payload EXACTAMENTE como lo requiere la API
+      const payload = {
+        deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
+        inputs: {
+          "Darwin Enriquez": imageUrl,
+          "line_color": lineColor,
+          "activar_transparencia": parsedTransparency,
+          "iluminar sombras": enhanceShadows,
+          "estilo de linea": presetLora,
+          "AI Model": aiModel
+        }
+      };
+
+      console.log("API PAYLOAD ENVIADO (generate-stencil):", JSON.stringify(payload, null, 2));
+
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
-        {
-          deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
-          inputs: {
-            "Darwin Enriquez": imageUrl,
-            line_color: lineColor,
-            activar_transparencia: parsedTransparency,
-            "iluminar sombras": enhanceShadows,
-            "estilo de linea": presetLora,
-            "AI Model": aiModel
-          }
-        },
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
