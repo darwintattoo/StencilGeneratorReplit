@@ -58,6 +58,14 @@ export default function Home() {
     }
   };
 
+  // Función para reiniciar el formulario y los resultados
+  const resetForm = () => {
+    setResponse(null);
+    setError(null);
+    setIsLoading(false);
+    console.log("Formulario y resultados reiniciados");
+  };
+
   return (
     <div className="bg-black text-white font-sans min-h-screen">
       <Navigation />
@@ -84,6 +92,7 @@ export default function Home() {
             response={response}
             error={error}
             isLoading={isLoading}
+            resetForm={resetForm}
           />
           
           {response && response.outputs?.image && user && (

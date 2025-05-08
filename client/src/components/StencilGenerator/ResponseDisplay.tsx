@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Loader2, Info, CheckCircle, AlertCircle, RefreshCw, Download } from "lucide-react";
+import { Loader2, Info, CheckCircle, AlertCircle, RefreshCw, Download, Upload } from "lucide-react";
 import { StencilResponse, StencilError, StencilJobStatus } from "@/types";
 import { useEffect, useState } from "react";
 import { checkJobStatus } from "@/lib/api";
