@@ -197,6 +197,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
+      // Verificar si hay problemas con la API y el estado
+      if (response.data.status === "not-started" && response.data.queue_position === null) {
+        console.log("ADVERTENCIA: El trabajo está en estado 'not-started' sin posición en cola después de tiempo de espera significativo");
+        
+        // Agregar información adicional para diagnóstico
+        response.data._diagnosticInfo = {
+          serverTime: new Date().toISOString(),
+          jobCreatedAt: response.data.created_at,
+          timeElapsedSinceCreation: new Date().getTime() - new Date(response.data.created_at).getTime(),
+          message: "El trabajo parece estar atascado en estado 'not-started'. Esto puede indicar problemas con la API externa."
+        };
+      }
+      
       console.log("ComfyDeploy API respuesta completa:", JSON.stringify(response.data, null, 2));
       
       // Según la documentación de ComfyDeploy, necesitamos extraer la imagen del campo output
