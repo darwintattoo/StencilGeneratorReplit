@@ -10,9 +10,10 @@ interface ResponseDisplayProps {
   response: StencilResponse | null;
   error: StencilError | null;
   isLoading: boolean;
+  resetForm?: () => void;
 }
 
-export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayProps) {
+export function ResponseDisplay({ response, error, isLoading, resetForm }: ResponseDisplayProps) {
   const [jobStatus, setJobStatus] = useState<StencilJobStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -23,7 +24,9 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
   useEffect(() => {
     let intervalId: number;
     let attempts = 0;
+    let notStartedCount = 0;
     const maxAttempts = 60; // 5 minutes (5s interval * 60)
+    const maxNotStartedAttempts = 10; // 50 seconds in "not-started" state is suspicious
 
     const fetchJobStatus = async () => {
       if (!response?.run_id) return;
@@ -42,6 +45,29 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
         if (status.status === 'completed' || status.status === 'success') {
           console.log("¡Trabajo completado! Estado final:", status.status);
           clearInterval(intervalId);
+        }
+        
+        // If job is cancelled or failed, stop polling
+        if (status.status === 'cancelled' || status.status === 'failed' || status.status === 'error') {
+          console.log(`Trabajo finalizado con estado: ${status.status}`);
+          clearInterval(intervalId);
+          setStatusError(`El proceso fue ${status.status === 'cancelled' ? 'cancelado' : 'fallido'}. Por favor, intenta nuevamente.`);
+        }
+        
+        // Track jobs stuck in "not-started" state
+        if (status.status === 'not-started') {
+          notStartedCount++;
+          
+          // After too many "not-started" states, suggest the job might be stuck
+          if (notStartedCount >= maxNotStartedAttempts) {
+            console.log("El trabajo parece estar atascado en estado 'not-started'");
+            if (status._diagnosticInfo) {
+              console.log("Información de diagnóstico:", status._diagnosticInfo);
+            }
+          }
+        } else {
+          // Reset the counter if we get any other state
+          notStartedCount = 0;
         }
         
         // Increment attempts
@@ -185,7 +211,7 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
             </div>
           )}
 
-          {/* Job Status Error */}
+          {/* Job Cancelled or Error State */}
           {statusError && (
             <div className="bg-red-900 bg-opacity-20 border border-red-800 rounded-md p-4 mb-4">
               <p className="text-[#F44336] text-sm">{statusError}</p>
@@ -198,6 +224,43 @@ export function ResponseDisplay({ response, error, isLoading }: ResponseDisplayP
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
+            </div>
+          )}
+          
+          {/* Cancelled Job State - Show clear message */}
+          {jobStatus?.status === 'cancelled' && !statusError && (
+            <div className="bg-amber-900 bg-opacity-20 border border-amber-800 rounded-md p-4 mb-4">
+              <p className="text-amber-500 text-sm mb-2">
+                El trabajo ha sido cancelado por el sistema. Esto puede deberse a una sobrecarga en el servicio o a un problema temporal en la API.
+              </p>
+              <p className="text-gray-400 text-xs mb-3">
+                Sugerencia: Intenta nuevamente o prueba con una imagen diferente.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Verificar Estado Nuevamente
+                </Button>
+                
+                {resetForm && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center bg-blue-900 bg-opacity-20 hover:bg-blue-900 hover:bg-opacity-30 border-blue-800"
+                    onClick={() => {
+                      resetForm();
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Intentar con Nueva Imagen
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
