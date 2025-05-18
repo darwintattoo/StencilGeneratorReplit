@@ -450,7 +450,63 @@ export function StencilForm({
                   </button>
                 </div>
               </div>
-            </div>
+              
+              {/* Posterize Level */}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="posterizeLevel" className="font-medium">{t("form.posterize_level") || "Posterize level"}</Label>
+                  <span className="text-sm text-blue-400">{posterizeValue}</span>
+                </div>
+                <input
+                  id="posterizeLevel"
+                  type="range"
+                  min="2"
+                  max="16"
+                  step="1"
+                  value={posterizeValue}
+                  onChange={(e) => setPosterizeValue(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>2</span>
+                  <span>16</span>
+                </div>
+              </div>
+              
+              {/* Activar Posterize */}
+              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="activarPosterize" className="font-medium">{t("form.posterizado") || "Posterizado"}</Label>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-400 mr-2">{t("form.param_posterize") || "activar_Posterize"}</span>
+                    <Switch
+                      id="activarPosterize"
+                      checked={activarPosterize}
+                      onCheckedChange={setActivarPosterize}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400">{t("form.posterize_help") || "Aplicar efecto de posterizado a la imagen"}</p>
+              </div>
+              
+              {/* Activar Auto Gamma */}
+              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="activarAutoGamma" className="font-medium">{t("form.gamma") || "Gamma"}</Label>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-400 mr-2">{t("form.param_gamma") || "Activar Auto Gamma"}</span>
+                    <Switch
+                      id="activarAutoGamma"
+                      checked={activarAutoGamma}
+                      onCheckedChange={setActivarAutoGamma}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400">{t("form.gamma_help") || "Aplicar corrección automática de gamma"}</p>
+              </div>
+              </div>
           )}
         </div>
         
