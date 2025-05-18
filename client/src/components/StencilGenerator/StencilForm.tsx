@@ -133,6 +133,9 @@ export function StencilForm({
       console.log("enhanceShadows type:", typeof enhanceShadows);
       console.log("aiModel:", aiModel);
       console.log("presetLora:", selectedPreset);
+      console.log("posterizeValue:", posterizeValue);
+      console.log("activarPosterize:", activarPosterize);
+      console.log("activarAutoGamma:", activarAutoGamma);
       
       // Usar la función de subida con el archivo seleccionado
       const response = await uploadImageForStencil({
@@ -141,7 +144,10 @@ export function StencilForm({
         transparentBackground,
         aiModel,
         enhanceShadows,
-        presetLora: selectedPreset
+        presetLora: selectedPreset,
+        posterizeValue,
+        activarPosterize,
+        activarAutoGamma
       });
       
       setResponse(response);
@@ -506,7 +512,7 @@ export function StencilForm({
                 </div>
                 <p className="text-sm text-gray-400">{t("form.gamma_help") || "Aplicar corrección automática de gamma"}</p>
               </div>
-              </div>
+            </div>
           )}
         </div>
         
