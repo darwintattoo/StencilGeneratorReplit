@@ -64,6 +64,12 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
             if (status._diagnosticInfo) {
               console.log("Información de diagnóstico:", status._diagnosticInfo);
             }
+            
+            // Set an error message to inform the user
+            setStatusError('El trabajo parece estar atascado. Esto puede indicar problemas con la API externa. Por favor, intenta de nuevo.');
+            
+            // Clear the interval to stop checking
+            clearInterval(intervalId);
           }
         } else {
           // Reset the counter if we get any other state
@@ -214,16 +220,35 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
           {/* Job Cancelled or Error State */}
           {statusError && (
             <div className="bg-red-900 bg-opacity-20 border border-red-800 rounded-md p-4 mb-4">
-              <p className="text-[#F44336] text-sm">{statusError}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2 flex items-center"
-                onClick={handleRefresh}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
+              <p className="text-[#F44336] text-sm mb-2">{statusError}</p>
+              <p className="text-gray-400 text-xs mb-3">
+                Parece que hay problemas de conexión con el servicio de generación de stencils. Esto puede deberse a sobrecarga o mantenimiento del servidor.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Verificar Estado Nuevamente
+                </Button>
+                
+                {resetForm && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center bg-blue-900 bg-opacity-20 hover:bg-blue-900 hover:bg-opacity-30 border-blue-800"
+                    onClick={() => {
+                      resetForm();
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Intentar con Nueva Imagen
+                  </Button>
+                )}
+              </div>
             </div>
           )}
           
