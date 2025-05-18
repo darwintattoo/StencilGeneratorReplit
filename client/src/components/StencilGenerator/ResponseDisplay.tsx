@@ -17,6 +17,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
   const [jobStatus, setJobStatus] = useState<StencilJobStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [apiHealthStatus, setApiHealthStatus] = useState<'unknown' | 'operational' | 'issues'>('unknown');
 
   const { t } = useLanguage();
   
@@ -66,7 +67,10 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
             }
             
             // Set an error message to inform the user
-            setStatusError('El trabajo parece estar atascado. Esto puede indicar problemas con la API externa. Por favor, intenta de nuevo.');
+            setStatusError('El trabajo parece estar atascado. Esto puede indicar problemas temporales con el servicio de generación. Por favor, intenta de nuevo.');
+            
+            // Update API health status
+            setApiHealthStatus('issues');
             
             // Clear the interval to stop checking
             clearInterval(intervalId);
@@ -256,10 +260,10 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
           {jobStatus?.status === 'cancelled' && !statusError && (
             <div className="bg-amber-900 bg-opacity-20 border border-amber-800 rounded-md p-4 mb-4">
               <p className="text-amber-500 text-sm mb-2">
-                El trabajo ha sido cancelado por el sistema. Esto puede deberse a una sobrecarga en el servicio o a un problema temporal en la API.
+                El trabajo ha sido cancelado por el sistema. Actualmente el servicio de generación de stencils podría estar experimentando problemas técnicos.
               </p>
               <p className="text-gray-400 text-xs mb-3">
-                Sugerencia: Intenta nuevamente o prueba con una imagen diferente.
+                Información técnica: El servicio ComfyDeploy API está actualmente teniendo dificultades para procesar nuevas solicitudes. Esto puede deberse a mantenimiento, sobrecarga del sistema o problemas temporales.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 mt-3">
                 <Button 
@@ -269,7 +273,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                   onClick={handleRefresh}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Verificar Estado Nuevamente
+                  Intentar Nuevamente
                 </Button>
                 
                 {resetForm && (
@@ -282,7 +286,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                     }}
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    Intentar con Nueva Imagen
+                    Probar con Nueva Imagen
                   </Button>
                 )}
               </div>
