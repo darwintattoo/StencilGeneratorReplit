@@ -31,6 +31,9 @@ export function StencilForm({
   const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");         // "AI Model"
   const [enhanceShadows, setEnhanceShadows] = useState(false);              // "iluminar sombras"
   const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors"); // "estilo de linea"
+  const [posterizeValue, setPosterizeValue] = useState(8);                  // "Posterize"
+  const [activarPosterize, setActivarPosterize] = useState(false);          // "activar_Posterize"
+  const [activarAutoGamma, setActivarAutoGamma] = useState(false);          // "Activar Auto Gamma"
   
   const { toast } = useToast();
   const { t, language } = useLanguage();

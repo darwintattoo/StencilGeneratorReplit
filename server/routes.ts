@@ -106,8 +106,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verificar el valor de enhanceShadows sea cual sea su formato
       const enhanceShadows = req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1 ? true : false;
       
+      // Parámetros para el nuevo formato de API
       const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
       const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
+      const posterizeValue = req.body.posterizeValue || 8;
+      const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
+      const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,
@@ -115,7 +119,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "activar_transparencia": parsedTransparency,
         "iluminar sombras": enhanceShadows,
         "estilo de linea": presetLora,
-        "AI Model": aiModel
+        "AI Model": aiModel,
+        "Posterize": posterizeValue,
+        "activar_Posterize": activarPosterize,
+        "Activar Auto Gamma": activarAutoGamma
       });
       
       // Llamar a la API externa con la URL del archivo subido
@@ -128,7 +135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "activar_transparencia": parsedTransparency,
           "iluminar sombras": enhanceShadows,
           "estilo de linea": presetLora,
-          "AI Model": aiModel
+          "AI Model": aiModel,
+          "Posterize": posterizeValue,
+          "activar_Posterize": activarPosterize,
+          "Activar Auto Gamma": activarAutoGamma
         }
       };
 
@@ -405,8 +415,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Corrigiendo el manejo de enhanceShadows para que sea explícitamente un booleano
       const enhanceShadows = req.body.enhanceShadows === 'true' || req.body.enhanceShadows === true || req.body.enhanceShadows === 1 ? true : false;
       
+      // Parámetros para el nuevo formato de API
       const aiModel = req.body.aiModel || "SDXL-Flash.safetensors";
       const presetLora = req.body.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors";
+      const posterizeValue = req.body.posterizeValue || 8;
+      const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
+      const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": imageUrl,
@@ -414,7 +428,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "activar_transparencia": parsedTransparency,
         "iluminar sombras": enhanceShadows,
         "estilo de linea": presetLora,
-        "AI Model": aiModel
+        "AI Model": aiModel,
+        "Posterize": posterizeValue,
+        "activar_Posterize": activarPosterize,
+        "Activar Auto Gamma": activarAutoGamma
       });
       
       // Crear un objeto payload EXACTAMENTE como se ve en la interfaz original
@@ -426,7 +443,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "activar_transparencia": parsedTransparency,
           "iluminar sombras": enhanceShadows,
           "estilo de linea": presetLora,
-          "AI Model": aiModel
+          "AI Model": aiModel,
+          "Posterize": posterizeValue,
+          "activar_Posterize": activarPosterize,
+          "Activar Auto Gamma": activarAutoGamma
         }
       };
 

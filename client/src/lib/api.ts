@@ -14,6 +14,9 @@ interface UploadStencilParams {
   aiModel?: string;
   enhanceShadows?: boolean;
   presetLora?: string;
+  posterizeValue?: number;
+  activarPosterize?: boolean;
+  activarAutoGamma?: boolean;
 }
 
 export async function generateStencil(params: StencilParams): Promise<StencilResponse> {
