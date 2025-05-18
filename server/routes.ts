@@ -144,6 +144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("API PAYLOAD ENVIADO:", JSON.stringify(payload, null, 2));
 
+      // Crear la solicitud a ComfyDeploy
+      console.log("Enviando solicitud a ComfyDeploy API...");
       const response = await axios.post(
         "https://api.comfydeploy.com/api/run/deployment/queue",
         payload,
@@ -151,11 +153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${apiKey}`
-          }
+          },
+          timeout: 30000 // 30 segundos de timeout
         }
       );
       
-      return res.status(200).json(response.data);
+      // Log de información de respuesta para diagnóstico
+      console.log("Respuesta ComfyDeploy - Estado:", response.status);
+      console.log("Respuesta ComfyDeploy - ID:", response.data?.id);
     } catch (error) {
       console.error("Error al procesar la imagen subida:", error);
       
