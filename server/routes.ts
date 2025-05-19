@@ -65,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configuración de autenticación
   const requireAuth = setupAuth(app);
   
+  // Montar la ruta de queue para ComfyDeploy
+  app.use("/api/queue", queueRouter);
+  
   // API endpoint para subir una imagen
   app.post("/api/upload-image", upload.single("image"), async (req, res) => {
     try {
