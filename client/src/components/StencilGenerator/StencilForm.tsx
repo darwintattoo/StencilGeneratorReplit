@@ -172,7 +172,7 @@ export function StencilForm({
         {/* SECCIÓN: CARGA DE IMAGEN */}
         <div className="space-y-4 mb-4">
           <div className="border-b border-gray-800 pb-1 mb-2">
-            <Label className="font-medium text-lg">{t("form.upload_label")}</Label>
+            <Label className="font-medium text-lg">{t("upload_label")}</Label>
           </div>
           
           {/* Drag & Drop Area */}
@@ -249,7 +249,7 @@ export function StencilForm({
           
           {/* line_color - El parámetro más usado primero */}
           <div className="space-y-2 mb-4">
-            <Label className="font-medium text-lg">{t("form.line_color")}</Label>
+            <Label className="font-medium text-lg">{t("line_color")}</Label>
             <div className="flex space-x-6 justify-center">
               {/* Black */}
               <div className="flex items-center">
@@ -415,7 +415,7 @@ export function StencilForm({
               {/* estilo de linea */}
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">{t("form.line_style")}</Label>
+                  <Label className="font-medium">{t("line_style")}</Label>
                   <span className="text-sm text-blue-400">
                     {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Preset 1" :
                     selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "Preset 2" :
