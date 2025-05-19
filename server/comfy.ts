@@ -22,16 +22,16 @@ export async function queueRun(inputs: Record<string, any>) {
     }
     
     console.log("Payload final para ComfyDeploy:", JSON.stringify({
-      deploymentId: COMFY_DEPLOYMENT_ID,
+      deployment_id: COMFY_DEPLOYMENT_ID,
       inputs: validatedInputs
     }, null, 2));
     
     // Usar la estructura correcta del payload según la documentación
-    // deploymentId en camelCase en lugar de deployment_id en snake_case
+    // Ahora usando deployment_id en snake_case como espera la API
     const response = await axios.post(
       "https://api.comfydeploy.com/api/run/deployment/queue",
       {
-        deploymentId: COMFY_DEPLOYMENT_ID,
+        deployment_id: COMFY_DEPLOYMENT_ID,
         inputs: validatedInputs
       },
       {
