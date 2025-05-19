@@ -138,6 +138,9 @@ export function StencilForm({
       console.log("activarAutoGamma:", activarAutoGamma);
       
       // Usar la función de subida con el archivo seleccionado
+      // Guardamos la URL de la imagen en una variable local
+      const imagePreviewUrl = imagePreview;
+      
       const response = await uploadImageForStencil({
         image: selectedFile,
         lineColor,
@@ -150,7 +153,15 @@ export function StencilForm({
         activarAutoGamma
       });
       
-      setResponse(response);
+      // Añadimos manualmente la URL de la imagen original a la respuesta
+      const enhancedResponse = {
+        ...response,
+        original_image: imagePreviewUrl
+      };
+      
+      console.log("Respuesta mejorada con imagen original:", enhancedResponse);
+      
+      setResponse(enhancedResponse);
       setError(null);
     } catch (err) {
       setResponse(null);
