@@ -1,0 +1,66 @@
+The job completed but no stencil image was found.
+
+Check the technical details for more information.
+
+[
+  {
+    "id": "e7399f61-30a9-445f-beee-b15db65b2167",
+    "output_id": null,
+    "run_id": "9cc49ee1-3c24-4051-b588-816c1c3db1b2",
+    "data": {
+      "text": [
+        "zeus by david strick on devi devi devie devie on devie's devie, devie is a self self self\n\n"
+      ]
+    },
+    "node_meta": {
+      "node_id": "58",
+      "node_class": "ShowText|pysssss"
+    },
+    "created_at": "2025-05-19T01:16:09.765000Z",
+    "updated_at": "2025-05-19T01:16:09.765000Z",
+    "type": null,
+    "node_id": null
+  },
+  {
+    "id": "56bd639a-4737-45f7-8d64-8227f0dbdac1",
+    "output_id": "png transparente",
+    "run_id": "9cc49ee1-3c24-4051-b588-816c1c3db1b2",
+    "data": {
+      "images": [
+        {
+          "url": "https://comfy-deploy-output.s3.us-east-2.amazonaws.com/outputs/runs/9cc49ee1-3c24-4051-b588-816c1c3db1b2/tattoostencilpro_00001_.png",
+          "type": "output",
+          "filename": "tattoostencilpro_00001_.png",
+          "is_public": true,
+          "subfolder": "",
+          "upload_duration": 0.47963273099999526
+        }
+      ]
+    },
+    "node_meta": {
+      "node_id": "486"
+    },
+    "created_at": "2025-05-19T01:16:44.759000Z",
+    "updated_at": "2025-05-19T01:16:44.759000Z",
+    "type": null,
+    "node_id": null
+  },
+  {
+    "id": "79444342-96ee-4f98-aeae-0133e533f4bd",
+    "output_id": null,
+    "run_id": "9cc49ee1-3c24-4051-b588-816c1c3db1b2",
+    "data": {
+      "text": [
+        "black and withe  line of ,zeus by david strick on devi devi devie devie on devie's devie, devie is a self self self, LineArt:0.6>, white background, thick outlines, crisp edges"
+      ]
+    },
+    "node_meta": {
+      "node_id": "60",
+      "node_class": "ShowText|pysssss"
+    },
+    "created_at": "2025-05-19T01:16:10.219000Z",
+    "updated_at": "2025-05-19T01:16:10.219000Z",
+    "type": null,
+    "node_id": null
+  }
+]

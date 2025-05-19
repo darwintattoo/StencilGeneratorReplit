@@ -45,6 +45,33 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
         // If job is complete, stop polling
         if (status.status === 'completed' || status.status === 'success') {
           console.log("¡Trabajo completado! Estado final:", status.status);
+          
+          // Procesar los outputs para encontrar la imagen
+          if (status.outputs && Array.isArray(status.outputs)) {
+            // Buscar un output con 'images' que contenga URLs
+            const imageOutput = status.outputs.find(output => 
+              output.data && output.data.images && 
+              Array.isArray(output.data.images) && 
+              output.data.images.length > 0 &&
+              output.data.images[0].url
+            );
+            
+            if (imageOutput && imageOutput.data.images[0].url) {
+              // Tenemos una URL de imagen, crear un nuevo objeto de estado con la URL
+              const imageUrl = imageOutput.data.images[0].url;
+              console.log("¡Imagen encontrada!", imageUrl);
+              
+              // Actualizar el estado con la URL de la imagen
+              setJobStatus({
+                ...status,
+                outputs: {
+                  ...status.outputs,
+                  image: imageUrl
+                }
+              });
+            }
+          }
+          
           clearInterval(intervalId);
         }
         
