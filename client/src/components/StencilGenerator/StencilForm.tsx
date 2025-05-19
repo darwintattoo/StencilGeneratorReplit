@@ -319,9 +319,9 @@ export function StencilForm({
           {/* activar_transparencia */}
           <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="transparency" className="font-medium">{t("form.transparent_bg")}</Label>
+              <Label htmlFor="transparency" className="font-medium">{t("transparent_bg") || "Fondo transparente"}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">{t("form.param_transparency")}</span>
+                <span className="text-xs text-gray-400 mr-2">{t("param_transparency") || "Activar"}</span>
                 <Switch
                   id="transparency"
                   checked={transparentBackground}
@@ -330,15 +330,15 @@ export function StencilForm({
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-400">{t("form.transparent_bg_help")}</p>
+            <p className="text-sm text-gray-400">{t("transparent_bg_help") || "Elimina el fondo para mejor integración con diseños"}</p>
           </div>
           
           {/* iluminar sombras */}
           <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="enhanceShadows" className="font-medium">{t("form.enhance_shadows")}</Label>
+              <Label htmlFor="enhanceShadows" className="font-medium">{t("enhance_shadows") || "Mejorar sombras"}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">{t("form.param_enhance_shadows")}</span>
+                <span className="text-xs text-gray-400 mr-2">{t("param_enhance_shadows") || "Activar"}</span>
                 <Switch
                   id="enhanceShadows"
                   checked={enhanceShadows}
@@ -347,7 +347,7 @@ export function StencilForm({
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-400">{t("form.enhance_shadows_help")}</p>
+            <p className="text-sm text-gray-400">{t("enhance_shadows_help") || "Mejora la definición de sombras en la imagen"}</p>
           </div>
         </div>
         
@@ -358,7 +358,7 @@ export function StencilForm({
             onClick={() => setIsAdvancedOptionsOpen(!isAdvancedOptionsOpen)}
             className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 transition-colors"
           >
-            <h3 className="text-md font-medium text-gray-300">{t("form.advanced_options")}</h3>
+            <h3 className="text-md font-medium text-gray-300">{t("advanced_options") || "Opciones avanzadas"}</h3>
             <div className={`transition-transform duration-200 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -371,7 +371,7 @@ export function StencilForm({
               {/* AI Model */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">{t("form.ai_model")}</Label>
+                  <Label className="font-medium">{t("ai_model") || "Modelo IA"}</Label>
                   <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "StencilPro v1" : 
                     aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "StencilPro v2 (beta)" : 
                     aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "Lineart v1" : "Lineart v2"}</span>
@@ -457,34 +457,12 @@ export function StencilForm({
                 </div>
               </div>
               
-              {/* Posterize Level */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="posterizeLevel" className="font-medium">{t("form.posterize_level") || "Posterize level"}</Label>
-                  <span className="text-sm text-blue-400">{posterizeValue}</span>
-                </div>
-                <input
-                  id="posterizeLevel"
-                  type="range"
-                  min="2"
-                  max="16"
-                  step="1"
-                  value={posterizeValue}
-                  onChange={(e) => setPosterizeValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>2</span>
-                  <span>16</span>
-                </div>
-              </div>
-              
               {/* Activar Posterize */}
               <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="activarPosterize" className="font-medium">{t("form.posterizado") || "Posterizado"}</Label>
+                  <Label htmlFor="activarPosterize" className="font-medium">{t("posterizado") || "Posterizado"}</Label>
                   <div className="flex items-center">
-                    <span className="text-xs text-gray-400 mr-2">{t("form.param_posterize") || "activar_Posterize"}</span>
+                    <span className="text-xs text-gray-400 mr-2">{t("param_posterize") || "Activar"}</span>
                     <Switch
                       id="activarPosterize"
                       checked={activarPosterize}
@@ -493,15 +471,39 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">{t("form.posterize_help") || "Aplicar efecto de posterizado a la imagen"}</p>
+                <p className="text-sm text-gray-400">{t("posterize_help") || "Aplicar efecto de posterizado a la imagen"}</p>
+                
+                {/* Mostrar el nivel de posterizado solo si está activado */}
+                {activarPosterize && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="posterizeLevel" className="font-medium text-sm">{t("posterize_level") || "Nivel de posterizado"}</Label>
+                      <span className="text-sm text-blue-400">{posterizeValue}</span>
+                    </div>
+                    <input
+                      id="posterizeLevel"
+                      type="range"
+                      min="2"
+                      max="16"
+                      step="1"
+                      value={posterizeValue}
+                      onChange={(e) => setPosterizeValue(parseInt(e.target.value))}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>2</span>
+                      <span>16</span>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Activar Auto Gamma */}
               <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="activarAutoGamma" className="font-medium">{t("form.gamma") || "Gamma"}</Label>
+                  <Label htmlFor="activarAutoGamma" className="font-medium">{t("gamma") || "Auto Gamma"}</Label>
                   <div className="flex items-center">
-                    <span className="text-xs text-gray-400 mr-2">{t("form.param_gamma") || "Activar Auto Gamma"}</span>
+                    <span className="text-xs text-gray-400 mr-2">{t("param_gamma") || "Activar"}</span>
                     <Switch
                       id="activarAutoGamma"
                       checked={activarAutoGamma}
@@ -510,7 +512,7 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">{t("form.gamma_help") || "Aplicar corrección automática de gamma"}</p>
+                <p className="text-sm text-gray-400">{t("gamma_help") || "Aplicar corrección automática de gamma"}</p>
               </div>
             </div>
           )}
