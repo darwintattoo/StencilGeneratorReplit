@@ -21,15 +21,15 @@ export default function Navigation() {
     <nav className="bg-black text-white py-3 px-4 border-b border-gray-800">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          <Link href="/" className="flex items-center">
-            <img src={logoImage} alt="TattooStencilPro" className="h-9" />
+          <Link href="/" className="flex items-center text-xl font-bold hover:text-blue-400 transition">
+            TattooStencilPro
           </Link>
         </div>
         
         <div className="flex items-center space-x-4">
           {user && (
-            <Link href="/my-stencils" className="hover:text-blue-400 transition text-sm mr-2">
-              {t("nav.mystencils")}
+            <Link href="/my-stencils" className="flex items-center hover:text-blue-400 transition">
+              <span className="text-sm mr-2">{t("nav.mystencils")}</span>
             </Link>
           )}
           
