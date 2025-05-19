@@ -27,7 +27,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
     let attempts = 0;
     let notStartedCount = 0;
     const maxAttempts = 60; // 5 minutes (5s interval * 60)
-    const maxNotStartedAttempts = 10; // 50 seconds in "not-started" state is suspicious
+    const maxNotStartedAttempts = 5; // 25 segundos en estado "not-started" es sospechoso
 
     const fetchJobStatus = async () => {
       if (!response?.run_id) return;
@@ -74,6 +74,13 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
             
             // Clear the interval to stop checking
             clearInterval(intervalId);
+            
+            // Mostrar el banner de error con opciones para el usuario
+            const stuckTime = status._diagnosticInfo?.timeElapsedSinceCreation 
+              ? Math.round(status._diagnosticInfo.timeElapsedSinceCreation / 1000) 
+              : ">25";
+            
+            console.log(`Trabajo atascado durante ${stuckTime} segundos, se recomienda reintentar.`);
           }
         } else {
           // Reset the counter if we get any other state
@@ -226,9 +233,21 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
             <div className="bg-red-900 bg-opacity-20 border border-red-800 rounded-md p-4 mb-4">
               <p className="text-[#F44336] text-sm mb-2">{statusError}</p>
               <p className="text-gray-400 text-xs mb-3">
-                Parece que hay problemas de conexión con el servicio de generación de stencils. Esto puede deberse a sobrecarga o mantenimiento del servidor.
+                {jobStatus?._diagnosticInfo ? (
+                  <>
+                    El servicio de generación está experimentando problemas técnicos. Este trabajo lleva 
+                    <span className="font-medium"> {Math.round((jobStatus._diagnosticInfo.timeElapsedSinceCreation || 0) / 1000)} segundos </span> 
+                    en estado "not-started" sin progreso.
+                  </>
+                ) : (
+                  <>
+                    Parece que hay problemas de conexión con el servicio de generación de stencils. 
+                    Esto puede deberse a sobrecarga o mantenimiento del servidor.
+                  </>
+                )}
               </p>
-              <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              
+              <div className="flex flex-wrap gap-2 mt-3">
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -236,7 +255,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                   onClick={handleRefresh}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Verificar Estado Nuevamente
+                  Verificar Estado
                 </Button>
                 
                 {resetForm && (
@@ -252,6 +271,17 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                     Intentar con Nueva Imagen
                   </Button>
                 )}
+                
+                <div className="border-t border-gray-700 w-full my-2"></div>
+                
+                <p className="w-full text-xs text-gray-400 mt-1">
+                  <strong>Recomendaciones:</strong>
+                </p>
+                <ul className="text-xs text-gray-400 list-disc list-inside">
+                  <li>Intenta con una imagen más pequeña (menos de 1MB)</li>
+                  <li>Utiliza imágenes con contornos claros</li>
+                  <li>Si el problema persiste, inténtalo más tarde</li>
+                </ul>
               </div>
             </div>
           )}
