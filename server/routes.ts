@@ -361,8 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
         imageUrl,
         lineColor,
-        transparentBackground: transparentBackground === true || transparentBackground === 'true',
-        createdAt: new Date()
+        transparentBackground: transparentBackground === true || transparentBackground === 'true'
       };
       
       const stencil = await appStorage.saveStencil(stencilData);
