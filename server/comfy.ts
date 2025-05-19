@@ -14,16 +14,22 @@ export async function queueRun(inputs: Record<string, any>) {
       throw new Error("La imagen es obligatoria");
     }
     
-    // Asegurarnos de que todos los valores booleanos son realmente booleanos y no strings
-    const validatedInputs = { ...inputs };
-    for (const key in validatedInputs) {
-      if (validatedInputs[key] === 'true') validatedInputs[key] = true;
-      if (validatedInputs[key] === 'false') validatedInputs[key] = false;
-    }
+    // Transformar los inputs internos al formato que espera ComfyDeploy
+    const comfyInputs = {
+      "Darwin Enriquez": inputs.input_image, // Nombre del parámetro para la imagen
+      "line_color": inputs.line_color, 
+      "activar_transparencia": inputs.activate_transparency === 'true' || inputs.activate_transparency === true ? true : false,
+      "iluminar sombras": inputs.brighten_shadows === 'true' || inputs.brighten_shadows === true ? true : false,
+      "estilo de linea": inputs.line_style,
+      "AI Model": inputs.checkpoint,
+      "Posterize": Number(inputs.posterize_level || 8),
+      "activar_Posterize": inputs.activate_posterize === 'true' || inputs.activate_posterize === true ? true : false,
+      "Activar Auto Gamma": inputs.activate_auto_gamma === 'true' || inputs.activate_auto_gamma === true ? true : false
+    };
     
     console.log("Payload final para ComfyDeploy:", JSON.stringify({
       deployment_id: COMFY_DEPLOYMENT_ID,
-      inputs: validatedInputs
+      inputs: comfyInputs
     }, null, 2));
     
     // Usar la estructura correcta del payload según la documentación
@@ -32,7 +38,7 @@ export async function queueRun(inputs: Record<string, any>) {
       "https://api.comfydeploy.com/api/run/deployment/queue",
       {
         deployment_id: COMFY_DEPLOYMENT_ID,
-        inputs: validatedInputs
+        inputs: comfyInputs
       },
       {
         headers: {
