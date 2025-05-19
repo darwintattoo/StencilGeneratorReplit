@@ -73,7 +73,7 @@ export async function checkRunStatus(runId: string) {
       
       console.log("Estado del trabajo real:", response.data);
       return response.data;
-    } catch (apiError) {
+    } catch (apiError: any) {
       console.error(`Error temporal al verificar estado del trabajo ${runId}:`, apiError.message);
       console.warn("Usando respuesta temporal para permitir continuar el proceso");
       
