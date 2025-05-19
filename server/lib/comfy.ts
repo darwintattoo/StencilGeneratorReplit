@@ -33,15 +33,15 @@ export async function queueStencilGeneration(
   const payload = {
     deployment_id: DEPLOYMENT_ID,
     inputs: {
-      "Darwin Enriquez": imageUrl,
+      "Darwin_Enriquez": imageUrl,
       "line_color": lineColor,
       "activar_transparencia": options.transparentBackground,
-      "iluminar sombras": options.enhanceShadows || false,
-      "estilo de linea": options.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors",
-      "AI Model": options.aiModel || "SDXL-Flash.safetensors",
+      "iluminar_sombras": options.enhanceShadows || false,
+      "estilo_de_linea": options.presetLora || "LoraLineart/Darwinstencil3-000007.safetensors",
+      "AI_Model": options.aiModel || "SDXL-Flash.safetensors",
       "Posterize": options.posterizeValue || 8,
       "activar_Posterize": options.activarPosterize || false,
-      "Activar Auto Gamma": options.activarAutoGamma || false
+      "Activar_Auto_Gamma": options.activarAutoGamma || false
     }
   };
 
