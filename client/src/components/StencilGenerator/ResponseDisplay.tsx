@@ -6,6 +6,7 @@ import { checkJobStatus } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
 import { useLocation } from "wouter";
+import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
 
 interface ResponseDisplayProps {
   response: StencilResponse | null;
@@ -379,22 +380,49 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
               {/* Verificamos si existe jobStatus.outputs.image (que nuestro backend debería haber extraído) */}
               {jobStatus?.outputs?.image ? (
                 <div className="bg-[#2D2D2D] p-2 rounded-md">
-                  <img 
-                    src={jobStatus.outputs.image} 
-                    alt="Stencil generado" 
-                    className="w-full rounded border border-gray-700"
-                    onError={(e) => {
-                      console.error("Error al cargar la imagen:", e);
-                      if (jobStatus?.outputs?.image) {
-                        console.log("URL de la imagen:", jobStatus.outputs.image);
-                        // Intentar nuevamente con un timestamp para evitar el caché
-                        const imgElement = e.target as HTMLImageElement;
-                        imgElement.src = `${jobStatus.outputs.image}?t=${new Date().getTime()}`;
-                      }
-                    }}
-                  />
+                  {/* Comparador de imágenes original/stencil */}
+                  {response?.original_image ? (
+                    <div className="w-full border border-gray-700 rounded-lg overflow-hidden mb-3">
+                      <ReactCompareSlider
+                        itemOne={
+                          <ReactCompareSliderImage 
+                            src={response.original_image}
+                            alt="Imagen original"
+                            style={{ width: '100%', objectFit: 'contain' }}
+                          />
+                        }
+                        itemTwo={
+                          <ReactCompareSliderImage 
+                            src={jobStatus.outputs.image}
+                            alt="Stencil generado"
+                            style={{ width: '100%', objectFit: 'contain' }}
+                          />
+                        }
+                        position={50}
+                        className="w-full h-auto"
+                      />
+                      <div className="text-center py-1 text-xs text-gray-400">
+                        {t("slide_to_compare") || "Desliza para comparar la imagen original con el stencil"}
+                      </div>
+                    </div>
+                  ) : (
+                    <img 
+                      src={jobStatus.outputs.image} 
+                      alt="Stencil generado" 
+                      className="w-full rounded border border-gray-700"
+                      onError={(e) => {
+                        console.error("Error al cargar la imagen:", e);
+                        if (jobStatus?.outputs?.image) {
+                          console.log("URL de la imagen:", jobStatus.outputs.image);
+                          // Intentar nuevamente con un timestamp para evitar el caché
+                          const imgElement = e.target as HTMLImageElement;
+                          imgElement.src = `${jobStatus.outputs.image}?t=${new Date().getTime()}`;
+                        }
+                      }}
+                    />
+                  )}
                   
-                  {/* Botón de descarga centrado */}
+                  {/* Botones de acción */}
                   <div className="flex justify-center gap-2 mt-4">
                     <Button 
                       variant="outline" 
@@ -403,7 +431,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                       onClick={handleDownload}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download Stencil
+                      {t("stencil.download") || "Download Stencil"}
                     </Button>
                     
                     <Button 
@@ -432,7 +460,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                       }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Stencil
+                      {t("stencil.edit") || "Edit Stencil"}
                     </Button>
                   </div>
                 </div>
