@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
-import { Loader2, Info, CheckCircle, AlertCircle, RefreshCw, Download, Upload } from "lucide-react";
+import { Loader2, Info, CheckCircle, AlertCircle, RefreshCw, Download, Upload, Edit } from "lucide-react";
 import { StencilResponse, StencilError, StencilJobStatus } from "@/types";
 import { useEffect, useState } from "react";
 import { checkJobStatus } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
+import { useLocation } from "wouter";
 
 interface ResponseDisplayProps {
   response: StencilResponse | null;
@@ -18,6 +19,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [apiHealthStatus, setApiHealthStatus] = useState<'unknown' | 'operational' | 'issues'>('unknown');
+  const [, setLocation] = useLocation();
 
   const { t } = useLanguage();
   
