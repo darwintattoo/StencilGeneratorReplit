@@ -116,8 +116,8 @@ export function StencilForm({
     // Validate form - a file must be provided
     if (!selectedFile) {
       toast({
-        title: t("form.error"),
-        description: t("form.error_no_file"),
+        title: t("error"),
+        description: t("error_no_file"),
         variant: "destructive"
       });
       return;
@@ -211,9 +211,9 @@ export function StencilForm({
                 // Upload prompt
                 <>
                   <Upload className="h-16 w-16 text-blue-500" />
-                  <p className="text-center text-gray-300 text-lg">{t("form.drag_drop")}</p>
-                  <p className="text-sm text-gray-400 mt-1">{t("form.or_click")}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t("form.supported_formats")}</p>
+                  <p className="text-center text-gray-300 text-lg">{t("drag_drop")}</p>
+                  <p className="text-sm text-gray-400 mt-1">{t("or_click")}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t("supported_formats")}</p>
                 </>
               )}
               
@@ -234,7 +234,7 @@ export function StencilForm({
                   className="mt-2" 
                   onClick={() => document.getElementById('fileInput')?.click()}
                 >
-                  {t("form.browse_files")}
+                  {t("browse_files")}
                 </Button>
               )}
             </div>
@@ -244,7 +244,7 @@ export function StencilForm({
         {/* SECCIÓN: OPCIONES BÁSICAS - Los más usados primero */}
         <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
           <div className="border-b border-gray-800 pb-1 mb-4">
-            <h3 className="text-md font-medium text-gray-300">{t("form.basic_options")}</h3>
+            <h3 className="text-md font-medium text-gray-300">{t("basic_options")}</h3>
           </div>
           
           {/* line_color - El parámetro más usado primero */}
@@ -527,12 +527,12 @@ export function StencilForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-              <span className="font-medium">{t("form.processing")}</span>
+              <span className="font-medium">{t("processing")}</span>
             </>
           ) : !selectedFile ? (
-            <span className="font-medium">{t("form.select_image_first")}</span>
+            <span className="font-medium">{t("select_image_first")}</span>
           ) : (
-            <span className="font-medium">{t("form.generate_stencil")}</span>
+            <span className="font-medium">{t("generate_stencil")}</span>
           )}
         </Button>
       </form>
