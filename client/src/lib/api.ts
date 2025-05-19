@@ -150,7 +150,7 @@ export async function checkJobStatus(runId: string): Promise<StencilJobStatus> {
       
       const response = await apiRequest(
         "GET", 
-        `/api/job-status/${runId}`
+        `/api/queue/${runId}`
       );
       
       return await response.json();
