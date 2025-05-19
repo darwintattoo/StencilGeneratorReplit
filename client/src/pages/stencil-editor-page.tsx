@@ -35,10 +35,16 @@ export default function StencilEditorPage() {
       const stencilUrl = searchParams.get('stencil');
       
       if (originalUrl && stencilUrl) {
-        setOriginalImage(decodeURIComponent(originalUrl));
-        setStencilImage(decodeURIComponent(stencilUrl));
+        // Imprimimos los valores para depurar
+        console.log('URL Imagen original:', originalUrl);
+        console.log('URL Imagen stencil:', stencilUrl);
+        
+        // No decodificamos las URLs ya que pueden contener caracteres especiales válidos
+        setOriginalImage(originalUrl);
+        setStencilImage(stencilUrl);
         setIsLoading(false);
       } else {
+        console.error('Parámetros faltantes:', { originalUrl, stencilUrl });
         setError('No se han proporcionado imágenes para editar');
         setIsLoading(false);
       }

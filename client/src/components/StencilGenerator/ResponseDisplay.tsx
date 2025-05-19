@@ -413,9 +413,22 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                       onClick={() => {
                         // Navegar a la página del editor de stencils con los parámetros necesarios
                         const params = new URLSearchParams();
-                        params.set('original', response?.original_image || '');
-                        params.set('stencil', jobStatus?.outputs?.image || '');
-                        setLocation(`/editor?${params.toString()}`);
+                        
+                        // Asegurándonos de que tenemos ambas URLs
+                        if (response?.original_image && jobStatus?.outputs?.image) {
+                          console.log("Enviando a editor - Original:", response.original_image);
+                          console.log("Enviando a editor - Stencil:", jobStatus.outputs.image);
+                          
+                          params.set('original', response.original_image);
+                          params.set('stencil', jobStatus.outputs.image);
+                          setLocation(`/editor?${params.toString()}`);
+                        } else {
+                          console.error("Faltan imágenes para editar:", {
+                            original: response?.original_image,
+                            stencil: jobStatus?.outputs?.image
+                          });
+                          alert("Error: No se pueden obtener las imágenes para editar.");
+                        }
                       }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
