@@ -132,20 +132,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       try {
-        // Usar el módulo centralizado para generar el stencil
-        const response = await queueStencilGeneration(
-          fileUrl, 
-          lineColor, 
+        // Usar nuestro nuevo sistema de API para generar el stencil
+        const inputs = {
+          "input_image": fileUrl,
+          "line_color": lineColor,
+          "activate_transparency": parsedTransparency,
+          "brighten_shadows": enhanceShadows,
+          "line_style": presetLora,
+          "checkpoint": aiModel,
+          "posterize_level": parseInt(posterizeValue),
+          "activate_posterize": activarPosterize,
+          "activate_auto_gamma": activarAutoGamma
+        };
+        
+        console.log("Enviando solicitud a /api/queue con inputs:", inputs);
+        
+        const queueResponse = await axios.post(
+          `${baseUrl}/api/queue`,
+          { inputs },
           {
-            transparentBackground: parsedTransparency,
-            enhanceShadows: enhanceShadows,
-            presetLora: presetLora,
-            aiModel: aiModel,
-            posterizeValue: posterizeValue,
-            activarPosterize: activarPosterize,
-            activarAutoGamma: activarAutoGamma
+            headers: {
+              "Content-Type": "application/json"
+            },
+            timeout: 30000
           }
         );
+        
+        const response = queueResponse.data;
         
         // Devolver la respuesta al cliente
         return res.status(200).json(response);
@@ -196,9 +209,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Usar el módulo centralizado para comprobar el estado
+      // Usar nuestra nueva ruta centralizada para comprobar el estado
       try {
-        const jobStatus = await checkJobStatus(runId);
+        const protocol = req.protocol;
+        const host = req.get('host');
+        const baseUrl = `${protocol}://${host}`;
+        
+        const response = await axios.get(`${baseUrl}/api/queue/${runId}`, {
+          timeout: 30000
+        });
+        
+        const jobStatus = response.data;
         
         // Verificar si hay problemas con la API y el estado
         if (jobStatus.status === "not-started" && jobStatus.queue_position === null) {
@@ -259,13 +280,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Usar el módulo centralizado para generar el stencil
       try {
-        const response = await queueStencilGeneration(
-          imageUrl, 
-          lineColor, 
-          { 
-            transparentBackground: parsedTransparency 
+        // Usar nuestra nueva ruta centralizada para generar el stencil
+        const protocol = req.protocol;
+        const host = req.get('host');
+        const baseUrl = `${protocol}://${host}`;
+        
+        const inputs = {
+          "input_image": imageUrl,
+          "line_color": lineColor,
+          "activate_transparency": parsedTransparency,
+          "brighten_shadows": false,
+          "line_style": "LoraLineart/Darwinstencil3-000007.safetensors",
+          "checkpoint": "SDXL-Flash.safetensors",
+          "posterize_level": 8,
+          "activate_posterize": false,
+          "activate_auto_gamma": false
+        };
+        
+        const queueResponse = await axios.post(
+          `${baseUrl}/api/queue`,
+          { inputs },
+          {
+            headers: {
+              "Content-Type": "application/json"
+            },
+            timeout: 30000
           }
         );
+        
+        const response = queueResponse.data;
         
         // Devolver la respuesta al cliente
         return res.status(200).json(response);
