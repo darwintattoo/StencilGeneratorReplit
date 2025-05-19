@@ -10,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Importamos el logo oficial
-import logoImage from "../../assets/tattoo-stencil-pro-logo-white.png";
+// Necesitamos asegurar que el logo se cargue correctamente en producción
 
 export default function Navigation() {
   const { user, logoutMutation } = useAuth();
@@ -22,7 +21,14 @@ export default function Navigation() {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center text-xl font-bold hover:text-blue-400 transition">
-            TattooStencilPro
+            <div className="flex items-center gap-2">
+              <img 
+                src={new URL('../../assets/tattoo-stencil-pro-icon.png', import.meta.url).href} 
+                alt="Icon" 
+                className="h-6" 
+              />
+              <span>TattooStencilPro</span>
+            </div>
           </Link>
         </div>
         

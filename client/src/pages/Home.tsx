@@ -73,7 +73,13 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Hero section */}
         <header className="mb-12 text-center pt-8">
-          <img src="/src/assets/tattoo-stencil-pro-logo-white.png" alt="TattooStencilPro" className="mx-auto h-24 mb-4" />
+          <div className="mx-auto h-24 mb-4 flex justify-center">
+            <img 
+              src={new URL('../assets/tattoo-stencil-pro-logo-white.png', import.meta.url).href} 
+              alt="TattooStencilPro" 
+              className="h-full" 
+            />
+          </div>
           <h2 className="text-2xl md:text-3xl font-light text-gray-300 mb-6">by Darwin Enriquez</h2>
           <p className="text-xl text-gray-400 mb-8">Professional AI-powered stencil creator</p>
         </header>
