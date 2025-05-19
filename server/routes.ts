@@ -9,7 +9,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { queueStencilGeneration, checkJobStatus } from "./lib/comfy";
+import queueRouter from "./routes/queue";
+import { checkRunStatus } from "./comfy";
 
 dotenv.config();
 

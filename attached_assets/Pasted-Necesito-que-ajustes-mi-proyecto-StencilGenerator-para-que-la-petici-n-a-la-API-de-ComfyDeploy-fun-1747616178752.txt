@@ -1,0 +1,104 @@
+Necesito que ajustes mi proyecto “StencilGenerator” para que la petición a la API de ComfyDeploy funcione correctamente.
+
+### Contexto
+- El run se queda en estado **not-started** porque estoy enviando `deployment_id` (snake_case) en vez de `deploymentId` (camelCase) y porque algunos nombres de `inputs` no coinciden con los `input_id` reales de mi workflow.
+- Quiero mantener mi clave de API en secreto (sólo backend), evitar que viaje al cliente y ordenar un poco la estructura.
+
+### Tareas que necesito que hagas
+1. **Variables de entorno**
+   - Ve al panel *Secrets* y crea  
+     - `COMFY_API_KEY` → «mi token»  
+     - `COMFY_DEPLOYMENT_ID` → `c0887fe6-13b0-4406-a8d1-f596b1fdab8d`
+   - Marca las dos como *exposed to code*.
+
+2. **`server/env.ts`**
+   - Crea este archivo:  
+     ```ts
+     export const COMFY_API_KEY = process.env.COMFY_API_KEY!;
+     export const COMFY_DEPLOYMENT_ID = process.env.COMFY_DEPLOYMENT_ID!;
+     ```
+
+3. **`server/comfy.ts`**
+   - Implementa una función `queueRun(inputs: Record<string, any>)` con:
+     ```ts
+     import { COMFY_API_KEY, COMFY_DEPLOYMENT_ID } from "./env";
+
+     export async function queueRun(inputs: Record<string, any>) {
+       const res = await fetch(
+         "https://api.comfydeploy.com/api/run/deployment/queue",
+         {
+           method: "POST",
+           headers: {
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${COMFY_API_KEY}`
+           },
+           body: JSON.stringify({
+             deploymentId: COMFY_DEPLOYMENT_ID,
+             inputs
+           })
+         }
+       );
+       if (!res.ok) throw new Error(await res.text());
+       return res.json(); // { run_id: "…" }
+     }
+     ```
+
+4. **Ruta API en el backend**
+   - Crea `server/routes/queue.ts`:
+     ```ts
+     import express from "express";
+     import { queueRun } from "../comfy";
+
+     const router = express.Router();
+
+     router.post("/", async (req, res) => {
+       try {
+         const { run_id } = await queueRun(req.body.inputs);
+         res.json({ run_id });
+       } catch (e: any) {
+         console.error(e);
+         res.status(500).json({ error: e.message });
+       }
+     });
+
+     export default router;
+     ```
+   - Móntala en `server/index.ts` con `app.use("/api/queue", queueRouter);`
+
+5. **Llamada desde el cliente**
+   - En lugar de llamar directo a la API externa, el front debe hacer:
+     ```ts
+     fetch("/api/queue", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({
+         inputs: {
+           /* Usa los input_id REALES de tu workflow:
+              - input_image
+              - line_color
+              - activate_transparency
+              - brighten_shadows
+              - line_style
+              - checkpoint
+              - posterize_level
+              - activate_posterize
+              - activate_auto_gamma
+           */
+         }
+       })
+     });
+     ```
+
+6. **Archivos de configuración**
+   - Asegúrate de que `.replit` ejecute el servidor (`npm run dev` o similar).
+   - Comprueba que `package.json` usa Node ≥ 18 (para que esté disponible `fetch` nativo).
+
+7. **Prueba rápida**
+   - Arranca el servidor, haz un `POST /api/queue` con inputs de prueba y verifica en la consola que el estado del run pasa de `not-started` a `queued` → `running`.
+
+### Salida esperada
+- Código refactorizado y funcionando.
+- El run de ComfyDeploy ya no se atasca en `not-started`.
+- Ningún token expuesto al navegador.
+
+¡Gracias!
