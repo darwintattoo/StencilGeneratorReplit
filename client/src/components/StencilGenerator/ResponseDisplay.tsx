@@ -395,7 +395,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                   />
                   
                   {/* Botón de descarga centrado */}
-                  <div className="flex justify-center mt-4">
+                  <div className="flex justify-center gap-2 mt-4">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -404,6 +404,22 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download Stencil
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center bg-blue-900 bg-opacity-20 hover:bg-blue-900 hover:bg-opacity-30 border-blue-800"
+                      onClick={() => {
+                        // Navegar a la página del editor de stencils con los parámetros necesarios
+                        const params = new URLSearchParams();
+                        params.set('original', response?.original_image || '');
+                        params.set('stencil', jobStatus?.outputs?.image || '');
+                        setLocation(`/editor?${params.toString()}`);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Stencil
                     </Button>
                   </div>
                 </div>
