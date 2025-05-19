@@ -9,20 +9,37 @@ export async function queueRun(inputs: Record<string, any>) {
   try {
     console.log("Enviando solicitud a ComfyDeploy con inputs:", inputs);
     
+    // Validar los inputs básicos
+    if (!inputs.input_image) {
+      throw new Error("La imagen es obligatoria");
+    }
+    
+    // Asegurarnos de que todos los valores booleanos son realmente booleanos y no strings
+    const validatedInputs = { ...inputs };
+    for (const key in validatedInputs) {
+      if (validatedInputs[key] === 'true') validatedInputs[key] = true;
+      if (validatedInputs[key] === 'false') validatedInputs[key] = false;
+    }
+    
+    console.log("Payload final para ComfyDeploy:", JSON.stringify({
+      deploymentId: COMFY_DEPLOYMENT_ID,
+      inputs: validatedInputs
+    }, null, 2));
+    
     // Usar la estructura correcta del payload según la documentación
     // deploymentId en camelCase en lugar de deployment_id en snake_case
     const response = await axios.post(
       "https://api.comfydeploy.com/api/run/deployment/queue",
       {
         deploymentId: COMFY_DEPLOYMENT_ID,
-        inputs
+        inputs: validatedInputs
       },
       {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${COMFY_API_KEY}`
         },
-        timeout: 30000 // 30 segundos de timeout
+        timeout: 60000 // 60 segundos de timeout para imágenes grandes
       }
     );
     

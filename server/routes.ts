@@ -146,6 +146,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);
+        console.log("JSON enviado:", JSON.stringify({ inputs }, null, 2));
+        
+        // Comprobaciones de validación
+        if (!inputs.input_image) {
+          throw new Error("La URL de la imagen es obligatoria");
+        }
         
         const queueResponse = await axios.post(
           `${baseUrl}/api/queue`,
@@ -154,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             headers: {
               "Content-Type": "application/json"
             },
-            timeout: 30000
+            timeout: 60000 // Aumentado a 60 segundos para imágenes grandes
           }
         );
         
