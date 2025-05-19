@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Llamar a la API externa con la URL del archivo subido
       // Crear un objeto payload EXACTAMENTE como se ve en la interfaz original
       const payload = {
-        deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
+        deployment_id: "0a40d2bc-bb16-47a1-af7a-20737e08b5b5",
         inputs: {
           "Darwin Enriquez": fileUrl,
           "line_color": lineColor,
@@ -441,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Crear un objeto payload EXACTAMENTE como se ve en la interfaz original
       const payload = {
-        deployment_id: "c0887fe6-13b0-4406-a8d1-f596b1fdab8d",
+        deployment_id: "0a40d2bc-bb16-47a1-af7a-20737e08b5b5",
         inputs: {
           "Darwin Enriquez": imageUrl,
           "line_color": lineColor,
