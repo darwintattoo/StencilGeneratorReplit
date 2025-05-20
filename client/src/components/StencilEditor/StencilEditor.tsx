@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Stage, Layer, Image, Line, Group } from 'react-konva';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Stage, Layer, Image, Line, Group, Rect } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
 import { useToast } from '@/hooks/use-toast';
@@ -192,9 +192,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         const dy = pointerPos.y - lastPointerPosition.current.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Si la distancia es significativa, añadir puntos intermedios para mejorar la calidad
+        // Si la distancia es significativa, añadir puntos intermedios para suavizar
         if (distance > 5) {
-          const steps = Math.floor(distance / 2);
+          // Usar más puntos para el borrador para asegurar borrado completo
+          const steps = tool === 'eraser' ? Math.ceil(distance / 1.5) : Math.floor(distance / 2);
+          
           for (let i = 1; i <= steps; i++) {
             const ratio = i / steps;
             const x = lastPointerPosition.current.x + dx * ratio;
@@ -213,7 +215,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       // Guardar la posición actual para la próxima vez
       lastPointerPosition.current = pointerPos;
       
-      // Actualizar el estado
+      // Actualizar el estado de inmediato para ver el trazo en tiempo real
       setLines([...lines.slice(0, -1), lastLine]);
       return;
     }
@@ -770,34 +772,34 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             ref={stageRef}
             draggable={mode === 'panning'}
           >
-            {/* Primera capa: contenido base (original) */}
-            <Layer>
-              {/* Imagen original con opacidad */}
+            {/* Capa de fondo: imagen original */}
+            <Layer name="background">
               {originalLayerVisible && originalImageObj && (
                 <Image
                   image={originalImageObj}
                   width={width}
                   height={height}
                   opacity={originalLayerOpacity}
+                  listening={false}
                 />
               )}
             </Layer>
             
-            {/* Segunda capa: imagen del stencil principal */}
-            <Layer>
-              {/* Imagen del stencil */}
+            {/* Capa de stencil */}
+            <Layer name="stencil">
               {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
                   width={width}
                   height={height}
                   ref={stencilImageRef}
+                  listening={false}
                 />
               )}
             </Layer>
             
-            {/* Segunda capa: solo para trazos de dibujo (brush) */}
-            <Layer>
+            {/* Capa de dibujo: todas las líneas de pincel */}
+            <Layer name="brushStrokes">
               {lines.filter(line => line.tool === 'brush').map((line, i) => (
                 <Line
                   key={`brush-${i}`}
@@ -807,12 +809,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   tension={0.5}
                   lineCap="round"
                   lineJoin="round"
+                  listening={false}
                 />
               ))}
             </Layer>
             
-            {/* Tercera capa: solo para borrador, afecta a todas las capas anteriores */}
-            <Layer>
+            {/* Capa de borrado */}
+            <Layer name="eraser">
               {lines.filter(line => line.tool === 'eraser').map((line, i) => (
                 <Line
                   key={`eraser-${i}`}
@@ -823,22 +826,21 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   lineCap="round"
                   lineJoin="round"
                   globalCompositeOperation="destination-out"
-                  perfectDrawEnabled={true}
+                  listening={false}
                 />
               ))}
             </Layer>
             
-            {/* Capa transparente para capturar eventos */}
-            <Layer>
-              <Group>
-                <Line
-                  points={[0, 0, width, 0, width, height, 0, height, 0, 0]}
-                  closed
-                  fill="rgba(0,0,0,0)"
-                  perfectDrawEnabled={false}
-                  listening={true}
-                />
-              </Group>
+            {/* Capa para capturar eventos */}
+            <Layer name="eventCatcher">
+              <Rect
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+                fill="rgba(0,0,0,0)"
+                listening={true}
+              />
             </Layer>
           </Stage>
         </div>
