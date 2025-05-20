@@ -52,7 +52,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushColor, setBrushColor] = useState('#ff0000');
   
   // Estado para la vista activa
-  const [activeView, setActiveView] = useState<'compare' | 'edit'>('compare');
+  const [activeView, setActiveView] = useState<'compare' | 'edit'>('edit');
   
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
