@@ -705,40 +705,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               </Layer>
             )}
             
-            {/* Capa del stencil - Ahora incluida dentro de un grupo para que el borrador funcione correctamente */}
-            {stencilLayerVisible && (
-              <Layer ref={stencilLayerRef}>
-                <Group
-                  globalCompositeOperation="source-over"
-                  listening={false}
-                >
-                  <Image
-                    image={stencilImageObj}
-                    width={width}
-                    height={height}
-                  />
-                  
-                  {/* Añadimos las líneas de borrador directamente en la capa del stencil */}
-                  {lines.filter(line => line.tool === 'eraser').map((line, i) => (
-                    <Line
-                      key={`eraser-${i}`}
-                      points={line.points}
-                      stroke={'white'}
-                      strokeWidth={line.strokeWidth}
-                      tension={0.5}
-                      lineCap="round"
-                      lineJoin="round"
-                      globalCompositeOperation="destination-out"
-                    />
-                  ))}
-                </Group>
-              </Layer>
-            )}
-            
-            {/* Capa de dibujo - Para líneas de pincel y borrador que afecten a lo dibujado */}
+            {/* Capa base que recibe los borrados */}
             <Layer>
+              {/* Imagen del stencil */}
+              {stencilLayerVisible && (
+                <Image
+                  image={stencilImageObj}
+                  width={width}
+                  height={height}
+                  ref={stencilLayerRef}
+                />
+              )}
+              
+              {/* Capa de dibujo para los trazos del pincel */}
               <Group>
-                {/* Primero dibujamos los trazos del pincel */}
                 {lines.filter(line => line.tool === 'brush').map((line, i) => (
                   <Line
                     key={`brush-${i}`}
@@ -751,11 +731,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                     globalCompositeOperation="source-over"
                   />
                 ))}
-                
-                {/* Luego aplicamos el borrador también a los trazos dibujados */}
+              </Group>
+              
+              {/* Capa de borrador que afecta tanto al stencil como a los trazos */}
+              <Group>
                 {lines.filter(line => line.tool === 'eraser').map((line, i) => (
                   <Line
-                    key={`brush-eraser-${i}`}
+                    key={`eraser-${i}`}
                     points={line.points}
                     stroke={'white'}
                     strokeWidth={line.strokeWidth}
