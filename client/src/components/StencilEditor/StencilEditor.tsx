@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Stage, Layer, Image, Line, Group, Transformer } from 'react-konva';
+import { Stage, Layer, Image, Line, Group, Transformer, Rect } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva'; // Importamos Konva directamente para usar sus funciones
 import { Button } from '@/components/ui/button';
@@ -736,49 +736,48 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               </Layer>
             )}
             
-            {/* Capa base que recibe los borrados */}
-            <Layer>
-              {/* Imagen del stencil */}
-              {stencilLayerVisible && (
+            {/* Primera capa - Imagen del stencil */}
+            {stencilLayerVisible && (
+              <Layer>
                 <Image
                   image={stencilImageObj}
                   width={width}
                   height={height}
                   ref={stencilLayerRef}
                 />
-              )}
-              
-              {/* Capa de dibujo para los trazos del pincel */}
-              <Group>
-                {lines.filter(line => line.tool === 'brush').map((line, i) => (
-                  <Line
-                    key={`brush-${i}`}
-                    points={line.points}
-                    stroke={line.color}
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="source-over"
-                  />
-                ))}
-              </Group>
-              
-              {/* Capa de borrador que afecta tanto al stencil como a los trazos */}
-              <Group>
-                {lines.filter(line => line.tool === 'eraser').map((line, i) => (
-                  <Line
-                    key={`eraser-${i}`}
-                    points={line.points}
-                    stroke={'white'}
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="destination-out"
-                  />
-                ))}
-              </Group>
+              </Layer>
+            )}
+            
+            {/* Segunda capa - Trazos de dibujo */}
+            <Layer>
+              {lines.filter(line => line.tool === 'brush').map((line, i) => (
+                <Line
+                  key={`brush-${i}`}
+                  points={line.points}
+                  stroke={line.color}
+                  strokeWidth={line.strokeWidth}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="source-over"
+                />
+              ))}
+            </Layer>
+            
+            {/* Capa con los borrados, aplicada solo al stencil mediante composición */}
+            <Layer>
+              {lines.filter(line => line.tool === 'eraser').map((line, i) => (
+                <Line
+                  key={`eraser-${i}`}
+                  points={line.points}
+                  stroke={'white'}
+                  strokeWidth={line.strokeWidth}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="destination-out"
+                />
+              ))}
             </Layer>
           </Stage>
         </div>
