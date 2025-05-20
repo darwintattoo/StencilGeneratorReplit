@@ -215,17 +215,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     );
   }
   
-  // Limitamos el tamaño para que sea manejable en la pantalla
-  // pero manteniendo una proporción adecuada del original
-  const maxWidth = Math.min(window.innerWidth - 250, 1000); // Restamos espacio para el panel lateral
-  const maxHeight = window.innerHeight - 200;
-  
-  const widthScale = maxWidth / originalImageObj.width;
-  const heightScale = maxHeight / originalImageObj.height;
-  const scale = Math.min(widthScale, heightScale, 1); // No aumentamos, solo reducimos si es necesario
-  
-  const width = Math.floor(originalImageObj.width * scale);
-  const height = Math.floor(originalImageObj.height * scale);
+  // Usamos el tamaño original sin modificar, tal como pide el usuario
+  const width = originalImageObj.width;
+  const height = originalImageObj.height;
   
   return (
     <div className="flex flex-col w-full space-y-4">
@@ -327,24 +319,25 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </div>
             
-            {/* Panel de control de capas - Ahora en la parte superior */}
+            {/* Panel de control de capas - Ahora en la parte superior con mejor distinción visual */}
             <div className="border border-gray-700 rounded-lg bg-gray-900 p-4 mb-4">
               <div className="flex flex-wrap items-center gap-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider">{t("layers") || "Capas"}</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">{t("layers") || "CAPAS"}</h3>
                 
-                {/* Control de capa original */}
-                <div className="flex items-center gap-2">
-                  <label className="text-sm whitespace-nowrap">{t("original_image") || "Imagen original"}</label>
+                {/* Control de capa original con mejor contraste visual */}
+                <div className="flex items-center gap-2 border border-gray-600 rounded-md p-2 bg-gray-800">
+                  <span className="h-4 w-4 bg-gray-600 rounded-full inline-block mr-1"></span>
+                  <label className="text-sm font-medium whitespace-nowrap text-yellow-300">{t("original_image") || "FOTO ORIGINAL"}</label>
                   <input
                     type="checkbox"
                     checked={originalLayerVisible}
                     onChange={(e) => setOriginalLayerVisible(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-700 text-blue-600"
+                    className="h-5 w-5 rounded border-gray-700 text-yellow-400"
                   />
                   
                   {originalLayerVisible && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs whitespace-nowrap">{t("opacity") || "Opacidad"}: {Math.round(originalLayerOpacity * 100)}%</label>
+                    <div className="flex items-center gap-2 ml-2">
+                      <label className="text-xs whitespace-nowrap text-yellow-200">{t("opacity") || "Opacidad"}: {Math.round(originalLayerOpacity * 100)}%</label>
                       <input
                         type="range"
                         min="0"
@@ -358,14 +351,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   )}
                 </div>
                 
-                {/* Control de capa stencil */}
-                <div className="flex items-center gap-2">
-                  <label className="text-sm whitespace-nowrap">{t("stencil") || "Stencil"}</label>
+                {/* Control de capa stencil con mejor contraste visual */}
+                <div className="flex items-center gap-2 border border-gray-600 rounded-md p-2 bg-gray-800">
+                  <span className="h-4 w-4 bg-red-500 rounded-full inline-block mr-1"></span>
+                  <label className="text-sm font-medium whitespace-nowrap text-red-300">{t("stencil") || "STENCIL"}</label>
                   <input
                     type="checkbox"
                     checked={stencilLayerVisible}
                     onChange={(e) => setStencilLayerVisible(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-700 text-blue-600"
+                    className="h-5 w-5 rounded border-gray-700 text-red-400"
                   />
                 </div>
               </div>
