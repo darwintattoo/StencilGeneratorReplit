@@ -168,33 +168,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       const lastLine = lines[lines.length - 1];
       if (!lastLine) return;
       
-      // Para el borrador, mejorar la densidad de puntos para un borrado más completo
-      if (tool === 'eraser') {
-        // Obtener el último punto registrado
-        const len = lastLine.points.length;
-        if (len >= 2) {
-          const prevX = lastLine.points[len - 2];
-          const prevY = lastLine.points[len - 1];
-          
-          // Calculamos la distancia entre el punto anterior y el actual
-          const dx = point.x - prevX;
-          const dy = point.y - prevY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Si hay una distancia significativa, interpolamos puntos intermedios
-          // para asegurar un borrado continuo y completo
-          if (distance > 5) {
-            const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
-            for (let i = 1; i < steps; i++) {
-              const ratio = i / steps;
-              const x = prevX + dx * ratio;
-              const y = prevY + dy * ratio;
-              lastLine.points = lastLine.points.concat([x, y]);
-            }
-          }
-        }
-      }
-      
+      // Agregar nuevo punto a la línea actual
       lastLine.points = lastLine.points.concat([point.x, point.y]);
       
       // Actualizar inmediatamente para mayor precisión
@@ -759,10 +733,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             ref={stageRef}
             draggable={mode === 'panning'}
           >
-            {/* Primera capa: contenido base (stencil + original) */}
+            {/* Primera capa: contenido base (original) */}
             <Layer>
               {/* Imagen original con opacidad */}
-              {originalLayerVisible && (
+              {originalLayerVisible && originalImageObj && (
                 <Image
                   image={originalImageObj}
                   width={width}
@@ -770,9 +744,12 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   opacity={originalLayerOpacity}
                 />
               )}
-              
+            </Layer>
+            
+            {/* Segunda capa: imagen del stencil principal */}
+            <Layer>
               {/* Imagen del stencil */}
-              {stencilLayerVisible && (
+              {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
                   width={width}
