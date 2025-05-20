@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Stage, Layer, Image, Line, Group, Transformer, Rect } from 'react-konva';
+import { Stage, Layer, Image, Line, Group } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva'; // Importamos Konva directamente para usar sus funciones
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,8 @@ import { saveAs } from 'file-saver';
 declare module 'konva/lib/Stage' {
   interface Stage {
     touchDistance?: number;
-    lastTouch?: Touch;
+    lastTouchClientX?: number;
+    lastTouchClientY?: number;
     lastMousePos?: {
       x: number;
       y: number;
@@ -126,19 +127,19 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     setPosition(newPos);
   };
   
-  // Función para corregir la precisión de un punto táctil
-  const correctTouchPosition = (stage: Konva.Stage, touch: Touch) => {
-    // Calcular las coordenadas correctas basadas en el escenario y el zoom
+  // Función para calcular la posición exacta con cualquier entrada (mouse o touch)
+  const getPointerPosition = (stage: Konva.Stage, clientX: number, clientY: number) => {
+    // Obtener el rectángulo del contenedor para coordenadas precisas
     const rect = stage.container().getBoundingClientRect();
     
-    // Coordenadas absolutas del toque
-    const touchX = touch.clientX - rect.left;
-    const touchY = touch.clientY - rect.top;
+    // Calcular las coordenadas relativas al contenedor
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     
-    // Ajustar las coordenadas al factor de escala y posición
+    // Ajustar las coordenadas considerando la escala y posición
     return {
-      x: (touchX - position.x) / scale,
-      y: (touchY - position.y) / scale
+      x: (x - position.x) / scale,
+      y: (y - position.y) / scale
     };
   };
   
@@ -251,22 +252,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         // Actualizar estado con las nuevas coordenadas
         setScale(limitedScale);
         setPosition(newPos);
-      } else if (isDragging && stage.lastTouch) {
+      } else if (isDragging) {
         // Manejar movimiento (pan) con un solo dedo en modo movimiento
         const touch = e.evt.touches[0];
         
-        // Solo actualizar si existe el toque anterior
-        if (stage.lastTouch.clientX !== undefined && stage.lastTouch.clientY !== undefined) {
+        if (stage.lastTouchClientX !== undefined && stage.lastTouchClientY !== undefined) {
           const newPosition = {
-            x: position.x + (touch.clientX - stage.lastTouch.clientX),
-            y: position.y + (touch.clientY - stage.lastTouch.clientY),
+            x: position.x + (touch.clientX - stage.lastTouchClientX),
+            y: position.y + (touch.clientY - stage.lastTouchClientY),
           };
           
           setPosition(newPosition);
         }
         
-        // Actualizar el toque más reciente
-        stage.lastTouch = touch;
+        // Guardar las coordenadas del toque actual
+        stage.lastTouchClientX = touch.clientX;
+        stage.lastTouchClientY = touch.clientY;
       }
     }
   }, [isDrawing, tool, lines, position, scale, mode, isDragging]);
@@ -280,11 +281,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     if (e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
       
-      // Guardar referencia clara del toque actual
-      stage.lastTouch = {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-      };
+      // Guardar coordenadas exactas del toque actual
+      stage.lastTouchClientX = touch.clientX;
+      stage.lastTouchClientY = touch.clientY;
       
       // Si estamos en modo dibujo, empezar a dibujar
       if (mode === 'drawing') {
@@ -760,31 +759,30 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             ref={stageRef}
             draggable={mode === 'panning'}
           >
-            {/* Capa de imagen original (fondo) */}
-            {originalLayerVisible && (
-              <Layer>
+            {/* Primera capa: contenido base (stencil + original) */}
+            <Layer>
+              {/* Imagen original con opacidad */}
+              {originalLayerVisible && (
                 <Image
                   image={originalImageObj}
                   width={width}
                   height={height}
                   opacity={originalLayerOpacity}
                 />
-              </Layer>
-            )}
-            
-            {/* Primera capa - Imagen del stencil */}
-            {stencilLayerVisible && (
-              <Layer>
+              )}
+              
+              {/* Imagen del stencil */}
+              {stencilLayerVisible && (
                 <Image
                   image={stencilImageObj}
                   width={width}
                   height={height}
                   ref={stencilLayerRef}
                 />
-              </Layer>
-            )}
+              )}
+            </Layer>
             
-            {/* Segunda capa - Trazos de dibujo */}
+            {/* Segunda capa: solo para trazos de dibujo (brush) */}
             <Layer>
               {lines.filter(line => line.tool === 'brush').map((line, i) => (
                 <Line
@@ -795,38 +793,35 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   tension={0.5}
                   lineCap="round"
                   lineJoin="round"
-                  globalCompositeOperation="source-over"
                 />
               ))}
             </Layer>
             
-            {/* Capa para líneas de borrador - usa la composición global */}
-            <Layer
-              listening={true}
-              globalCompositeOperation="destination-out"
-            >
+            {/* Tercera capa: solo para borrador, afecta a todas las capas anteriores */}
+            <Layer>
               {lines.filter(line => line.tool === 'eraser').map((line, i) => (
                 <Line
                   key={`eraser-${i}`}
                   points={line.points}
-                  stroke={'rgba(255,255,255,1)'}
+                  stroke="white"
                   strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap="round"
                   lineJoin="round"
+                  globalCompositeOperation="destination-out"
+                  perfectDrawEnabled={true}
                 />
               ))}
             </Layer>
             
-            {/* Capa adicional para capturar eventos en áreas borradas */}
-            <Layer listening={true} opacity={0}>
+            {/* Capa transparente para capturar eventos */}
+            <Layer>
               <Group>
-                {/* Rectángulo transparente que cubre todo el lienzo */}
                 <Line
                   points={[0, 0, width, 0, width, height, 0, height, 0, 0]}
-                  stroke="transparent"
-                  fill="transparent"
-                  closed={true}
+                  closed
+                  fill="rgba(0,0,0,0)"
+                  perfectDrawEnabled={false}
                   listening={true}
                 />
               </Group>
