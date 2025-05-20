@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { Stage, Layer, Image, Line, Group } from 'react-konva';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Stage, Layer, Image, Line, Group, Transformer } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva'; // Importamos Konva directamente para usar sus funciones
 import { Button } from '@/components/ui/button';
 import { 
   Brush, 
@@ -9,7 +10,10 @@ import {
   Redo2, 
   Download, 
   Save,
-  ImageDown
+  ImageDown,
+  ZoomIn,
+  ZoomOut,
+  Move
 } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { saveAs } from 'file-saver';
@@ -53,6 +57,12 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [originalLayerVisible, setOriginalLayerVisible] = useState(true);
   const [stencilLayerVisible, setStencilLayerVisible] = useState(true);
   
+  // Estados para el zoom y movimiento del canvas
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [mode, setMode] = useState<'drawing' | 'panning'>('drawing');
+  
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
     // Cargar imagen original
@@ -72,8 +82,206 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     };
   }, [originalImage, stencilImage]);
   
-  // Función para comenzar a dibujar
+  // Funciones para zoom y movimiento del canvas
+  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+    
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    const oldScale = scale;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    
+    const mousePointTo = {
+      x: (pointer.x - position.x) / oldScale,
+      y: (pointer.y - position.y) / oldScale,
+    };
+    
+    // Ajuste de zoom con la rueda
+    const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
+    
+    // Limitar el zoom mínimo y máximo
+    const limitedScale = Math.max(0.1, Math.min(newScale, 10));
+    
+    setScale(limitedScale);
+    
+    const newPos = {
+      x: pointer.x - mousePointTo.x * limitedScale,
+      y: pointer.y - mousePointTo.y * limitedScale,
+    };
+    
+    setPosition(newPos);
+  };
+  
+  // Función para manejar gestos táctiles (pinch to zoom)
+  const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    // Si estamos en modo dibujo y se está dibujando, manejar el dibujo
+    if (mode === 'drawing' && isDrawing) {
+      const touch = e.evt.touches[0];
+      const point = stage.getPointerPosition();
+      if (!point) return;
+      
+      const lastLine = lines[lines.length - 1];
+      if (!lastLine) return;
+      
+      // Para el borrador, mejorar la densidad de puntos para un borrado más completo
+      if (tool === 'eraser') {
+        // Obtener el último punto registrado
+        const len = lastLine.points.length;
+        if (len >= 2) {
+          const prevX = lastLine.points[len - 2];
+          const prevY = lastLine.points[len - 1];
+          
+          // Calculamos la distancia entre el punto anterior y el actual
+          const dx = point.x - prevX;
+          const dy = point.y - prevY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Si hay una distancia significativa, interpolamos puntos intermedios
+          // para asegurar un borrado continuo y completo
+          if (distance > 5) {
+            const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
+            for (let i = 1; i < steps; i++) {
+              const ratio = i / steps;
+              const x = prevX + dx * ratio;
+              const y = prevY + dy * ratio;
+              lastLine.points = lastLine.points.concat([x, y]);
+            }
+          }
+        }
+      }
+      
+      lastLine.points = lastLine.points.concat([point.x, point.y]);
+      
+      // Usar requestAnimationFrame para mejorar el rendimiento en dispositivos lentos
+      window.requestAnimationFrame(() => {
+        setLines([...lines.slice(0, -1), lastLine]);
+      });
+      return;
+    }
+    
+    // Si estamos en modo movimiento o hay más de un toque (gesto de zoom)
+    if (mode === 'panning' || e.evt.touches.length === 2) {
+      // Manejar zoom con dos dedos (pinch to zoom)
+      if (e.evt.touches.length === 2) {
+        const touch1 = e.evt.touches[0];
+        const touch2 = e.evt.touches[1];
+        
+        // Calcular la distancia entre los dos toques
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        
+        if (!stage.touchDistance) {
+          stage.touchDistance = distance;
+          return;
+        }
+        
+        // Determinar el factor de escala basado en la distancia de pinch
+        const scale = stage.scale() || { x: 1, y: 1 };
+        const newScale = scale.x * (distance / stage.touchDistance);
+        
+        // Limitar el zoom mínimo y máximo
+        const limitedScale = Math.max(0.1, Math.min(newScale, 10));
+        
+        // Calcular el punto central del pinch para hacer zoom sobre ese punto
+        const center = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+        
+        const oldScale = scale.x;
+        const mousePointTo = {
+          x: (center.x - position.x) / oldScale,
+          y: (center.y - position.y) / oldScale,
+        };
+        
+        const newPos = {
+          x: center.x - mousePointTo.x * limitedScale,
+          y: center.y - mousePointTo.y * limitedScale,
+        };
+        
+        stage.touchDistance = distance;
+        setScale(limitedScale);
+        setPosition(newPos);
+      } else if (isDragging) {
+        // Manejar movimiento (pan) con un solo dedo en modo movimiento
+        const touch = e.evt.touches[0];
+        const newPosition = {
+          x: position.x + (touch.clientX - stage.lastTouch?.clientX || 0),
+          y: position.y + (touch.clientY - stage.lastTouch?.clientY || 0),
+        };
+        
+        setPosition(newPosition);
+        stage.lastTouch = touch;
+      }
+    }
+  }, [isDrawing, tool, lines, position, scale, mode, isDragging]);
+
+  // Función para manejar el inicio de toques táctiles
+  const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    // Guardar posición del toque
+    if (e.evt.touches.length === 1) {
+      const touch = e.evt.touches[0];
+      stage.lastTouch = touch;
+      
+      // Si estamos en modo dibujo, empezar a dibujar
+      if (mode === 'drawing') {
+        setIsDrawing(true);
+        const pos = stage.getPointerPosition();
+        if (!pos) return;
+        
+        // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
+        const effectiveSize = tool === 'eraser' ? brushSize * 2.5 : brushSize;
+        
+        const newLine: Line = {
+          tool,
+          points: [pos.x, pos.y],
+          color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
+          strokeWidth: effectiveSize
+        };
+        
+        setLines([...lines, newLine]);
+        setUndoHistory([...undoHistory, [...lines]]);
+        setRedoHistory([]);
+      } else {
+        setIsDragging(true);
+      }
+    } 
+    // Si hay dos toques, preparar para zoom
+    else if (e.evt.touches.length === 2) {
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+      
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      
+      stage.touchDistance = distance;
+    }
+  }, [mode, tool, brushSize, brushColor, lines, undoHistory]);
+
+  // Función para manejar el final de toques táctiles
+  const handleTouchEnd = useCallback(() => {
+    setIsDrawing(false);
+    setIsDragging(false);
+  }, []);
+  
+  // Función para comenzar a dibujar (mouse)
   const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+    if (mode !== 'drawing') return;
+    
     setIsDrawing(true);
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
@@ -93,55 +301,91 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     setRedoHistory([]);
   };
   
-  // Función para continuar dibujando
+  // Función para continuar dibujando (mouse)
   const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-    if (!isDrawing) return;
+    // Si estamos en modo movimiento, manejar desplazamiento del canvas
+    if (mode === 'panning' && isDragging) {
+      const stage = e.target.getStage();
+      if (!stage) return;
+      
+      const pointerPos = stage.getPointerPosition();
+      if (!pointerPos || !stage.lastMousePos) return;
+      
+      const dx = pointerPos.x - stage.lastMousePos.x;
+      const dy = pointerPos.y - stage.lastMousePos.y;
+      
+      setPosition({
+        x: position.x + dx,
+        y: position.y + dy
+      });
+      
+      stage.lastMousePos = pointerPos;
+      return;
+    }
     
-    const stage = e.target.getStage();
-    const point = stage?.getPointerPosition();
-    if (!point) return;
-    
-    const lastLine = lines[lines.length - 1];
-    if (!lastLine) return;
-    
-    // Para el borrador, mejorar la densidad de puntos para un borrado más completo
-    if (tool === 'eraser') {
-      // Obtener el último punto registrado
-      const len = lastLine.points.length;
-      if (len >= 2) {
-        const prevX = lastLine.points[len - 2];
-        const prevY = lastLine.points[len - 1];
-        
-        // Calculamos la distancia entre el punto anterior y el actual
-        const dx = point.x - prevX;
-        const dy = point.y - prevY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Si hay una distancia significativa, interpolamos puntos intermedios
-        // para asegurar un borrado continuo y completo
-        if (distance > 5) {
-          const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
-          for (let i = 1; i < steps; i++) {
-            const ratio = i / steps;
-            const x = prevX + dx * ratio;
-            const y = prevY + dy * ratio;
-            lastLine.points = lastLine.points.concat([x, y]);
+    // Si estamos en modo dibujo, manejar el dibujo
+    if (mode === 'drawing' && isDrawing) {
+      const stage = e.target.getStage();
+      const point = stage?.getPointerPosition();
+      if (!point) return;
+      
+      const lastLine = lines[lines.length - 1];
+      if (!lastLine) return;
+      
+      // Para el borrador, mejorar la densidad de puntos para un borrado más completo
+      if (tool === 'eraser') {
+        // Obtener el último punto registrado
+        const len = lastLine.points.length;
+        if (len >= 2) {
+          const prevX = lastLine.points[len - 2];
+          const prevY = lastLine.points[len - 1];
+          
+          // Calculamos la distancia entre el punto anterior y el actual
+          const dx = point.x - prevX;
+          const dy = point.y - prevY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Si hay una distancia significativa, interpolamos puntos intermedios
+          // para asegurar un borrado continuo y completo
+          if (distance > 5) {
+            const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
+            for (let i = 1; i < steps; i++) {
+              const ratio = i / steps;
+              const x = prevX + dx * ratio;
+              const y = prevY + dy * ratio;
+              lastLine.points = lastLine.points.concat([x, y]);
+            }
           }
         }
       }
+      
+      lastLine.points = lastLine.points.concat([point.x, point.y]);
+      
+      // Usar requestAnimationFrame para mejorar el rendimiento en dispositivos lentos
+      window.requestAnimationFrame(() => {
+        setLines([...lines.slice(0, -1), lastLine]);
+      });
     }
-    
-    lastLine.points = lastLine.points.concat([point.x, point.y]);
-    
-    // Usar requestAnimationFrame para mejorar el rendimiento en dispositivos lentos
-    window.requestAnimationFrame(() => {
-      setLines([...lines.slice(0, -1), lastLine]);
-    });
   };
   
-  // Función para terminar de dibujar
+  // Función para terminar de dibujar o mover
   const handleMouseUp = () => {
     setIsDrawing(false);
+    setIsDragging(false);
+  };
+  
+  // Función para comenzar a mover el canvas
+  const handleDragStart = (e: KonvaEventObject<MouseEvent>) => {
+    if (mode !== 'panning') return;
+    
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    setIsDragging(true);
+    const pos = stage.getPointerPosition();
+    if (pos) {
+      stage.lastMousePos = pos;
+    }
   };
   
   // Función para deshacer
