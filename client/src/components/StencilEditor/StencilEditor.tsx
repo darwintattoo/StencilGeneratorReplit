@@ -48,7 +48,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
   const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [brushSize, setBrushSize] = useState(5);
+  const [brushSize, setBrushSize] = useState(2);
   const [brushColor, setBrushColor] = useState('#ff0000');
   
   // Estado para la vista activa
