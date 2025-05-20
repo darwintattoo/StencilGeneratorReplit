@@ -249,9 +249,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     );
   }
   
-  // Usamos el tamaño original sin modificar, tal como pide el usuario
+  // Usamos el tamaño original sin modificar, pero con manejo mejorado del contenedor
   const width = originalImageObj.width;
   const height = originalImageObj.height;
+  
+  // Función para verificar si el contenedor necesita scroll
+  const containerStyle = {
+    maxWidth: '100%',
+    maxHeight: '80vh',
+    overflow: 'auto'
+  };
   
   return (
     <div className="flex flex-col w-full space-y-4">
@@ -399,8 +406,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               </div>
             </div>
             
-            {/* Lienzo de edición */}
-            <div className="border border-gray-700 rounded-lg overflow-hidden">
+            {/* Lienzo de edición con mejor manejo de dimensiones */}
+            <div className="border border-gray-700 rounded-lg" style={containerStyle}>
               <Stage
                 width={width}
                 height={height}
