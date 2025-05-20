@@ -451,20 +451,37 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   </Layer>
                 )}
                 
-                {/* Capa de dibujo - Solo para las líneas de pincel, no borrador */}
+                {/* Capa de dibujo - Para líneas de pincel y borrador que afecten a lo dibujado */}
                 <Layer>
-                  {lines.filter(line => line.tool === 'brush').map((line, i) => (
-                    <Line
-                      key={`brush-${i}`}
-                      points={line.points}
-                      stroke={line.color}
-                      strokeWidth={line.strokeWidth}
-                      tension={0.5}
-                      lineCap="round"
-                      lineJoin="round"
-                      globalCompositeOperation="source-over"
-                    />
-                  ))}
+                  <Group>
+                    {/* Primero dibujamos los trazos del pincel */}
+                    {lines.filter(line => line.tool === 'brush').map((line, i) => (
+                      <Line
+                        key={`brush-${i}`}
+                        points={line.points}
+                        stroke={line.color}
+                        strokeWidth={line.strokeWidth}
+                        tension={0.5}
+                        lineCap="round"
+                        lineJoin="round"
+                        globalCompositeOperation="source-over"
+                      />
+                    ))}
+                    
+                    {/* Luego aplicamos el borrador también a los trazos dibujados */}
+                    {lines.filter(line => line.tool === 'eraser').map((line, i) => (
+                      <Line
+                        key={`brush-eraser-${i}`}
+                        points={line.points}
+                        stroke={'white'}
+                        strokeWidth={line.strokeWidth}
+                        tension={0.5}
+                        lineCap="round"
+                        lineJoin="round"
+                        globalCompositeOperation="destination-out"
+                      />
+                    ))}
+                  </Group>
                 </Layer>
               </Stage>
             </div>
