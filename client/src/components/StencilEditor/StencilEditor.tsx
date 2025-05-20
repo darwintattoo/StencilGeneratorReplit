@@ -18,6 +18,18 @@ import {
 import { useLanguage } from '@/hooks/use-language';
 import { saveAs } from 'file-saver';
 
+// Extensión de los tipos de Konva para propiedades personalizadas
+declare module 'konva/lib/Stage' {
+  interface Stage {
+    touchDistance?: number;
+    lastTouch?: Touch;
+    lastMousePos?: {
+      x: number;
+      y: number;
+    };
+  }
+}
+
 // Tipo para los trazos de pincel
 interface Line {
   tool: 'brush' | 'eraser';
@@ -606,15 +618,80 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           </div>
         </div>
         
+        {/* Controles de zoom y modo de interacción */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={mode === 'drawing' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMode('drawing')}
+            >
+              <Brush className="h-4 w-4 mr-1" />
+              {t("drawing_mode") || "Dibujar"}
+            </Button>
+            <Button
+              variant={mode === 'panning' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMode('panning')}
+            >
+              <Move className="h-4 w-4 mr-1" />
+              {t("move_mode") || "Mover/Zoom"}
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setScale(scale * 1.2);
+              }}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setScale(Math.max(0.1, scale / 1.2));
+              }}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setScale(1);
+                setPosition({ x: 0, y: 0 });
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 12h6" />
+              </svg>
+            </Button>
+          </div>
+        </div>
+
         {/* Lienzo de edición con mejor manejo de dimensiones */}
         <div className="border border-gray-700 rounded-lg" style={containerStyle}>
           <Stage
             width={width}
             height={height}
-            onMouseDown={handleMouseDown}
+            onMouseDown={mode === 'drawing' ? handleMouseDown : handleDragStart}
             onMousemove={handleMouseMove}
             onMouseup={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onWheel={handleWheel}
+            scaleX={scale}
+            scaleY={scale}
+            x={position.x}
+            y={position.y}
             ref={stageRef}
+            draggable={mode === 'panning'}
           >
             {/* Capa de imagen original (fondo) */}
             {originalLayerVisible && (
