@@ -54,6 +54,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   // Estado para la vista activa
   const [activeView, setActiveView] = useState<'compare' | 'edit'>('edit');
   
+  // Estados para controlar las capas
+  const [originalLayerOpacity, setOriginalLayerOpacity] = useState(0.3);
+  const [originalLayerVisible, setOriginalLayerVisible] = useState(true);
+  const [stencilLayerVisible, setStencilLayerVisible] = useState(true);
+  
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
     // Cargar imagen original
@@ -210,12 +215,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     );
   }
   
-  // Calcular dimensiones proporcionales para que ambas imágenes tengan el mismo tamaño
-  // Usamos un tamaño mayor para que la imagen se vea más clara
-  const maxWidth = Math.min(window.innerWidth - 40, 1000);
-  const scale = maxWidth / Math.max(originalImageObj.width, stencilImageObj.width);
-  const width = originalImageObj.width * scale;
-  const height = originalImageObj.height * scale;
+  // Usamos el tamaño original de la imagen sin escalar
+  const width = originalImageObj.width;
+  const height = originalImageObj.height;
   
   return (
     <div className="flex flex-col w-full space-y-4">
@@ -317,52 +319,104 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </div>
             
-            <div className="border border-gray-700 rounded-lg overflow-hidden">
-              <Stage
-                width={width}
-                height={height}
-                onMouseDown={handleMouseDown}
-                onMousemove={handleMouseMove}
-                onMouseup={handleMouseUp}
-                ref={stageRef}
-              >
-                {/* Capa de imagen original (fondo) */}
-                <Layer>
-                  <Image
-                    image={originalImageObj}
-                    width={width}
-                    height={height}
-                    opacity={0.3} // Semi-transparente para ver el stencil encima
-                  />
-                </Layer>
+            <div className="flex border border-gray-700 rounded-lg overflow-hidden">
+              <div className="flex-grow">
+                <Stage
+                  width={width}
+                  height={height}
+                  onMouseDown={handleMouseDown}
+                  onMousemove={handleMouseMove}
+                  onMouseup={handleMouseUp}
+                  ref={stageRef}
+                >
+                  {/* Capa de imagen original (fondo) */}
+                  {originalLayerVisible && (
+                    <Layer>
+                      <Image
+                        image={originalImageObj}
+                        width={width}
+                        height={height}
+                        opacity={originalLayerOpacity}
+                      />
+                    </Layer>
+                  )}
+                  
+                  {/* Capa del stencil */}
+                  {stencilLayerVisible && (
+                    <Layer ref={stencilLayerRef}>
+                      <Image
+                        image={stencilImageObj}
+                        width={width}
+                        height={height}
+                      />
+                    </Layer>
+                  )}
+                  
+                  {/* Capa de dibujo */}
+                  <Layer>
+                    {lines.map((line, i) => (
+                      <Line
+                        key={i}
+                        points={line.points}
+                        stroke={line.color}
+                        strokeWidth={line.strokeWidth}
+                        tension={0.5}
+                        lineCap="round"
+                        lineJoin="round"
+                        globalCompositeOperation={
+                          line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                        }
+                      />
+                    ))}
+                  </Layer>
+                </Stage>
+              </div>
+              
+              {/* Panel de control de capas */}
+              <div className="w-48 bg-gray-900 p-4 flex flex-col space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider">{t("layers") || "Capas"}</h3>
                 
-                {/* Capa del stencil */}
-                <Layer ref={stencilLayerRef}>
-                  <Image
-                    image={stencilImageObj}
-                    width={width}
-                    height={height}
-                  />
-                </Layer>
-                
-                {/* Capa de dibujo */}
-                <Layer>
-                  {lines.map((line, i) => (
-                    <Line
-                      key={i}
-                      points={line.points}
-                      stroke={line.color}
-                      strokeWidth={line.strokeWidth}
-                      tension={0.5}
-                      lineCap="round"
-                      lineJoin="round"
-                      globalCompositeOperation={
-                        line.tool === 'eraser' ? 'destination-out' : 'source-over'
-                      }
+                {/* Control de capa original */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm">{t("original_image") || "Imagen original"}</label>
+                    <input
+                      type="checkbox"
+                      checked={originalLayerVisible}
+                      onChange={(e) => setOriginalLayerVisible(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-700 text-blue-600"
                     />
-                  ))}
-                </Layer>
-              </Stage>
+                  </div>
+                  
+                  {originalLayerVisible && (
+                    <div className="space-y-1">
+                      <label className="text-xs">{t("opacity") || "Opacidad"}: {Math.round(originalLayerOpacity * 100)}%</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={originalLayerOpacity}
+                        onChange={(e) => setOriginalLayerOpacity(parseFloat(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Control de capa stencil */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm">{t("stencil") || "Stencil"}</label>
+                    <input
+                      type="checkbox"
+                      checked={stencilLayerVisible}
+                      onChange={(e) => setStencilLayerVisible(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-700 text-blue-600"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="text-center text-sm text-gray-400">
@@ -380,10 +434,6 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         <Button variant="outline" onClick={exportAsMergedPNG}>
           <ImageDown className="h-4 w-4 mr-2" />
           {t("export_merged_png") || "Exportar combinado (PNG)"}
-        </Button>
-        <Button variant="outline" onClick={exportAsPSD}>
-          <Layers className="h-4 w-4 mr-2" />
-          {t("export_for_procreate") || "Exportar para Procreate"}
         </Button>
         {onSave && (
           <Button variant="default" onClick={saveEditedImage}>
