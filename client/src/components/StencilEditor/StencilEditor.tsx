@@ -126,6 +126,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     setPosition(newPos);
   };
   
+  // Función para corregir la precisión de un punto táctil
+  const correctTouchPosition = (stage: Konva.Stage, touch: Touch) => {
+    // Calcular las coordenadas correctas basadas en el escenario y el zoom
+    const rect = stage.container().getBoundingClientRect();
+    
+    // Coordenadas absolutas del toque
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
+    
+    // Ajustar las coordenadas al factor de escala y posición
+    return {
+      x: (touchX - position.x) / scale,
+      y: (touchY - position.y) / scale
+    };
+  };
+  
   // Función para manejar gestos táctiles (pinch to zoom)
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
@@ -136,7 +152,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     // Si estamos en modo dibujo y se está dibujando, manejar el dibujo
     if (mode === 'drawing' && isDrawing) {
       const touch = e.evt.touches[0];
-      const point = stage.getPointerPosition();
+      
+      // Usar la corrección de precisión en lugar del getPointerPosition
+      const point = correctTouchPosition(stage, touch);
       if (!point) return;
       
       const lastLine = lines[lines.length - 1];
@@ -197,22 +215,25 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         }
         
         // Determinar el factor de escala basado en la distancia de pinch
-        const scale = stage.scale() || { x: 1, y: 1 };
-        const newScale = scale.x * (distance / stage.touchDistance);
+        const stageScale = scale; // Use our state variable directly
+        const newScaleValue = stageScale * (distance / stage.touchDistance);
         
         // Limitar el zoom mínimo y máximo
-        const limitedScale = Math.max(0.1, Math.min(newScale, 10));
+        const limitedScale = Math.max(0.1, Math.min(newScaleValue, 10));
+        
+        // Obtener el rectángulo del container para calcular coordenadas precisas
+        const rect = stage.container().getBoundingClientRect();
         
         // Calcular el punto central del pinch para hacer zoom sobre ese punto
         const center = {
-          x: (touch1.clientX + touch2.clientX) / 2,
-          y: (touch1.clientY + touch2.clientY) / 2,
+          x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+          y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
         };
         
-        const oldScale = scale.x;
+        // Calcular el nuevo punto de origen considerando el zoom
         const mousePointTo = {
-          x: (center.x - position.x) / oldScale,
-          y: (center.y - position.y) / oldScale,
+          x: (center.x - position.x) / stageScale,
+          y: (center.y - position.y) / stageScale,
         };
         
         const newPos = {
@@ -221,23 +242,31 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         };
         
         stage.touchDistance = distance;
+        
+        // Actualizar estado con las nuevas coordenadas
         setScale(limitedScale);
         setPosition(newPos);
-      } else if (isDragging) {
+      } else if (isDragging && stage.lastTouch) {
         // Manejar movimiento (pan) con un solo dedo en modo movimiento
         const touch = e.evt.touches[0];
-        const newPosition = {
-          x: position.x + (touch.clientX - stage.lastTouch?.clientX || 0),
-          y: position.y + (touch.clientY - stage.lastTouch?.clientY || 0),
-        };
         
-        setPosition(newPosition);
+        // Solo actualizar si existe el toque anterior
+        if (stage.lastTouch.clientX !== undefined && stage.lastTouch.clientY !== undefined) {
+          const newPosition = {
+            x: position.x + (touch.clientX - stage.lastTouch.clientX),
+            y: position.y + (touch.clientY - stage.lastTouch.clientY),
+          };
+          
+          setPosition(newPosition);
+        }
+        
+        // Actualizar el toque más reciente
         stage.lastTouch = touch;
       }
     }
   }, [isDrawing, tool, lines, position, scale, mode, isDragging]);
 
-  // Función para manejar el inicio de toques táctiles
+  // Función para manejar el inicio de toques táctiles con precisión mejorada
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
     const stage = e.target.getStage();
     if (!stage) return;
@@ -250,7 +279,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       // Si estamos en modo dibujo, empezar a dibujar
       if (mode === 'drawing') {
         setIsDrawing(true);
-        const pos = stage.getPointerPosition();
+        
+        // Calcular la posición con mayor precisión
+        const pos = correctTouchPosition(stage, touch);
         if (!pos) return;
         
         // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
