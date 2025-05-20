@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Stage, Layer, Image, Line } from 'react-konva';
+import { Stage, Layer, Image, Line, Group } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { ReactCompareSlider, ReactCompareSliderImage } from 'react-compare-slider';
 import { Button } from '@/components/ui/button';
@@ -387,31 +387,48 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   </Layer>
                 )}
                 
-                {/* Capa del stencil */}
+                {/* Capa del stencil - Ahora incluida dentro de un grupo para que el borrador funcione correctamente */}
                 {stencilLayerVisible && (
                   <Layer ref={stencilLayerRef}>
-                    <Image
-                      image={stencilImageObj}
-                      width={width}
-                      height={height}
-                    />
+                    <Group
+                      globalCompositeOperation="source-over"
+                      listening={false}
+                    >
+                      <Image
+                        image={stencilImageObj}
+                        width={width}
+                        height={height}
+                      />
+                      
+                      {/* Añadimos las líneas de borrador directamente en la capa del stencil */}
+                      {lines.filter(line => line.tool === 'eraser').map((line, i) => (
+                        <Line
+                          key={`eraser-${i}`}
+                          points={line.points}
+                          stroke={'white'}
+                          strokeWidth={line.strokeWidth}
+                          tension={0.5}
+                          lineCap="round"
+                          lineJoin="round"
+                          globalCompositeOperation="destination-out"
+                        />
+                      ))}
+                    </Group>
                   </Layer>
                 )}
                 
-                {/* Capa de dibujo */}
+                {/* Capa de dibujo - Solo para las líneas de pincel, no borrador */}
                 <Layer>
-                  {lines.map((line, i) => (
+                  {lines.filter(line => line.tool === 'brush').map((line, i) => (
                     <Line
-                      key={i}
+                      key={`brush-${i}`}
                       points={line.points}
                       stroke={line.color}
                       strokeWidth={line.strokeWidth}
                       tension={0.5}
                       lineCap="round"
                       lineJoin="round"
-                      globalCompositeOperation={
-                        line.tool === 'eraser' ? 'destination-out' : 'source-over'
-                      }
+                      globalCompositeOperation="source-over"
                     />
                   ))}
                 </Layer>
