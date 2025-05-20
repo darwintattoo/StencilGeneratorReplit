@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Stage, Layer, Image, Line, Group } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
-import Konva from 'konva'; // Importamos Konva directamente para usar sus funciones
+import Konva from 'konva';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { 
   Brush, 
@@ -47,10 +48,11 @@ interface StencilEditorProps {
 
 export default function StencilEditor({ originalImage, stencilImage, onSave }: StencilEditorProps) {
   const { t } = useLanguage();
+  const { toast } = useToast();
   
   // Referencias a los elementos de canvas
-  const stageRef = useRef<any>(null);
-  const stencilLayerRef = useRef<any>(null);
+  const stageRef = useRef<Konva.Stage | null>(null);
+  const stencilImageRef = useRef<Konva.Image | null>(null);
   
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
@@ -75,6 +77,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [mode, setMode] = useState<'drawing' | 'panning'>('drawing');
+  
+  // Estado para puntos temporales (para dibujo más suave)
+  const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
+  const lastTouchDistance = useRef<number | null>(null);
+  const lastTouchCenter = useRef<{ x: number, y: number } | null>(null);
   
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
@@ -128,187 +135,224 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   };
   
   // Función para calcular la posición exacta con cualquier entrada (mouse o touch)
-  const getPointerPosition = (stage: Konva.Stage, clientX: number, clientY: number) => {
+  const getRelativePointerPosition = (evt: MouseEvent | Touch) => {
+    if (!stageRef.current) return null;
+    
+    const stage = stageRef.current;
     // Obtener el rectángulo del contenedor para coordenadas precisas
     const rect = stage.container().getBoundingClientRect();
     
-    // Calcular las coordenadas relativas al contenedor
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Calcular coordenadas relativas al contenedor
+    const pointX = evt.clientX - rect.left;
+    const pointY = evt.clientY - rect.top;
     
-    // Ajustar las coordenadas considerando la escala y posición
+    // Convertir a coordenadas del canvas ajustando escala y posición
     return {
-      x: (x - position.x) / scale,
-      y: (y - position.y) / scale
+      x: (pointX - position.x) / scale,
+      y: (pointY - position.y) / scale
     };
   };
   
-  // Función para manejar gestos táctiles (pinch to zoom)
+  // Función para calcular el centro y distancia en gestos multitáctiles
+  const getMultitouchCenter = (touch1: Touch, touch2: Touch) => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    
+    const rect = stage.container().getBoundingClientRect();
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+      y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+      distance: Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      )
+    };
+  };
+  
+  // Función para manejar gestos táctiles con enfoque Procreate
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
-    const stage = e.target.getStage();
-    if (!stage) return;
+    if (!stageRef.current) return;
+    const stage = stageRef.current;
     
-    // Si estamos en modo dibujo y se está dibujando, manejar el dibujo
+    // Si estamos dibujando con un dedo
     if (mode === 'drawing' && isDrawing && e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
+      const pointerPos = getRelativePointerPosition(touch);
+      if (!pointerPos) return;
       
-      // Obtener la posición relativa al contenedor del stage, ajustando por escala/posición
-      const rect = stage.container().getBoundingClientRect();
-      const rawX = touch.clientX - rect.left;
-      const rawY = touch.clientY - rect.top;
-      
-      // Convertir a coordenadas del canvas (ajustando por la escala y posición)
-      const point = {
-        x: (rawX - position.x) / scale,
-        y: (rawY - position.y) / scale
-      };
-      
+      // Obtener la última línea
       const lastLine = lines[lines.length - 1];
       if (!lastLine) return;
       
-      // Agregar nuevo punto a la línea actual
-      lastLine.points = lastLine.points.concat([point.x, point.y]);
+      // Calcular la distancia desde el último punto
+      if (lastPointerPosition.current) {
+        const dx = pointerPos.x - lastPointerPosition.current.x;
+        const dy = pointerPos.y - lastPointerPosition.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Si la distancia es significativa, añadir puntos intermedios para mejorar la calidad
+        if (distance > 5) {
+          const steps = Math.floor(distance / 2);
+          for (let i = 1; i <= steps; i++) {
+            const ratio = i / steps;
+            const x = lastPointerPosition.current.x + dx * ratio;
+            const y = lastPointerPosition.current.y + dy * ratio;
+            lastLine.points = lastLine.points.concat([x, y]);
+          }
+        } else {
+          // Si no, añadir el punto actual
+          lastLine.points = lastLine.points.concat([pointerPos.x, pointerPos.y]);
+        }
+      } else {
+        // Si no hay posición anterior, simplemente añadir el punto
+        lastLine.points = lastLine.points.concat([pointerPos.x, pointerPos.y]);
+      }
       
-      // Actualizar inmediatamente para mayor precisión
+      // Guardar la posición actual para la próxima vez
+      lastPointerPosition.current = pointerPos;
+      
+      // Actualizar el estado
       setLines([...lines.slice(0, -1), lastLine]);
       return;
     }
     
-    // Si estamos en modo movimiento o hay más de un toque (gesto de zoom)
-    if (mode === 'panning' || e.evt.touches.length === 2) {
-      // Manejar zoom con dos dedos (pinch to zoom)
-      if (e.evt.touches.length === 2) {
-        const touch1 = e.evt.touches[0];
-        const touch2 = e.evt.touches[1];
-        
-        // Calcular la distancia entre los dos toques
-        const distance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        );
-        
-        if (!stage.touchDistance) {
-          stage.touchDistance = distance;
-          return;
-        }
-        
-        // Determinar el factor de escala basado en la distancia de pinch
-        const stageScale = scale; // Use our state variable directly
-        const newScaleValue = stageScale * (distance / stage.touchDistance);
-        
-        // Limitar el zoom mínimo y máximo
-        const limitedScale = Math.max(0.1, Math.min(newScaleValue, 10));
-        
-        // Obtener el rectángulo del container para calcular coordenadas precisas
-        const rect = stage.container().getBoundingClientRect();
-        
-        // Calcular el punto central del pinch para hacer zoom sobre ese punto
-        const center = {
-          x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-          y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-        };
-        
-        // Calcular el nuevo punto de origen considerando el zoom
-        const mousePointTo = {
-          x: (center.x - position.x) / stageScale,
-          y: (center.y - position.y) / stageScale,
-        };
-        
-        const newPos = {
-          x: center.x - mousePointTo.x * limitedScale,
-          y: center.y - mousePointTo.y * limitedScale,
-        };
-        
-        stage.touchDistance = distance;
-        
-        // Actualizar estado con las nuevas coordenadas
-        setScale(limitedScale);
-        setPosition(newPos);
-      } else if (isDragging) {
-        // Manejar movimiento (pan) con un solo dedo en modo movimiento
-        const touch = e.evt.touches[0];
-        
-        if (stage.lastTouchClientX !== undefined && stage.lastTouchClientY !== undefined) {
-          const newPosition = {
-            x: position.x + (touch.clientX - stage.lastTouchClientX),
-            y: position.y + (touch.clientY - stage.lastTouchClientY),
-          };
-          
-          setPosition(newPosition);
-        }
-        
-        // Guardar las coordenadas del toque actual
-        stage.lastTouchClientX = touch.clientX;
-        stage.lastTouchClientY = touch.clientY;
+    // Zoom con dos dedos (pinch-to-zoom)
+    if (e.evt.touches.length === 2) {
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+      
+      // Obtener información del gesto
+      const touchInfo = getMultitouchCenter(touch1, touch2);
+      if (!touchInfo) return;
+      
+      // Primera vez del gesto
+      if (lastTouchDistance.current === null) {
+        lastTouchDistance.current = touchInfo.distance;
+        lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
+        return;
       }
+      
+      // Calcular nuevo nivel de zoom
+      const newScale = scale * (touchInfo.distance / lastTouchDistance.current);
+      const limitedScale = Math.max(0.1, Math.min(newScale, 10));
+      
+      // Calcular nueva posición centrada en el punto de pellizco
+      const mousePointTo = {
+        x: (touchInfo.x - position.x) / scale,
+        y: (touchInfo.y - position.y) / scale,
+      };
+      
+      const newPos = {
+        x: touchInfo.x - mousePointTo.x * limitedScale,
+        y: touchInfo.y - mousePointTo.y * limitedScale,
+      };
+      
+      // Actualizar estado
+      setScale(limitedScale);
+      setPosition(newPos);
+      
+      // Guardar valores para el próximo evento
+      lastTouchDistance.current = touchInfo.distance;
+      lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
+      return;
     }
-  }, [isDrawing, tool, lines, position, scale, mode, isDragging]);
-
-  // Función para manejar el inicio de toques táctiles con precisión mejorada
-  const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
-    const stage = e.target.getStage();
-    if (!stage) return;
     
-    // Guardar posición del toque
-    if (e.evt.touches.length === 1) {
+    // Movimiento (panning) con un dedo en modo movimiento
+    if (mode === 'panning' && isDragging && e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
       
-      // Guardar coordenadas exactas del toque actual
-      stage.lastTouchClientX = touch.clientX;
-      stage.lastTouchClientY = touch.clientY;
+      if (lastPointerPosition.current) {
+        const newPosition = {
+          x: position.x + (touch.clientX - lastPointerPosition.current.x),
+          y: position.y + (touch.clientY - lastPointerPosition.current.y),
+        };
+        
+        setPosition(newPosition);
+      }
       
-      // Si estamos en modo dibujo, empezar a dibujar
+      // Actualizar posición para el próximo evento
+      const rect = stage.container().getBoundingClientRect();
+      lastPointerPosition.current = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+    }
+  }, [isDrawing, lines, position, scale, mode, isDragging]);
+
+  // Función para manejar el inicio de toques táctiles en estilo Procreate
+  const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    
+    if (!stageRef.current) return;
+    
+    // Limpiar el último punto de referencia para dibujo suave
+    lastPointerPosition.current = null;
+    
+    // Si hay un solo toque
+    if (e.evt.touches.length === 1) {
+      const touch = e.evt.touches[0];
+      const pointerPos = getRelativePointerPosition(touch);
+      if (!pointerPos) return;
+      
+      // Si estamos en modo dibujo
       if (mode === 'drawing') {
         setIsDrawing(true);
         
-        // Obtener la posición relativa al contenedor del stage, ajustando por escala/posición
-        const rect = stage.container().getBoundingClientRect();
-        const rawX = touch.clientX - rect.left;
-        const rawY = touch.clientY - rect.top;
-        
-        // Convertir a coordenadas del canvas (ajustando por la escala y posición)
-        const pos = {
-          x: (rawX - position.x) / scale,
-          y: (rawY - position.y) / scale
-        };
-        
-        // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
+        // Crear una nueva línea con el tamaño adecuado para el borrador o pincel
         const effectiveSize = tool === 'eraser' ? brushSize * 3 : brushSize;
         
         const newLine: Line = {
           tool,
-          points: [pos.x, pos.y],
+          points: [pointerPos.x, pointerPos.y],
           color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
           strokeWidth: effectiveSize
         };
         
+        // Guardar posición para suavizado de trazos
+        lastPointerPosition.current = pointerPos;
+        
+        // Actualizar estado
         setLines([...lines, newLine]);
         setUndoHistory([...undoHistory, [...lines]]);
         setRedoHistory([]);
-      } else {
+      } else if (mode === 'panning') {
+        // Modo de navegación: estamos empezando a mover el canvas
         setIsDragging(true);
+        
+        // Guardar la posición inicial para calcular el desplazamiento
+        lastPointerPosition.current = {
+          x: touch.clientX,
+          y: touch.clientY
+        };
       }
     } 
-    // Si hay dos toques, preparar para zoom
+    // Si hay dos toques, preparar para zoom (estilo pellizco)
     else if (e.evt.touches.length === 2) {
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
       
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) +
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
+      // Obtener información inicial del gesto
+      const touchInfo = getMultitouchCenter(touch1, touch2);
+      if (!touchInfo) return;
       
-      stage.touchDistance = distance;
+      // Guardar valores iniciales para calcular el zoom
+      lastTouchDistance.current = touchInfo.distance;
+      lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
     }
   }, [mode, tool, brushSize, brushColor, lines, undoHistory, position, scale]);
 
   // Función para manejar el final de toques táctiles
   const handleTouchEnd = useCallback(() => {
+    // Finalizar los estados de dibujo y arrastre
     setIsDrawing(false);
     setIsDragging(false);
+    
+    // Limpiar referencias temporales para pinch-to-zoom
+    lastTouchDistance.current = null;
+    lastTouchCenter.current = null;
+    lastPointerPosition.current = null;
   }, []);
   
   // Función para comenzar a dibujar (mouse)
@@ -464,16 +508,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const exportAsPNG = () => {
     if (!stageRef.current) return;
     
-    // Primero ocultamos temporalmente la capa de la imagen original
-    const originalVisible = stencilLayerRef.current?.visible();
-    stencilLayerRef.current?.visible(true);
-    
     const uri = stageRef.current.toDataURL({
       pixelRatio: 2
     });
-    
-    // Restauramos la visibilidad
-    stencilLayerRef.current?.visible(originalVisible);
     
     saveAs(uri, 'stencil-edited.png');
   };
@@ -754,7 +791,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   image={stencilImageObj}
                   width={width}
                   height={height}
-                  ref={stencilLayerRef}
+                  ref={stencilImageRef}
                 />
               )}
             </Layer>
