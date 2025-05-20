@@ -84,7 +84,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     const newLine: Line = {
       tool,
       points: [pos.x, pos.y],
-      color: tool === 'brush' ? brushColor : '#00000000', // Color transparente para el borrador
+      color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
       strokeWidth: brushSize
     };
     
@@ -211,14 +211,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   }
   
   // Calcular dimensiones proporcionales para que ambas imágenes tengan el mismo tamaño
-  const maxWidth = Math.min(window.innerWidth - 40, 800);
+  // Usamos un tamaño mayor para que la imagen se vea más clara
+  const maxWidth = Math.min(window.innerWidth - 40, 1000);
   const scale = maxWidth / Math.max(originalImageObj.width, stencilImageObj.width);
   const width = originalImageObj.width * scale;
   const height = originalImageObj.height * scale;
   
   return (
     <div className="flex flex-col w-full space-y-4">
-      <Tabs defaultValue="compare" className="w-full" onValueChange={(value) => setActiveView(value as 'compare' | 'edit')}>
+      <Tabs defaultValue="edit" className="w-full" onValueChange={(value) => setActiveView(value as 'compare' | 'edit')}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="compare">{t("compare") || "Comparar"}</TabsTrigger>
           <TabsTrigger value="edit">{t("edit") || "Editar"}</TabsTrigger>
