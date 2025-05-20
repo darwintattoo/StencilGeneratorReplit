@@ -150,12 +150,19 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     if (!stage) return;
     
     // Si estamos en modo dibujo y se está dibujando, manejar el dibujo
-    if (mode === 'drawing' && isDrawing) {
+    if (mode === 'drawing' && isDrawing && e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
       
-      // Usar la corrección de precisión en lugar del getPointerPosition
-      const point = correctTouchPosition(stage, touch);
-      if (!point) return;
+      // Obtener la posición relativa al contenedor del stage, ajustando por escala/posición
+      const rect = stage.container().getBoundingClientRect();
+      const rawX = touch.clientX - rect.left;
+      const rawY = touch.clientY - rect.top;
+      
+      // Convertir a coordenadas del canvas (ajustando por la escala y posición)
+      const point = {
+        x: (rawX - position.x) / scale,
+        y: (rawY - position.y) / scale
+      };
       
       const lastLine = lines[lines.length - 1];
       if (!lastLine) return;
@@ -189,10 +196,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       
       lastLine.points = lastLine.points.concat([point.x, point.y]);
       
-      // Usar requestAnimationFrame para mejorar el rendimiento en dispositivos lentos
-      window.requestAnimationFrame(() => {
-        setLines([...lines.slice(0, -1), lastLine]);
-      });
+      // Actualizar inmediatamente para mayor precisión
+      setLines([...lines.slice(0, -1), lastLine]);
       return;
     }
     
@@ -274,18 +279,30 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     // Guardar posición del toque
     if (e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
-      stage.lastTouch = touch;
+      
+      // Guardar referencia clara del toque actual
+      stage.lastTouch = {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      };
       
       // Si estamos en modo dibujo, empezar a dibujar
       if (mode === 'drawing') {
         setIsDrawing(true);
         
-        // Calcular la posición con mayor precisión
-        const pos = correctTouchPosition(stage, touch);
-        if (!pos) return;
+        // Obtener la posición relativa al contenedor del stage, ajustando por escala/posición
+        const rect = stage.container().getBoundingClientRect();
+        const rawX = touch.clientX - rect.left;
+        const rawY = touch.clientY - rect.top;
+        
+        // Convertir a coordenadas del canvas (ajustando por la escala y posición)
+        const pos = {
+          x: (rawX - position.x) / scale,
+          y: (rawY - position.y) / scale
+        };
         
         // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
-        const effectiveSize = tool === 'eraser' ? brushSize * 2.5 : brushSize;
+        const effectiveSize = tool === 'eraser' ? brushSize * 3 : brushSize;
         
         const newLine: Line = {
           tool,
@@ -313,7 +330,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       
       stage.touchDistance = distance;
     }
-  }, [mode, tool, brushSize, brushColor, lines, undoHistory]);
+  }, [mode, tool, brushSize, brushColor, lines, undoHistory, position, scale]);
 
   // Función para manejar el final de toques táctiles
   const handleTouchEnd = useCallback(() => {
@@ -326,15 +343,26 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     if (mode !== 'drawing') return;
     
     setIsDrawing(true);
-    const pos = e.target.getStage()?.getPointerPosition();
-    if (!pos) return;
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    // Obtener posición exacta del ratón relativa al contenedor
+    const rect = stage.container().getBoundingClientRect();
+    const mouseX = e.evt.clientX - rect.left;
+    const mouseY = e.evt.clientY - rect.top;
+    
+    // Convertir a coordenadas del canvas (ajustando por la escala y posición)
+    const adjustedPoint = {
+      x: (mouseX - position.x) / scale,
+      y: (mouseY - position.y) / scale
+    };
     
     // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
     const effectiveSize = tool === 'eraser' ? brushSize * 2.5 : brushSize;
     
     const newLine: Line = {
       tool,
-      points: [pos.x, pos.y],
+      points: [adjustedPoint.x, adjustedPoint.y],
       color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
       strokeWidth: effectiveSize
     };
@@ -369,8 +397,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     // Si estamos en modo dibujo, manejar el dibujo
     if (mode === 'drawing' && isDrawing) {
       const stage = e.target.getStage();
-      const point = stage?.getPointerPosition();
-      if (!point) return;
+      if (!stage) return;
+      
+      // Obtener posición exacta del ratón relativa al contenedor
+      const rect = stage.container().getBoundingClientRect();
+      const mouseX = e.evt.clientX - rect.left;
+      const mouseY = e.evt.clientY - rect.top;
+      
+      // Convertir a coordenadas del canvas (ajustando por la escala y posición)
+      const point = {
+        x: (mouseX - position.x) / scale,
+        y: (mouseY - position.y) / scale
+      };
       
       const lastLine = lines[lines.length - 1];
       if (!lastLine) return;
@@ -404,10 +442,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       
       lastLine.points = lastLine.points.concat([point.x, point.y]);
       
-      // Usar requestAnimationFrame para mejorar el rendimiento en dispositivos lentos
-      window.requestAnimationFrame(() => {
-        setLines([...lines.slice(0, -1), lastLine]);
-      });
+      // Actualizar inmediatamente para mayor precisión
+      setLines([...lines.slice(0, -1), lastLine]);
     }
   };
   
@@ -764,20 +800,36 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               ))}
             </Layer>
             
-            {/* Capa con los borrados, aplicada solo al stencil mediante composición */}
-            <Layer>
+            {/* Capa para líneas de borrador - usa la composición global */}
+            <Layer
+              listening={true}
+              globalCompositeOperation="destination-out"
+            >
               {lines.filter(line => line.tool === 'eraser').map((line, i) => (
                 <Line
                   key={`eraser-${i}`}
                   points={line.points}
-                  stroke={'white'}
+                  stroke={'rgba(255,255,255,1)'}
                   strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap="round"
                   lineJoin="round"
-                  globalCompositeOperation="destination-out"
                 />
               ))}
+            </Layer>
+            
+            {/* Capa adicional para capturar eventos en áreas borradas */}
+            <Layer listening={true} opacity={0}>
+              <Group>
+                {/* Rectángulo transparente que cubre todo el lienzo */}
+                <Line
+                  points={[0, 0, width, 0, width, height, 0, height, 0, 0]}
+                  stroke="transparent"
+                  fill="transparent"
+                  closed={true}
+                  listening={true}
+                />
+              </Group>
             </Layer>
           </Stage>
         </div>
