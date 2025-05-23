@@ -178,45 +178,63 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     
     // Si estamos dibujando con un dedo
     if (mode === 'drawing' && isDrawing && e.evt.touches.length === 1) {
-      const touch = e.evt.touches[0];
-      const pointerPos = getRelativePointerPosition(touch);
+      // Obtener coordenadas del puntero (ajustadas por el container)
+      const pointerPos = stage.getPointerPosition();
       if (!pointerPos) return;
       
-      // Obtener la última línea
-      const lastLine = lines[lines.length - 1];
-      if (!lastLine) return;
+      // Transformar a coordenadas del canvas con el zoom aplicado
+      const adjustedPos = {
+        x: (pointerPos.x - position.x) / scale,
+        y: (pointerPos.y - position.y) / scale
+      };
       
-      // Calcular la distancia desde el último punto
+      // Obtener la última línea para añadir puntos
+      const lastLineIndex = lines.length - 1;
+      if (lastLineIndex < 0) return;
+      
+      // Crear una copia de las líneas y de la última línea
+      const updatedLines = [...lines];
+      const lastLine = { ...updatedLines[lastLineIndex] };
+      
+      // Si hay un punto anterior, interpolar para trazos suaves
       if (lastPointerPosition.current) {
-        const dx = pointerPos.x - lastPointerPosition.current.x;
-        const dy = pointerPos.y - lastPointerPosition.current.y;
+        const dx = adjustedPos.x - lastPointerPosition.current.x;
+        const dy = adjustedPos.y - lastPointerPosition.current.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Si la distancia es significativa, añadir puntos intermedios para suavizar
-        if (distance > 5) {
-          // Usar más puntos para el borrador para asegurar borrado completo
-          const steps = tool === 'eraser' ? Math.ceil(distance / 1.5) : Math.floor(distance / 2);
+        // Si el movimiento es significativo, crear varios puntos intermedios
+        if (distance > 1) {
+          // Para el borrador, usar más puntos para asegurar cobertura total
+          const steps = tool === 'eraser' ? Math.ceil(distance) : Math.max(1, Math.floor(distance / 2));
+          const newPoints = [];
           
           for (let i = 1; i <= steps; i++) {
             const ratio = i / steps;
             const x = lastPointerPosition.current.x + dx * ratio;
             const y = lastPointerPosition.current.y + dy * ratio;
-            lastLine.points = lastLine.points.concat([x, y]);
+            newPoints.push(x, y);
           }
+          
+          // Actualizar los puntos de la línea
+          lastLine.points = [...lastLine.points, ...newPoints];
         } else {
-          // Si no, añadir el punto actual
-          lastLine.points = lastLine.points.concat([pointerPos.x, pointerPos.y]);
+          // Añadir solo el punto actual si la distancia es pequeña
+          lastLine.points = [...lastLine.points, adjustedPos.x, adjustedPos.y];
         }
       } else {
-        // Si no hay posición anterior, simplemente añadir el punto
-        lastLine.points = lastLine.points.concat([pointerPos.x, pointerPos.y]);
+        // Si no hay punto anterior, añadir el punto actual
+        lastLine.points = [...lastLine.points, adjustedPos.x, adjustedPos.y];
       }
       
-      // Guardar la posición actual para la próxima vez
-      lastPointerPosition.current = pointerPos;
+      // Actualizar el punto de referencia para el próximo evento
+      lastPointerPosition.current = adjustedPos;
       
-      // Actualizar el estado de inmediato para ver el trazo en tiempo real
-      setLines([...lines.slice(0, -1), lastLine]);
+      // Actualizar el estado con las nuevas líneas
+      updatedLines[lastLineIndex] = lastLine;
+      setLines(updatedLines);
+      
+      // Forzar el renderizado inmediato para ver los cambios
+      stage.batchDraw();
       return;
     }
     
@@ -283,57 +301,63 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [isDrawing, lines, position, scale, mode, isDragging]);
 
-  // Función para manejar el inicio de toques táctiles en estilo Procreate
+  // Función para manejar el inicio de toques táctiles - Simplificado para mejor compatibilidad
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
     if (!stageRef.current) return;
     
-    // Limpiar el último punto de referencia para dibujo suave
+    // Reset tracking variables
     lastPointerPosition.current = null;
     
-    // Si hay un solo toque
+    // Un solo toque - dibujo o movimiento
     if (e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
-      const pointerPos = getRelativePointerPosition(touch);
+      const stage = stageRef.current;
+      
+      // Coordenadas dentro del stage
+      const pointerPos = stage.getPointerPosition();
       if (!pointerPos) return;
       
-      // Si estamos en modo dibujo
+      // Convertir a coordenadas reales con el zoom
+      const actualPos = {
+        x: (pointerPos.x - position.x) / scale,
+        y: (pointerPos.y - position.y) / scale
+      };
+      
+      // Modo dibujo
       if (mode === 'drawing') {
         setIsDrawing(true);
         
-        // Crear una nueva línea con el tamaño adecuado para el borrador o pincel
-        let effectiveSize = brushSize;
+        // Tamaño basado en la herramienta
+        const effectiveSize = tool === 'eraser' 
+          ? brushSize * 5 // Borrador mucho más grande
+          : brushSize;
         
-        // El borrador necesita ser más grande para ser efectivo
-        if (tool === 'eraser') {
-          effectiveSize = brushSize * 3.5;
-        }
-        
+        // Nueva línea con punto inicial duplicado (técnica para puntos individuales)
         const newLine: Line = {
           tool,
-          points: [pointerPos.x, pointerPos.y, pointerPos.x, pointerPos.y], // Duplicar el punto inicial para asegurar que sea visible
-          color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
+          points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
+          color: tool === 'brush' ? brushColor : '#ffffff',
           strokeWidth: effectiveSize
         };
         
-        // Guardar posición para suavizado de trazos
-        lastPointerPosition.current = pointerPos;
-        
         // Actualizar estado
-        setLines([...lines, newLine]);
-        setUndoHistory([...undoHistory, [...lines]]);
+        setLines(prevLines => [...prevLines, newLine]);
+        setUndoHistory(prev => [...prev, [...lines]]);
         setRedoHistory([]);
         
-        // Forzar renderizado para asegurar que el borrador sea visible inmediatamente
-        if (tool === 'eraser' && stageRef.current) {
-          stageRef.current.batchDraw();
-        }
-      } else if (mode === 'panning') {
-        // Modo de navegación: estamos empezando a mover el canvas
+        // Guardar posición para suavizado
+        lastPointerPosition.current = actualPos;
+        
+        // Renderizar inmediatamente
+        stage.batchDraw();
+      } 
+      // Modo navegación
+      else if (mode === 'panning') {
         setIsDragging(true);
         
-        // Guardar la posición inicial para calcular el desplazamiento
+        // Guardar punto inicial del movimiento
         lastPointerPosition.current = {
           x: touch.clientX,
           y: touch.clientY
@@ -824,26 +848,24 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               ))}
             </Layer>
             
-            {/* Capa especial para el borrador */}
+            {/* Capa con composición especial solo para el borrador */}
             <Layer 
               name="eraser"
             >
-              <Group
-                globalCompositeOperation="destination-out"
-              >
-                {lines.filter(line => line.tool === 'eraser').map((line, i) => (
-                  <Line
-                    key={`eraser-${i}`}
-                    points={line.points}
-                    stroke="white"
-                    strokeWidth={line.strokeWidth * 4} // Mucho más ancho para borrar efectivamente
-                    tension={0.2}
-                    lineCap="round"
-                    lineJoin="round"
-                    listening={false}
-                  />
-                ))}
-              </Group>
+              {lines.filter(line => line.tool === 'eraser').map((line, i) => (
+                <Line
+                  key={`eraser-${i}`}
+                  points={line.points}
+                  stroke="white"
+                  strokeWidth={line.strokeWidth * 5} // 5 veces más ancho para un borrado efectivo
+                  tension={0.1} // Menor tensión para mejor precisión
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="destination-out" // Composición directamente en la línea
+                  perfectDrawEnabled={true}
+                  listening={false}
+                />
+              ))}
             </Layer>
             
             {/* Capa para capturar eventos */}
