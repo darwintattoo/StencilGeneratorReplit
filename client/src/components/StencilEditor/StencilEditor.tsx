@@ -303,11 +303,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         setIsDrawing(true);
         
         // Crear una nueva línea con el tamaño adecuado para el borrador o pincel
-        const effectiveSize = tool === 'eraser' ? brushSize * 3 : brushSize;
+        let effectiveSize = brushSize;
+        
+        // El borrador necesita ser más grande para ser efectivo
+        if (tool === 'eraser') {
+          effectiveSize = brushSize * 3.5;
+        }
         
         const newLine: Line = {
           tool,
-          points: [pointerPos.x, pointerPos.y],
+          points: [pointerPos.x, pointerPos.y, pointerPos.x, pointerPos.y], // Duplicar el punto inicial para asegurar que sea visible
           color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
           strokeWidth: effectiveSize
         };
@@ -319,6 +324,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         setLines([...lines, newLine]);
         setUndoHistory([...undoHistory, [...lines]]);
         setRedoHistory([]);
+        
+        // Forzar renderizado para asegurar que el borrador sea visible inmediatamente
+        if (tool === 'eraser' && stageRef.current) {
+          stageRef.current.batchDraw();
+        }
       } else if (mode === 'panning') {
         // Modo de navegación: estamos empezando a mover el canvas
         setIsDragging(true);
@@ -814,18 +824,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               ))}
             </Layer>
             
-            {/* Capa de borrado */}
+            {/* Capa para borrado más efectivo */}
             <Layer name="eraser">
               {lines.filter(line => line.tool === 'eraser').map((line, i) => (
                 <Line
                   key={`eraser-${i}`}
                   points={line.points}
-                  stroke="white"
+                  stroke="#ffffff"
                   strokeWidth={line.strokeWidth}
-                  tension={0.5}
+                  tension={0.3}
                   lineCap="round"
                   lineJoin="round"
                   globalCompositeOperation="destination-out"
+                  perfectDrawEnabled={true}
+                  opacity={1}
                   listening={false}
                 />
               ))}
