@@ -795,43 +795,17 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa de stencil - rediseñada para mejorar borrado */}
+            {/* Capa de stencil simplificada */}
             <Layer name="stencil">
-              <Group
-                clipFunc={(ctx) => {
-                  // Dibujar todos los trazos del borrador como máscara
-                  lines.filter(line => line.tool === 'eraser').forEach(line => {
-                    ctx.beginPath();
-                    for (let i = 0; i < line.points.length; i += 2) {
-                      const x = line.points[i];
-                      const y = line.points[i + 1];
-                      
-                      if (i === 0) {
-                        ctx.moveTo(x, y);
-                      } else {
-                        ctx.lineTo(x, y);
-                      }
-                    }
-                    ctx.lineWidth = line.strokeWidth * 2;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    ctx.stroke();
-                  });
-                }}
-                globalCompositeOperation="destination-out"
-              >
-                <Group x={0} y={0}>
-                  {stencilLayerVisible && stencilImageObj && (
-                    <Image
-                      image={stencilImageObj}
-                      width={width}
-                      height={height}
-                      ref={stencilImageRef}
-                      listening={false}
-                    />
-                  )}
-                </Group>
-              </Group>
+              {stencilLayerVisible && stencilImageObj && (
+                <Image
+                  image={stencilImageObj}
+                  width={width}
+                  height={height}
+                  ref={stencilImageRef}
+                  listening={false}
+                />
+              )}
             </Layer>
             
             {/* Capa de dibujo: todas las líneas de pincel */}
@@ -850,28 +824,26 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               ))}
             </Layer>
             
-            {/* Nueva implementación de capa de borrado */}
+            {/* Capa especial para el borrador */}
             <Layer 
-              name="eraser" 
-              clearBeforeDraw={true}
+              name="eraser"
             >
-              {lines.filter(line => line.tool === 'eraser').map((line, i) => (
-                <Line
-                  key={`eraser-${i}`}
-                  points={line.points}
-                  stroke="rgba(255,255,255,1)"
-                  strokeWidth={line.strokeWidth * 1.2}
-                  tension={0.2}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation="destination-out"
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                  hitStrokeWidth={10}
-                  opacity={1}
-                  listening={false}
-                />
-              ))}
+              <Group
+                globalCompositeOperation="destination-out"
+              >
+                {lines.filter(line => line.tool === 'eraser').map((line, i) => (
+                  <Line
+                    key={`eraser-${i}`}
+                    points={line.points}
+                    stroke="white"
+                    strokeWidth={line.strokeWidth * 4} // Mucho más ancho para borrar efectivamente
+                    tension={0.2}
+                    lineCap="round"
+                    lineJoin="round"
+                    listening={false}
+                  />
+                ))}
+              </Group>
             </Layer>
             
             {/* Capa para capturar eventos */}
