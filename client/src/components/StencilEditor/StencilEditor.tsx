@@ -241,8 +241,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       return;
     }
     
-    // CASO 2: Paneo con DOS DEDOS - funciona en cualquier modo (dibujo o navegación)
+    // CASO 2: Paneo con DOS DEDOS - Implementación optimizada para mayor fluidez
     else if (e.evt.touches.length === 2) {
+      // Asegurarnos de que estamos en modo arrastre para dos dedos
+      if (!isDragging) {
+        setIsDragging(true);
+      }
+      
       // Obtener información de los dos toques
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
@@ -261,27 +266,42 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       const touchInfo = getMultitouchCenter(touch1, touch2);
       if (!touchInfo) return;
       
-      // PANEO: Calcular diferencia de posición del centro
+      // PANEO: Calcular diferencia de posición del centro con amortiguación para movimiento más suave
       if (lastTouchCenter.current) {
-        const dx = touchInfo.x - lastTouchCenter.current.x;
-        const dy = touchInfo.y - lastTouchCenter.current.y;
+        // La amortiguación hace el movimiento más fluido
+        const damping = 1.0; // 1.0 = sin amortiguación, menor = más suave
+        const dx = (touchInfo.x - lastTouchCenter.current.x) * damping;
+        const dy = (touchInfo.y - lastTouchCenter.current.y) * damping;
         
-        // Actualizar posición del stage
-        setPosition({
-          x: position.x + dx,
-          y: position.y + dy
-        });
+        // Actualizar posición del stage directamente mediante ref para mejor rendimiento
+        if (stageRef.current) {
+          const newPos = {
+            x: position.x + dx,
+            y: position.y + dy
+          };
+          
+          // Aplicar la posición directamente al stage (más rápido que setState)
+          stageRef.current.position(newPos);
+          
+          // También actualizar el state para mantener sincronización
+          setPosition(newPos);
+        }
       }
       
       // ZOOM: Calcular diferencia de distancia entre dedos
-      if (lastTouchDistance.current) {
-        const newScale = scale * (touchInfo.distance / lastTouchDistance.current);
+      if (lastTouchDistance.current && touchInfo.distance > 0) {
+        const scaleFactor = touchInfo.distance / lastTouchDistance.current;
         
-        // Limitar el zoom a valores razonables
-        const limitedScale = Math.min(Math.max(0.1, newScale), 10);
-        
-        // Aplicar el nuevo zoom
-        setScale(limitedScale);
+        // Solo aplicar zoom si el cambio es significativo (evita micro-ajustes)
+        if (Math.abs(scaleFactor - 1) > 0.01) {
+          const newScale = scale * scaleFactor;
+          
+          // Limitar el zoom a valores razonables
+          const limitedScale = Math.min(Math.max(0.1, newScale), 10);
+          
+          // Aplicar el nuevo zoom
+          setScale(limitedScale);
+        }
       }
       
       // Actualizar referencias para el próximo evento
@@ -289,7 +309,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       lastTouchDistance.current = touchInfo.distance;
       
       // Forzar renderizado para movimiento fluido
-      stage.batchDraw();
+      if (stageRef.current) {
+        stageRef.current.batchDraw();
+      }
       
       return;
     }
