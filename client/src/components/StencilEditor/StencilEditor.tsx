@@ -266,41 +266,72 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       const touchInfo = getMultitouchCenter(touch1, touch2);
       if (!touchInfo) return;
       
-      // PANEO: Calcular diferencia de posición del centro con amortiguación para movimiento más suave
+      // PANEO: Enfoque mejorado para calcular desplazamiento con dos dedos
       if (lastTouchCenter.current) {
-        // La amortiguación hace el movimiento más fluido
-        const damping = 1.0; // 1.0 = sin amortiguación, menor = más suave
-        const dx = (touchInfo.x - lastTouchCenter.current.x) * damping;
-        const dy = (touchInfo.y - lastTouchCenter.current.y) * damping;
+        // Implementación mejorada con mejor respuesta táctil y precisión
+        // Usar movimiento relativo sin amortiguación para mayor precisión
+        const dx = touchInfo.x - lastTouchCenter.current.x;
+        const dy = touchInfo.y - lastTouchCenter.current.y;
         
-        // Actualizar posición del stage directamente mediante ref para mejor rendimiento
-        if (stageRef.current) {
-          const newPos = {
-            x: position.x + dx,
-            y: position.y + dy
-          };
-          
-          // Aplicar la posición directamente al stage (más rápido que setState)
-          stageRef.current.position(newPos);
-          
-          // También actualizar el state para mantener sincronización
-          setPosition(newPos);
+        // Solo aplicar cambios si el movimiento es significativo
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+          if (stageRef.current) {
+            // Calcular nueva posición
+            const newX = position.x + dx;
+            const newY = position.y + dy;
+            
+            // Aplicar la posición directamente al stage para respuesta inmediata
+            stageRef.current.x(newX);
+            stageRef.current.y(newY);
+            
+            // Actualizar el state
+            setPosition({
+              x: newX,
+              y: newY
+            });
+          }
         }
       }
       
-      // ZOOM: Calcular diferencia de distancia entre dedos
+      // ZOOM: Separar gestión de zoom para simplificar
       if (lastTouchDistance.current && touchInfo.distance > 0) {
+        // Calcular el factor de escala comparando distancias
         const scaleFactor = touchInfo.distance / lastTouchDistance.current;
         
-        // Solo aplicar zoom si el cambio es significativo (evita micro-ajustes)
-        if (Math.abs(scaleFactor - 1) > 0.01) {
-          const newScale = scale * scaleFactor;
+        // Sólo aplicar zoom si el cambio es sustancial
+        // Un umbral más alto (0.02) evita cambios inadvertidos
+        if (Math.abs(scaleFactor - 1) > 0.02) {
+          // Calcular centro del zoom (punto medio entre los dedos)
+          const zoomCenter = {
+            x: touchInfo.x,
+            y: touchInfo.y
+          };
           
-          // Limitar el zoom a valores razonables
+          // Calcular la nueva escala con limitaciones
+          const newScale = scale * scaleFactor;
           const limitedScale = Math.min(Math.max(0.1, newScale), 10);
           
-          // Aplicar el nuevo zoom
-          setScale(limitedScale);
+          if (stageRef.current) {
+            // Punto antes del zoom (posición en coordenadas del mundo)
+            const mousePointTo = {
+              x: (zoomCenter.x - position.x) / scale,
+              y: (zoomCenter.y - position.y) / scale
+            };
+            
+            // Nueva posición que mantiene el punto centrado
+            const newPos = {
+              x: zoomCenter.x - mousePointTo.x * limitedScale,
+              y: zoomCenter.y - mousePointTo.y * limitedScale
+            };
+            
+            // Aplicar cambios directamente para respuesta inmediata
+            stageRef.current.scale({ x: limitedScale, y: limitedScale });
+            stageRef.current.position(newPos);
+            
+            // Actualizar estado
+            setScale(limitedScale);
+            setPosition(newPos);
+          }
         }
       }
       
