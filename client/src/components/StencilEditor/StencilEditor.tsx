@@ -65,7 +65,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
+  const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
+  // Variable para rastrear cuántos dedos están tocando la pantalla
+  const touchFingerCount = useRef<number>(0);
   
   // Estados para controlar las capas
   const [originalLayerOpacity, setOriginalLayerOpacity] = useState(0.3);
@@ -169,14 +172,14 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     };
   };
   
-  // Función para manejar gestos táctiles con enfoque Procreate
+  // Función para manejar gestos táctiles con soporte mejorado para paneo con dos dedos
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
     if (!stageRef.current) return;
     const stage = stageRef.current;
     
-    // Si estamos dibujando con un dedo
+    // CASO 1: Dibujando con un dedo en modo dibujo
     if (mode === 'drawing' && isDrawing && e.evt.touches.length === 1) {
       // Obtener coordenadas del puntero (ajustadas por el container)
       const pointerPos = stage.getPointerPosition();
@@ -205,7 +208,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         // Si el movimiento es significativo, crear varios puntos intermedios
         if (distance > 1) {
           // Para el borrador, usar más puntos para asegurar cobertura total
-          const steps = tool === 'eraser' ? Math.ceil(distance) : Math.max(1, Math.floor(distance / 2));
+          const steps = tool === 'eraser' ? Math.ceil(distance) * 2 : Math.max(1, Math.floor(distance / 2));
           const newPoints = [];
           
           for (let i = 1; i <= steps; i++) {
@@ -238,44 +241,56 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       return;
     }
     
-    // Zoom con dos dedos (pinch-to-zoom)
-    if (e.evt.touches.length === 2) {
+    // CASO 2: Paneo con DOS DEDOS - funciona en cualquier modo (dibujo o navegación)
+    else if (e.evt.touches.length === 2) {
+      // Obtener información de los dos toques
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
       
-      // Obtener información del gesto
-      const touchInfo = getMultitouchCenter(touch1, touch2);
-      if (!touchInfo) return;
-      
-      // Primera vez del gesto
-      if (lastTouchDistance.current === null) {
+      // Verificar que tengamos la información inicial del pellizco
+      if (!lastTouchDistance.current || !lastTouchCenter.current) {
+        const touchInfo = getMultitouchCenter(touch1, touch2);
+        if (!touchInfo) return;
+        
         lastTouchDistance.current = touchInfo.distance;
         lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
         return;
       }
       
-      // Calcular nuevo nivel de zoom
-      const newScale = scale * (touchInfo.distance / lastTouchDistance.current);
-      const limitedScale = Math.max(0.1, Math.min(newScale, 10));
+      // Obtener información actual del gesto
+      const touchInfo = getMultitouchCenter(touch1, touch2);
+      if (!touchInfo) return;
       
-      // Calcular nueva posición centrada en el punto de pellizco
-      const mousePointTo = {
-        x: (touchInfo.x - position.x) / scale,
-        y: (touchInfo.y - position.y) / scale,
-      };
+      // PANEO: Calcular diferencia de posición del centro
+      if (lastTouchCenter.current) {
+        const dx = touchInfo.x - lastTouchCenter.current.x;
+        const dy = touchInfo.y - lastTouchCenter.current.y;
+        
+        // Actualizar posición del stage
+        setPosition({
+          x: position.x + dx,
+          y: position.y + dy
+        });
+      }
       
-      const newPos = {
-        x: touchInfo.x - mousePointTo.x * limitedScale,
-        y: touchInfo.y - mousePointTo.y * limitedScale,
-      };
+      // ZOOM: Calcular diferencia de distancia entre dedos
+      if (lastTouchDistance.current) {
+        const newScale = scale * (touchInfo.distance / lastTouchDistance.current);
+        
+        // Limitar el zoom a valores razonables
+        const limitedScale = Math.min(Math.max(0.1, newScale), 10);
+        
+        // Aplicar el nuevo zoom
+        setScale(limitedScale);
+      }
       
-      // Actualizar estado
-      setScale(limitedScale);
-      setPosition(newPos);
-      
-      // Guardar valores para el próximo evento
-      lastTouchDistance.current = touchInfo.distance;
+      // Actualizar referencias para el próximo evento
       lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
+      lastTouchDistance.current = touchInfo.distance;
+      
+      // Forzar renderizado para movimiento fluido
+      stage.batchDraw();
+      
       return;
     }
     
@@ -301,7 +316,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [isDrawing, lines, position, scale, mode, isDragging]);
 
-  // Función para manejar el inicio de toques táctiles - Simplificado para mejor compatibilidad
+  // Función para manejar el inicio de toques táctiles - Con soporte mejorado para paneo con dos dedos
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
@@ -310,7 +325,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     // Reset tracking variables
     lastPointerPosition.current = null;
     
-    // Un solo toque - dibujo o movimiento
+    // Actualizar contador de dedos
+    touchFingerCount.current = e.evt.touches.length;
+    
+    // CASO 1: Un solo dedo en pantalla - modo dibujo o navegación normal
     if (e.evt.touches.length === 1) {
       const touch = e.evt.touches[0];
       const stage = stageRef.current;
@@ -331,7 +349,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         
         // Tamaño basado en la herramienta
         const effectiveSize = tool === 'eraser' 
-          ? brushSize * 5 // Borrador mucho más grande
+          ? eraserSize // Usar el tamaño específico del borrador
           : brushSize;
         
         // Nueva línea con punto inicial duplicado (técnica para puntos individuales)
@@ -356,6 +374,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       // Modo navegación
       else if (mode === 'panning') {
         setIsDragging(true);
+        document.body.style.cursor = 'grabbing';
         
         // Guardar punto inicial del movimiento
         lastPointerPosition.current = {
@@ -363,33 +382,67 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           y: touch.clientY
         };
       }
-    } 
-    // Si hay dos toques, preparar para zoom (estilo pellizco)
+    }
+    
+    // CASO 2: Dos dedos en pantalla - siempre activar paneo temporal (independiente del modo)
     else if (e.evt.touches.length === 2) {
+      // Pausar cualquier dibujo en progreso
+      setIsDrawing(false);
+      
+      // Marcar que estamos arrastrando con dos dedos
+      setIsDragging(true);
+      
+      // Cambiar cursor visual
+      document.body.style.cursor = 'grabbing';
+      
+      // Obtener información de los dos toques
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
       
-      // Obtener información inicial del gesto
+      // Guardar datos iniciales para calcular distancia y centro del pellizco
       const touchInfo = getMultitouchCenter(touch1, touch2);
       if (!touchInfo) return;
       
-      // Guardar valores iniciales para calcular el zoom
+      // Guardar valores iniciales para calcular el zoom y el desplazamiento
       lastTouchDistance.current = touchInfo.distance;
-      lastTouchCenter.current = { x: touchInfo.x, y: touchInfo.y };
+      lastTouchCenter.current = { 
+        x: touchInfo.x, 
+        y: touchInfo.y 
+      };
     }
   }, [mode, tool, brushSize, brushColor, lines, undoHistory, position, scale]);
 
   // Función para manejar el final de toques táctiles
-  const handleTouchEnd = useCallback(() => {
-    // Finalizar los estados de dibujo y arrastre
-    setIsDrawing(false);
-    setIsDragging(false);
+  const handleTouchEnd = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    // Actualizar contador de dedos
+    touchFingerCount.current = e.evt.touches.length;
     
-    // Limpiar referencias temporales para pinch-to-zoom
-    lastTouchDistance.current = null;
-    lastTouchCenter.current = null;
-    lastPointerPosition.current = null;
-  }, []);
+    // Si ya no hay toques, finalizar todos los estados
+    if (e.evt.touches.length === 0) {
+      setIsDrawing(false);
+      setIsDragging(false);
+      
+      // Restaurar cursor apropiado según el modo
+      if (mode === 'panning') {
+        document.body.style.cursor = 'grab';
+      } else {
+        document.body.style.cursor = 'default';
+      }
+      
+      // Limpiar referencias temporales para pinch-to-zoom
+      lastTouchDistance.current = null;
+      lastTouchCenter.current = null;
+      lastPointerPosition.current = null;
+    }
+    // Si pasamos de dos dedos a uno, restaurar el modo dibujo si estábamos en ese modo
+    else if (e.evt.touches.length === 1 && mode === 'drawing') {
+      setIsDragging(false);
+      document.body.style.cursor = 'default';
+      
+      // No activamos isDrawing hasta que el usuario levante y vuelva a tocar
+      // Esto evita trazos inesperados después de usar paneo con dos dedos
+    }
+  }, [mode]);
   
   // Función para comenzar a dibujar (mouse)
   const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
@@ -652,7 +705,12 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           <Button
             variant={tool === 'brush' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setTool('brush')}
+            onClick={() => {
+              setTool('brush');
+              // Restaurar globalCompositeOperation normal
+              // (aunque esto se maneja automáticamente en el renderizado de Line)
+            }}
+            className={tool === 'brush' ? "bg-blue-600 hover:bg-blue-700" : ""}
           >
             <Brush className="h-4 w-4 mr-1" />
             {t("brush") || "Pincel"}
@@ -660,10 +718,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           <Button
             variant={tool === 'eraser' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setTool('eraser')}
+            onClick={() => {
+              setTool('eraser');
+              // El borrador real ya está configurado con globalCompositeOperation: 'destination-out'
+              // en la definición de la capa del borrador
+            }}
+            className={tool === 'eraser' ? "bg-red-600 hover:bg-red-700" : ""}
           >
             <Eraser className="h-4 w-4 mr-1" />
-            {t("eraser") || "Borrador"}
+            {t("eraser") || "Borrador Real"}
           </Button>
           <Button
             variant="outline"
@@ -685,16 +748,29 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           </Button>
           
           <div className="flex items-center ml-2">
-            <label className="text-sm mr-2">{t("size") || "Tamaño"}:</label>
+            <label className="text-sm mr-2">
+              {tool === 'brush' 
+                ? (t("brush_size") || "Tamaño del pincel") 
+                : (t("eraser_size") || "Tamaño del borrador")}:
+            </label>
             <input
               type="range"
               min="1"
-              max="20"
-              value={brushSize}
-              onChange={(e) => setBrushSize(parseInt(e.target.value))}
+              max={tool === 'eraser' ? 30 : 20} // Mayor rango para el borrador
+              value={tool === 'brush' ? brushSize : eraserSize}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                if (tool === 'brush') {
+                  setBrushSize(value);
+                } else {
+                  setEraserSize(value);
+                }
+              }}
               className="w-24"
             />
-            <span className="text-sm ml-1">{brushSize}px</span>
+            <span className="text-sm ml-1">
+              {tool === 'brush' ? brushSize : eraserSize}px
+            </span>
           </div>
           
           {tool === 'brush' && (
@@ -901,7 +977,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               ))}
             </Layer>
             
-            {/* Capa con composición especial solo para el borrador */}
+            {/* Capa de borrador real con globalCompositeOperation */}
             <Layer 
               name="eraser"
             >
@@ -909,13 +985,14 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 <Line
                   key={`eraser-${i}`}
                   points={line.points}
-                  stroke="white"
-                  strokeWidth={line.strokeWidth * 5} // 5 veces más ancho para un borrado efectivo
-                  tension={0.1} // Menor tensión para mejor precisión
+                  stroke="rgba(255,255,255,1)" // Blanco sólido para borrar completamente
+                  strokeWidth={line.strokeWidth} // Usar el tamaño definido
+                  tension={0.2} // Suavizado para borrado natural
                   lineCap="round"
                   lineJoin="round"
-                  globalCompositeOperation="destination-out" // Composición directamente en la línea
+                  globalCompositeOperation="destination-out" // Esta es la clave para el borrado real con transparencia
                   perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false} // Mejora el rendimiento
                   listening={false}
                 />
               ))}
