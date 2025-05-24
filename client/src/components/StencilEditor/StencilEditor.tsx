@@ -427,23 +427,35 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Función para continuar dibujando (mouse)
   const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-    // Si estamos en modo movimiento, manejar desplazamiento del canvas
+    // Si estamos en modo movimiento, manejar desplazamiento del canvas con animación suave
     if (mode === 'panning' && isDragging) {
       const stage = e.target.getStage();
       if (!stage) return;
       
+      // Mantener cursor de "mano cerrada" durante el arrastre
+      document.body.style.cursor = 'grabbing';
+      
+      // Obtener posición actual del puntero
       const pointerPos = stage.getPointerPosition();
       if (!pointerPos || !stage.lastMousePos) return;
       
+      // Calcular desplazamiento desde la última posición
       const dx = pointerPos.x - stage.lastMousePos.x;
       const dy = pointerPos.y - stage.lastMousePos.y;
       
-      setPosition({
+      // Actualizar posición del stage
+      const newPos = {
         x: position.x + dx,
         y: position.y + dy
-      });
+      };
       
+      setPosition(newPos);
+      
+      // Actualizar referencia para el próximo movimiento
       stage.lastMousePos = pointerPos;
+      
+      // Forzar renderizado para movimiento más fluido
+      stage.batchDraw();
       return;
     }
     
@@ -522,6 +534,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     
     const stage = e.target.getStage();
     if (!stage) return;
+    
+    // Cambiar el cursor a "mano cerrada" para indicar el arrastre
+    document.body.style.cursor = 'grabbing';
     
     setIsDragging(true);
     const pos = stage.getPointerPosition();
