@@ -805,6 +805,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             y={position.y}
             ref={stageRef}
             draggable={mode === 'panning'}
+            onDragStart={() => {
+              document.body.style.cursor = 'grabbing';
+            }}
+            onDragMove={(e) => {
+              // Actualizar la posición durante el arrastre
+              const newPos = e.target.position();
+              setPosition(newPos);
+            }}
+            onDragEnd={() => {
+              document.body.style.cursor = 'default';
+              // Asegurar que el estado refleje la posición final
+              if (stageRef.current) {
+                const newPos = stageRef.current.position();
+                setPosition(newPos);
+              }
+            }}
           >
             {/* Capa de fondo: imagen original */}
             <Layer name="background">
