@@ -500,10 +500,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   };
   
-  // Función para terminar de dibujar o mover
+  // Función para terminar de dibujar o mover con mejor manejo del cursor
   const handleMouseUp = () => {
     setIsDrawing(false);
-    setIsDragging(false);
+    
+    if (isDragging) {
+      setIsDragging(false);
+      
+      // Actualizar el cursor según el modo actual cuando se termina el arrastre
+      if (mode === 'panning' && stageRef.current) {
+        document.body.style.cursor = 'grab';
+      } else {
+        document.body.style.cursor = 'default';
+      }
+    }
   };
   
   // Función para comenzar a mover el canvas
@@ -737,7 +747,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant={mode === 'drawing' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setMode('drawing')}
+              onClick={() => {
+                setMode('drawing');
+                if (stageRef.current) {
+                  document.body.style.cursor = 'default';
+                }
+              }}
+              className={mode === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""}
             >
               <Brush className="h-4 w-4 mr-1" />
               {t("drawing_mode") || "Dibujar"}
@@ -745,7 +761,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant={mode === 'panning' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setMode('panning')}
+              onClick={() => {
+                setMode('panning');
+                if (stageRef.current) {
+                  document.body.style.cursor = 'grab';
+                }
+              }}
+              className={mode === 'panning' ? "bg-green-600 hover:bg-green-700" : ""}
             >
               <Move className="h-4 w-4 mr-1" />
               {t("move_mode") || "Mover/Zoom"}
