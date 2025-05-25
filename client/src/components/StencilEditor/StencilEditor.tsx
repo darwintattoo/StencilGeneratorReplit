@@ -58,16 +58,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const stageRef = useRef<Konva.Stage | null>(null);
   const stencilImageRef = useRef<Konva.Image | null>(null);
   const stencilLayerRef = useRef<Konva.Layer | null>(null);
+  const drawingLayerRef = useRef<Konva.Layer | null>(null);
+  const eraserLayerRef = useRef<Konva.Layer | null>(null);
   
   // Referencia para cerrar menús al hacer clic fuera
   const eraserMenuRef = useRef<HTMLDivElement | null>(null);
   
-  // Canvas temporal para aplicar borrador al stencil
+  // Canvas físico para manipulación directa del stencil (estilo Procreate)
   const stencilCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const stencilContextRef = useRef<CanvasRenderingContext2D | null>(null);
   
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
   const [stencilImageObj, setStencilImageObj] = useState<HTMLImageElement | null>(null);
+  const [stencilDataUrl, setStencilDataUrl] = useState<string | null>(null);
   
   // Estados para la herramienta de dibujo
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
@@ -78,13 +82,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
+  
   // Estado para gestionar el borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   const [eraserMenuOpen, setEraserMenuOpen] = useState<boolean>(false);
   
-  // Estados independientes para cada capa
+  // Estados para manejo de capas (estilo Procreate)
   const [drawingLines, setDrawingLines] = useState<Line[]>([]);
-  const [stencilEraserLines, setStencilEraserLines] = useState<Line[]>([]);
+  const [needsStencilUpdate, setNeedsStencilUpdate] = useState<boolean>(false);
+  
+  // Estado para historia de acciones del stencil
+  const [stencilHistory, setStencilHistory] = useState<string[]>([]);
+  const [stencilHistoryIndex, setStencilHistoryIndex] = useState<number>(-1);
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -528,6 +537,34 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [mode]);
   
+  // Función para aplicar el borrado directamente al canvas del stencil
+  const applyEraseToStencil = (x: number, y: number, size: number) => {
+    if (!stencilContextRef.current || !stencilCanvasRef.current) return;
+    
+    const ctx = stencilContextRef.current;
+    
+    // Configurar el contexto para borrar
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Dibujar un círculo para borrar en esa posición
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Restaurar operación normal
+    ctx.globalCompositeOperation = 'source-over';
+    
+    // Generar nuevo dataURL y actualizar la imagen
+    const newDataUrl = stencilCanvasRef.current.toDataURL();
+    setStencilDataUrl(newDataUrl);
+    
+    // Indicar que necesitamos actualizar la vista
+    setNeedsStencilUpdate(true);
+  };
+
   // Función para comenzar a dibujar (mouse)
   const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     if (mode !== 'drawing') return;
@@ -547,7 +584,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       y: (mouseY - position.y) / scale
     };
     
-    // Crear un nuevo trazo basado en la herramienta y el objetivo
+    // Manejar según la herramienta y el objetivo
     if (tool === 'brush') {
       // Para dibujo, siempre va a la capa de dibujo
       const newLine: Line = {
@@ -563,16 +600,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       setRedoHistory([]);
     } 
     else if (tool === 'eraser') {
-      // Determinar tamaño efectivo según la capa objetivo
-      const eraserEffectiveSize = eraserTarget === 'stencil' ? eraserSize * 5 : eraserSize;
-      
       if (eraserTarget === 'drawing') {
-        // Borrador para la capa de dibujo
+        // Borrador para la capa de dibujo (líneas)
         const newLine: Line = {
           tool: 'eraser',
           points: [adjustedPoint.x, adjustedPoint.y],
           color: '#ffffff',
-          strokeWidth: eraserEffectiveSize
+          strokeWidth: eraserSize
         };
         
         // Actualizar los trazos de dibujo
@@ -581,16 +615,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         setRedoHistory([]);
       } 
       else if (eraserTarget === 'stencil') {
-        // Borrador específico para la capa de stencil
-        const newLine: Line = {
-          tool: 'eraser',
-          points: [adjustedPoint.x, adjustedPoint.y],
-          color: '#ffffff',
-          strokeWidth: eraserEffectiveSize
-        };
+        // Guardar el estado actual antes de borrar (para deshacer)
+        if (stencilDataUrl && stencilHistoryIndex === stencilHistory.length - 1) {
+          // Solo guardar si estamos en el estado más reciente
+          setStencilHistory([...stencilHistory, stencilDataUrl]);
+          setStencilHistoryIndex(stencilHistory.length);
+        }
         
-        // Actualizar los trazos de borrado del stencil
-        setStencilEraserLines([...stencilEraserLines, newLine]);
+        // Borrador para la capa de stencil (aplicado directamente)
+        const stencilEraseSize = eraserSize * 5; // Mayor tamaño para más efectividad
+        applyEraseToStencil(adjustedPoint.x, adjustedPoint.y, stencilEraseSize);
       }
     }
   };
@@ -645,9 +679,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: (mouseY - position.y) / scale
       };
       
-      // IMPLEMENTACIÓN DE BORRADORES INDEPENDIENTES
+          // Manejo estilo Procreate de las herramientas de dibujo y borrado
       
-      // Manejar trazos de dibujo
+      // Dibujo con pincel
       if (tool === 'brush') {
         const lastLine = drawingLines[drawingLines.length - 1];
         if (!lastLine) return;
@@ -655,7 +689,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         lastLine.points = lastLine.points.concat([point.x, point.y]);
         setDrawingLines([...drawingLines.slice(0, -1), lastLine]);
       }
-      // Manejar borrador de dibujo
+      // Borrador para la capa de dibujo
       else if (tool === 'eraser' && eraserTarget === 'drawing') {
         const lastLine = drawingLines[drawingLines.length - 1];
         if (!lastLine) return;
@@ -686,38 +720,43 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         lastLine.points = lastLine.points.concat([point.x, point.y]);
         setDrawingLines([...drawingLines.slice(0, -1), lastLine]);
       }
-      // Manejar borrador de stencil (independiente)
+      // Borrador para el stencil (manipulación directa de la imagen)
       else if (tool === 'eraser' && eraserTarget === 'stencil') {
-        const lastLine = stencilEraserLines[stencilEraserLines.length - 1];
-        if (!lastLine) return;
+        // Aplicar el borrador directamente sobre el canvas con alta densidad de puntos
+        if (!stencilContextRef.current) return;
         
-        // Densidad de puntos mucho mayor para borrado de stencil
-        const len = lastLine.points.length;
-        if (len >= 2) {
-          const prevX = lastLine.points[len - 2];
-          const prevY = lastLine.points[len - 1];
-          
-          // Calculamos la distancia entre el punto anterior y el actual
-          const dx = point.x - prevX;
-          const dy = point.y - prevY;
+        // Para el stencil, interpolamos puntos para un borrado más suave
+        const lastPointerPosition = stage.getPointerPosition();
+        if (lastPointerPosition) {
+          // Calculamos la distancia para la interpolación
+          const lastPos = lastPointerPosition;
+          const dx = point.x - lastPos.x / scale + position.x / scale;
+          const dy = point.y - lastPos.y / scale + position.y / scale;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Más puntos y más densidad para el stencil
-          if (distance > 2) {  // Menor umbral = más puntos
-            const steps = Math.ceil(distance / 1); // Aún más puntos
-            for (let i = 1; i < steps; i++) {
+          // Tamaño efectivo para el borrador del stencil
+          const stencilEraseSize = eraserSize * 5;
+          
+          // Interpolación de alta densidad para borrado suave
+          if (distance > 1) {
+            const steps = Math.max(Math.ceil(distance / 1), 10); // Muchos puntos
+            for (let i = 0; i < steps; i++) {
               const ratio = i / steps;
-              const x = prevX + dx * ratio;
-              const y = prevY + dy * ratio;
-              lastLine.points = lastLine.points.concat([x, y]);
+              const x = point.x - dx * ratio;
+              const y = point.y - dy * ratio;
+              applyEraseToStencil(x, y, stencilEraseSize);
             }
+          } else {
+            // Aplicar un único punto si la distancia es muy pequeña
+            applyEraseToStencil(point.x, point.y, stencilEraseSize);
           }
+        } else {
+          // Si no hay posición previa, simplemente aplicar un punto
+          const stencilEraseSize = eraserSize * 5;
+          applyEraseToStencil(point.x, point.y, stencilEraseSize);
         }
         
-        lastLine.points = lastLine.points.concat([point.x, point.y]);
-        setStencilEraserLines([...stencilEraserLines.slice(0, -1), lastLine]);
-        
-        // Forzar redibujado para que el borrado sea visible inmediatamente
+        // Forzar redibujado para ver los cambios inmediatamente
         if (stencilLayerRef.current) {
           stencilLayerRef.current.batchDraw();
         }
@@ -1165,7 +1204,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* CAPA DE STENCIL INDEPENDIENTE */}
+            {/* CAPA DE STENCIL MANIPULADA DIRECTAMENTE */}
             <Layer 
               name="stencil"
               ref={node => {
@@ -1173,33 +1212,17 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 if (node) (window as any).layerStencil = node;
               }}
             >
-              {/* Imagen del stencil */}
-              {stencilLayerVisible && stencilImageObj && (
+              {/* Imagen del stencil que se actualiza directamente */}
+              {stencilLayerVisible && stencilDataUrl && (
                 <Image
-                  image={stencilImageObj}
+                  image={new window.Image()}
+                  ref={stencilImageRef}
                   width={width}
                   height={height}
-                  ref={stencilImageRef}
                   listening={false}
+                  src={stencilDataUrl}
                 />
               )}
-              
-              {/* Borrador específico para el stencil */}
-              {stencilEraserLines.map((line, i) => (
-                <Line
-                  key={`stencil-eraser-${i}`}
-                  points={line.points}
-                  stroke="rgba(255,255,255,1)"
-                  strokeWidth={line.strokeWidth * 8} // Grosor extra grande para el stencil
-                  tension={0.3}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation="destination-out"
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                  listening={false}
-                />
-              ))}
             </Layer>
             
             {/* CAPA DE DIBUJO INDEPENDIENTE */}
