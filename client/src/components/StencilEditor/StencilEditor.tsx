@@ -1165,7 +1165,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* SOLUCIÓN SIMPLIFICADA CON UNA ÚNICA CAPA PARA EL STENCIL */}
+            {/* CAPA DE STENCIL INDEPENDIENTE */}
             <Layer 
               name="stencil"
               ref={node => {
@@ -1173,29 +1173,68 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 if (node) (window as any).layerStencil = node;
               }}
             >
-              {/* Grupo para encapsular imagen y borrador */}
-              <Group>
-                {/* Imagen del stencil */}
-                {stencilLayerVisible && stencilImageObj && (
-                  <Image
-                    image={stencilImageObj}
-                    width={width}
-                    height={height}
-                    ref={stencilImageRef}
-                    listening={false}
-                  />
-                )}
-                
-                {/* Borrador aplicado directamente en la misma capa */}
-                {lines
-                  .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
-                  .map((line, i) => (
+              {/* Imagen del stencil */}
+              {stencilLayerVisible && stencilImageObj && (
+                <Image
+                  image={stencilImageObj}
+                  width={width}
+                  height={height}
+                  ref={stencilImageRef}
+                  listening={false}
+                />
+              )}
+              
+              {/* Borrador específico para el stencil */}
+              {stencilEraserLines.map((line, i) => (
+                <Line
+                  key={`stencil-eraser-${i}`}
+                  points={line.points}
+                  stroke="rgba(255,255,255,1)"
+                  strokeWidth={line.strokeWidth * 8} // Grosor extra grande para el stencil
+                  tension={0.3}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="destination-out"
+                  perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false}
+                  listening={false}
+                />
+              ))}
+            </Layer>
+            
+            {/* CAPA DE DIBUJO INDEPENDIENTE */}
+            <Layer 
+              name="drawingLayer" 
+              ref={node => {
+                if (node) (window as any).layerDraw = node;
+              }}
+            >
+              {/* Trazos de pincel (dibujo) */}
+              {drawingLines.map((line, i) => {
+                if (line.tool === 'brush') {
+                  return (
                     <Line
-                      key={`stencil-eraser-${i}`}
+                      key={`brush-${i}`}
                       points={line.points}
-                      stroke="rgba(255,255,255,1)"
-                      strokeWidth={line.strokeWidth * 5} // Aumentamos aún más el grosor
-                      tension={0.3}
+                      stroke={line.color}
+                      strokeWidth={line.strokeWidth}
+                      tension={0.5}
+                      lineCap="round"
+                      lineJoin="round"
+                      globalCompositeOperation="source-over"
+                      perfectDrawEnabled={true}
+                      shadowForStrokeEnabled={false}
+                      listening={false}
+                    />
+                  );
+                } else if (line.tool === 'eraser') {
+                  return (
+                    <Line
+                      key={`drawing-eraser-${i}`}
+                      points={line.points}
+                      stroke="#ffffff"
+                      strokeWidth={line.strokeWidth}
+                      tension={0.5}
                       lineCap="round"
                       lineJoin="round"
                       globalCompositeOperation="destination-out"
@@ -1203,54 +1242,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                       shadowForStrokeEnabled={false}
                       listening={false}
                     />
-                  ))
+                  );
                 }
-              </Group>
-            </Layer>
-            
-            {/* Capa 2: Dibujo (trazos del usuario) con borrador integrado */}
-            <Layer name="drawingLayer" ref={node => {
-              if (node) (window as any).layerDraw = node;
-            }}>
-              {/* Trazos de pincel (dibujo) */}
-              {lines
-                .filter(line => line.tool === 'brush')
-                .map((line, i) => (
-                  <Line
-                    key={`brush-${i}`}
-                    points={line.points}
-                    stroke={line.color}
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="source-over" // Asegurar que siempre sea source-over para el pincel
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
-              
-              {/* Trazos de borrador directamente en la capa de dibujo */}
-              {lines
-                .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
-                .map((line, i) => (
-                  <Line
-                    key={`drawing-eraser-${i}`}
-                    points={line.points}
-                    stroke="#ffffff"
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="destination-out"
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
+                return null;
+              })}
             </Layer>
             
             {/* Capa para capturar eventos */}
