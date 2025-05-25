@@ -68,6 +68,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
+  // Estado para determinar la capa objetivo del borrador
+  const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -778,17 +780,31 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             {t("brush") || "Pincel"}
           </Button>
           <Button
-            variant={tool === 'eraser' ? 'default' : 'outline'}
+            variant={tool === 'eraser' && eraserTarget === 'drawing' ? 'default' : 'outline'}
             size="sm"
             onClick={() => {
               setTool('eraser');
-              // El borrador real ya está configurado con globalCompositeOperation: 'destination-out'
-              // en la definición de la capa del borrador
+              setEraserTarget('drawing');
+              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
             }}
-            className={tool === 'eraser' ? "bg-red-600 hover:bg-red-700" : ""}
+            className={tool === 'eraser' && eraserTarget === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""}
           >
             <Eraser className="h-4 w-4 mr-1" />
-            {t("eraser") || "Borrador Real"}
+            {t("erase_drawing") || "Borrar Dibujo"}
+          </Button>
+          
+          <Button
+            variant={tool === 'eraser' && eraserTarget === 'stencil' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setTool('eraser');
+              setEraserTarget('stencil');
+              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+            }}
+            className={tool === 'eraser' && eraserTarget === 'stencil' ? "bg-red-600 hover:bg-red-700" : ""}
+          >
+            <Eraser className="h-4 w-4 mr-1" />
+            {t("erase_stencil") || "Borrar Stencil"}
           </Button>
           <Button
             variant="outline"
@@ -1010,9 +1026,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa de stencil (capa inferior) */}
+            {/* IMPLEMENTACIÓN CON CAPAS INDEPENDIENTES Y BORRADOR SELECTIVO */}
+            
+            {/* Capa 1: Stencil (imagen base) */}
             <Layer name="stencil" ref={node => {
-              // Referencia global para debugging y acceso directo
               if (node) (window as any).layerStencil = node;
             }}>
               {stencilLayerVisible && stencilImageObj && (
@@ -1024,18 +1041,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   listening={false}
                 />
               )}
-            </Layer>
-            
-            {/* Capa para borrador de stencil (controla borrado en la imagen stencil) */}
-            <Layer name="stencilEraser">
-              {/* Solo los trazos de borrador */}
+              
+              {/* Borrador aplicado SOLO a la capa de stencil */}
               {lines
-                .filter(line => line.tool === 'eraser' && line.affectsStencil)
+                .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
                 .map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
                     points={line.points}
-                    stroke="#ffffff" // El color no importa para destination-out
+                    stroke="#ffffff" // El color no importa con destination-out
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
@@ -1049,11 +1063,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               }
             </Layer>
             
-            {/* Capa para trazos de dibujo */}
+            {/* Capa 2: Dibujo (trazos del usuario) */}
             <Layer name="drawingLayer" ref={node => {
               if (node) (window as any).layerDraw = node;
             }}>
-              {/* Solo las líneas de dibujo (pincel) */}
+              {/* Trazos de pincel (dibujo) */}
               {lines
                 .filter(line => line.tool === 'brush')
                 .map((line, i) => (
@@ -1071,18 +1085,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   />
                 ))
               }
-            </Layer>
-            
-            {/* Capa para borrador de dibujo (controla borrado en las líneas dibujadas) */}
-            <Layer name="drawingEraser">
-              {/* Solo los trazos de borrador */}
+              
+              {/* Borrador aplicado SOLO a la capa de dibujo */}
               {lines
-                .filter(line => line.tool === 'eraser')
+                .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
                 .map((line, i) => (
                   <Line
                     key={`drawing-eraser-${i}`}
                     points={line.points}
-                    stroke="#ffffff" // El color no importa para destination-out
+                    stroke="#ffffff"
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
