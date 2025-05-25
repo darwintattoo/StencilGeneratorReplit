@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Stage, Layer, Image, Line, Group, Rect } from 'react-konva';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Stage, Layer, Image, Line, Rect } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
 import { useToast } from '@/hooks/use-toast';
@@ -61,18 +61,26 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Estados para la herramienta de dibujo
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
-  const [lines, setLines] = useState<Line[]>([]);
-  const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
-  const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
+  // Separamos las líneas por capa para evitar conflictos entre el borrador de stencil y el de dibujo
+  const [drawingLines, setDrawingLines] = useState<Line[]>([]);
+  const [stencilLines, setStencilLines] = useState<Line[]>([]);
+  const [undoHistory, setUndoHistory] = useState<{drawing: Line[][], stencil: Line[][]}>(
+    {drawing: [], stencil: []}
+  );
+  const [redoHistory, setRedoHistory] = useState<{drawing: Line[][], stencil: Line[][]}>(
+    {drawing: [], stencil: []}
+  );
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
-  const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
+  const [eraserSize, setEraserSize] = useState(10); 
   const [brushColor, setBrushColor] = useState('#ff0000');
+  
   // Estado para determinar la capa objetivo del borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   // Estado para controlar el panel de ajustes
   const [showToolSettings, setShowToolSettings] = useState(false);
-  // Variables para rastrear gestos táctiles (estilo Procreate)
+  
+  // Variables para rastrear gestos táctiles
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
   const lastTouchDistance = useRef<number | null>(null);
@@ -116,150 +124,211 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     };
   }, [originalImage, stencilImage]);
   
-  // Funciones para zoom y movimiento del canvas
-  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
+  // Función para aplicar inercia de desplazamiento
+  const applyInertia = useCallback(() => {
+    if (!stageRef.current) return;
     
-    const stage = e.target.getStage();
-    if (!stage) return;
+    // Cancelar cualquier animación anterior
+    if (inertiaAnimationId.current) {
+      cancelAnimationFrame(inertiaAnimationId.current);
+    }
     
-    const oldScale = scale;
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
+    // Factores de inercia
+    const friction = 0.90; // Reducción por frame (0-1)
+    const duration = 400; // Duración máxima en ms
+    const startTime = performance.now();
     
-    const mousePointTo = {
-      x: (pointer.x - position.x) / oldScale,
-      y: (pointer.y - position.y) / oldScale,
+    // Velocidad inicial (guardada durante el paneo)
+    const initialVelocity = { ...velocity.current };
+    
+    // Función de animación de inercia
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      
+      if (elapsed < duration && (Math.abs(velocity.current.x) > 0.1 || Math.abs(velocity.current.y) > 0.1)) {
+        // Aplicar fricción
+        velocity.current.x *= friction;
+        velocity.current.y *= friction;
+        
+        // Actualizar posición según velocidad
+        setPosition(prevPos => ({
+          x: prevPos.x + velocity.current.x,
+          y: prevPos.y + velocity.current.y
+        }));
+        
+        // Continuar animación
+        inertiaAnimationId.current = requestAnimationFrame(animate);
+      } else {
+        // Detener cuando la velocidad es muy baja o se alcanza el tiempo máximo
+        velocity.current = { x: 0, y: 0 };
+        inertiaAnimationId.current = null;
+      }
     };
     
-    // Ajuste de zoom con la rueda
-    const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
-    
-    // Limitar el zoom mínimo y máximo
-    const limitedScale = Math.max(0.1, Math.min(newScale, 10));
-    
-    setScale(limitedScale);
-    
-    const newPos = {
-      x: pointer.x - mousePointTo.x * limitedScale,
-      y: pointer.y - mousePointTo.y * limitedScale,
-    };
-    
-    setPosition(newPos);
+    // Iniciar animación solo si hay velocidad suficiente
+    if (Math.abs(initialVelocity.x) > 1 || Math.abs(initialVelocity.y) > 1) {
+      inertiaAnimationId.current = requestAnimationFrame(animate);
+    }
+  }, []);
+
+  // Función para calcular la distancia entre dos puntos táctiles
+  const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }): number => {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   };
-  
-  // Función para calcular la posición exacta con cualquier entrada (mouse o touch)
-  const getRelativePointerPosition = (evt: MouseEvent | Touch) => {
+
+  // Función para calcular el centro entre dos puntos táctiles
+  const getCenter = (p1: { x: number, y: number }, p2: { x: number, y: number }): { x: number, y: number } => {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2
+    };
+  };
+
+  // Función útil para calcular información de multitáctil
+  const getMultitouchCenter = (touch1: Touch, touch2: Touch) => {
     if (!stageRef.current) return null;
     
     const stage = stageRef.current;
-    // Obtener el rectángulo del contenedor para coordenadas precisas
-    const rect = stage.container().getBoundingClientRect();
+    const p1 = {
+      x: touch1.clientX,
+      y: touch1.clientY
+    };
+    const p2 = {
+      x: touch2.clientX,
+      y: touch2.clientY
+    };
     
-    // Calcular coordenadas relativas al contenedor
-    const pointX = evt.clientX - rect.left;
-    const pointY = evt.clientY - rect.top;
-    
-    // Convertir a coordenadas del canvas ajustando escala y posición
     return {
-      x: (pointX - position.x) / scale,
-      y: (pointY - position.y) / scale
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2,
+      distance: getDistance(p1, p2)
     };
   };
-  
-  // Función para calcular el centro y distancia en gestos multitáctiles
-  const getMultitouchCenter = (touch1: Touch, touch2: Touch) => {
-    const stage = stageRef.current;
-    if (!stage) return null;
+
+  // Función para terminar el dibujo
+  const endDrawing = useCallback(() => {
+    setIsDrawing(false);
+    lastPointerPosition.current = null;
+  }, []);
+
+  // Función para manejar el inicio de toques táctiles - Con soporte para borrador en capas separadas
+  const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
     
-    const rect = stage.container().getBoundingClientRect();
-    return {
-      x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-      y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-      distance: Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) +
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      )
-    };
-  };
-  
-  // Función para manejar gestos táctiles con soporte mejorado para paneo con dos dedos
+    if (!stageRef.current) return;
+    
+    // Reset tracking variables
+    lastPointerPosition.current = null;
+    
+    // Actualizar contador de dedos
+    touchFingerCount.current = e.evt.touches.length;
+    
+    // CASO 1: Un solo dedo en pantalla - modo dibujo o navegación normal
+    if (e.evt.touches.length === 1) {
+      const touch = e.evt.touches[0];
+      const stage = stageRef.current;
+      
+      // Coordenadas dentro del stage
+      const pointerPos = stage.getPointerPosition();
+      if (!pointerPos) return;
+      
+      // Convertir a coordenadas reales con el zoom
+      const actualPos = {
+        x: (pointerPos.x - position.x) / scale,
+        y: (pointerPos.y - position.y) / scale
+      };
+      
+      // Modo dibujo
+      if (mode === 'drawing') {
+        setIsDrawing(true);
+        
+        // Tamaño basado en la herramienta
+        const effectiveSize = tool === 'eraser' 
+          ? eraserSize // Usar el tamaño específico del borrador
+          : brushSize;
+        
+        // Nueva línea con punto inicial duplicado (técnica para puntos individuales)
+        const newLine: Line = {
+          tool,
+          points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
+          color: tool === 'brush' ? brushColor : '#ffffff',
+          strokeWidth: effectiveSize,
+        };
+        
+        // Actualizar estado de la capa correspondiente
+        if (tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing')) {
+          // Para pincel o borrador de dibujo, afectamos la capa de dibujo
+          setDrawingLines(prevLines => [...prevLines, newLine]);
+          setUndoHistory(prev => ({
+            ...prev,
+            drawing: [...prev.drawing, [...drawingLines]]
+          }));
+        } else if (tool === 'eraser' && eraserTarget === 'stencil') {
+          // Para borrador de stencil, afectamos la capa de stencil
+          setStencilLines(prevLines => [...prevLines, newLine]);
+          setUndoHistory(prev => ({
+            ...prev,
+            stencil: [...prev.stencil, [...stencilLines]]
+          }));
+        }
+        
+        // Resetear historial de rehacer
+        setRedoHistory({drawing: [], stencil: []});
+        
+        // Guardar posición para suavizado
+        lastPointerPosition.current = actualPos;
+        
+        // Renderizar inmediatamente
+        stage.batchDraw();
+      } 
+      // Modo navegación
+      else if (mode === 'panning') {
+        setIsDragging(true);
+        document.body.style.cursor = 'grabbing';
+        
+        // Guardar punto inicial del movimiento
+        lastPointerPosition.current = {
+          x: touch.clientX,
+          y: touch.clientY
+        };
+      }
+    }
+    
+    // CASO 2: Dos dedos en pantalla - siempre activar paneo temporal (independiente del modo)
+    else if (e.evt.touches.length === 2) {
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+      
+      // Guardar estado inicial para seguimiento de gestos
+      const touchInfo = getMultitouchCenter(touch1, touch2);
+      if (touchInfo) {
+        lastTouchDistance.current = touchInfo.distance;
+        lastTouchCenter.current = {
+          x: touchInfo.x,
+          y: touchInfo.y
+        };
+      }
+      
+      // Activar modo pinch-zoom temporalmente
+      isPinching.current = true;
+      
+      // Desactivar dibujo si estaba activo
+      if (isDrawing) {
+        setIsDrawing(false);
+      }
+    }
+  }, [brushColor, brushSize, eraserSize, isDrawing, lines, mode, position.x, position.y, scale, tool, eraserTarget]);
+
+  // Función para manejar el movimiento de toques táctiles
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
     if (!stageRef.current) return;
     const stage = stageRef.current;
     
-    // CASO 1: Dibujando con un dedo en modo dibujo
-    if (mode === 'drawing' && isDrawing && e.evt.touches.length === 1) {
-      // Obtener coordenadas del puntero (ajustadas por el container)
-      const pointerPos = stage.getPointerPosition();
-      if (!pointerPos) return;
-      
-      // Transformar a coordenadas del canvas con el zoom aplicado
-      const adjustedPos = {
-        x: (pointerPos.x - position.x) / scale,
-        y: (pointerPos.y - position.y) / scale
-      };
-      
-      // Obtener la última línea para añadir puntos
-      const lastLineIndex = lines.length - 1;
-      if (lastLineIndex < 0) return;
-      
-      // Crear una copia de las líneas y de la última línea
-      const updatedLines = [...lines];
-      const lastLine = { ...updatedLines[lastLineIndex] };
-      
-      // Si hay un punto anterior, interpolar para trazos suaves
-      if (lastPointerPosition.current) {
-        const dx = adjustedPos.x - lastPointerPosition.current.x;
-        const dy = adjustedPos.y - lastPointerPosition.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Si el movimiento es significativo, crear varios puntos intermedios
-        if (distance > 1) {
-          // Para el borrador, usar más puntos para asegurar cobertura total
-          const steps = tool === 'eraser' ? Math.ceil(distance) * 2 : Math.max(1, Math.floor(distance / 2));
-          const newPoints = [];
-          
-          for (let i = 1; i <= steps; i++) {
-            const ratio = i / steps;
-            const x = lastPointerPosition.current.x + dx * ratio;
-            const y = lastPointerPosition.current.y + dy * ratio;
-            newPoints.push(x, y);
-          }
-          
-          // Actualizar los puntos de la línea
-          lastLine.points = [...lastLine.points, ...newPoints];
-        } else {
-          // Añadir solo el punto actual si la distancia es pequeña
-          lastLine.points = [...lastLine.points, adjustedPos.x, adjustedPos.y];
-        }
-      } else {
-        // Si no hay punto anterior, añadir el punto actual
-        lastLine.points = [...lastLine.points, adjustedPos.x, adjustedPos.y];
-      }
-      
-      // Actualizar el punto de referencia para el próximo evento
-      lastPointerPosition.current = adjustedPos;
-      
-      // Actualizar el estado con las nuevas líneas
-      updatedLines[lastLineIndex] = lastLine;
-      setLines(updatedLines);
-      
-      // Forzar el renderizado inmediato para ver los cambios
-      stage.batchDraw();
-      return;
-    }
-    
-    // CASO 2: Paneo con DOS DEDOS - Implementación optimizada para mayor fluidez
-    else if (e.evt.touches.length === 2) {
-      // Asegurarnos de que estamos en modo arrastre para dos dedos
-      if (!isDragging) {
-        setIsDragging(true);
-      }
-      
-      // Obtener información de los dos toques
+    // CASO 1: Dos dedos - paneo y zoom con gestos mejorados
+    if (e.evt.touches.length === 2) {
+      // Implementación de pinch-zoom/pan con mejor respuesta
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
       
@@ -378,127 +447,75 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: touch.clientY
       };
     }
-  }, [isDrawing, lines, position, scale, mode, isDragging]);
-
-  // Función para manejar el inicio de toques táctiles - Con soporte para borrador en ambas capas
-  const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
-    e.evt.preventDefault();
     
-    if (!stageRef.current) return;
-    
-    // Reset tracking variables
-    lastPointerPosition.current = null;
-    
-    // Actualizar contador de dedos
-    touchFingerCount.current = e.evt.touches.length;
-    
-    // CASO 1: Un solo dedo en pantalla - modo dibujo o navegación normal
-    if (e.evt.touches.length === 1) {
-      const touch = e.evt.touches[0];
-      const stage = stageRef.current;
-      
-      // Coordenadas dentro del stage
-      const pointerPos = stage.getPointerPosition();
+    // Dibujo con un dedo en modo dibujo
+    if (isDrawing && mode === 'drawing' && e.evt.touches.length === 1) {
+      // Obtener posición del puntero
+      const pointerPos = stageRef.current.getPointerPosition();
       if (!pointerPos) return;
       
-      // Convertir a coordenadas reales con el zoom
+      // Convertir a coordenadas reales teniendo en cuenta zoom y posición
       const actualPos = {
         x: (pointerPos.x - position.x) / scale,
         y: (pointerPos.y - position.y) / scale
       };
       
-      // Modo dibujo
-      if (mode === 'drawing') {
-        setIsDrawing(true);
-        
-        // Tamaño basado en la herramienta
-        const effectiveSize = tool === 'eraser' 
-          ? eraserSize // Usar el tamaño específico del borrador
-          : brushSize;
-        
-        // Nueva línea con punto inicial duplicado (técnica para puntos individuales)
-        const newLine: Line = {
-          tool,
-          points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
-          color: tool === 'brush' ? brushColor : '#ffffff',
-          strokeWidth: effectiveSize,
-          // Marcar si este trazo debe afectar también al stencil
-          affectsStencil: tool === 'eraser' // Solo los trazos de borrador afectan al stencil
-        };
-        
-        // Actualizar estado
-        setLines(prevLines => [...prevLines, newLine]);
-        setUndoHistory(prev => [...prev, [...lines]]);
-        setRedoHistory([]);
-        
-        // Guardar posición para suavizado
+      // Si es el primer punto, establecer posición y salir
+      if (!lastPointerPosition.current) {
         lastPointerPosition.current = actualPos;
-        
-        // Renderizar inmediatamente
-        stage.batchDraw();
-      } 
-      // Modo navegación
-      else if (mode === 'panning') {
-        setIsDragging(true);
-        document.body.style.cursor = 'grabbing';
-        
-        // Guardar punto inicial del movimiento
-        lastPointerPosition.current = {
-          x: touch.clientX,
-          y: touch.clientY
-        };
+        return;
       }
+      
+      // Obtener última línea
+      const lastLineIdx = lines.length - 1;
+      if (lastLineIdx < 0) return;
+      
+      // Copiar array para inmutabilidad
+      const newLines = [...lines];
+      
+      // Añadir nuevos puntos a la última línea
+      const newPoints = [...newLines[lastLineIdx].points, actualPos.x, actualPos.y];
+      newLines[lastLineIdx].points = newPoints;
+      
+      // Actualizar estado
+      setLines(newLines);
+      
+      // Actualizar posición para suavizado
+      lastPointerPosition.current = actualPos;
+      
+      // Renderizar inmediatamente
+      stage.batchDraw();
     }
-    
-    // CASO 2: Dos dedos en pantalla - siempre activar paneo temporal (independiente del modo)
-    else if (e.evt.touches.length === 2) {
-      // Pausar cualquier dibujo en progreso
-      setIsDrawing(false);
-      
-      // Marcar que estamos arrastrando con dos dedos
-      setIsDragging(true);
-      
-      // Cambiar cursor visual
-      document.body.style.cursor = 'grabbing';
-      
-      // Obtener información de los dos toques
-      const touch1 = e.evt.touches[0];
-      const touch2 = e.evt.touches[1];
-      
-      // Guardar datos iniciales para calcular distancia y centro del pellizco
-      const touchInfo = getMultitouchCenter(touch1, touch2);
-      if (!touchInfo) return;
-      
-      // Guardar valores iniciales para calcular el zoom y el desplazamiento
-      lastTouchDistance.current = touchInfo.distance;
-      lastTouchCenter.current = { 
-        x: touchInfo.x, 
-        y: touchInfo.y 
-      };
-    }
-  }, [mode, tool, brushSize, brushColor, lines, undoHistory, position, scale]);
+  }, [isDrawing, isDragging, lines, mode, position, scale]);
 
-  // Función para manejar el final de toques táctiles
+  // Función para manejar el fin de toques táctiles
   const handleTouchEnd = useCallback((e: KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    
     // Actualizar contador de dedos
     touchFingerCount.current = e.evt.touches.length;
     
-    // Si ya no hay toques, finalizar todos los estados
-    if (e.evt.touches.length === 0) {
-      setIsDrawing(false);
-      setIsDragging(false);
+    // Si estábamos pinchando, aplicar inercia
+    if (isPinching.current && e.evt.touches.length < 2) {
+      isPinching.current = false;
       
-      // Restaurar cursor apropiado según el modo
-      if (mode === 'panning') {
-        document.body.style.cursor = 'grab';
-      } else {
-        document.body.style.cursor = 'default';
+      // No aplicamos inercia para el pinch-zoom
+      // ya que podría resultar en comportamiento impredecible
+    }
+    
+    // Si soltamos todos los dedos, finalizar dibujo y arrastre
+    if (e.evt.touches.length === 0) {
+      if (isDrawing) {
+        endDrawing();
       }
       
-      // Limpiar referencias temporales para pinch-to-zoom
-      lastTouchDistance.current = null;
-      lastTouchCenter.current = null;
-      lastPointerPosition.current = null;
+      if (isDragging) {
+        setIsDragging(false);
+        document.body.style.cursor = 'default';
+        
+        // Aplicar inercia para movimiento natural
+        applyInertia();
+      }
     }
     // Si pasamos de dos dedos a uno, restaurar el modo dibujo si estábamos en ese modo
     else if (e.evt.touches.length === 1 && mode === 'drawing') {
@@ -508,237 +525,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       // No activamos isDrawing hasta que el usuario levante y vuelva a tocar
       // Esto evita trazos inesperados después de usar paneo con dos dedos
     }
-  }, [mode]);
-  
-  // Función para comenzar a dibujar (mouse)
-  const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-    if (mode !== 'drawing') return;
-    
-    setIsDrawing(true);
-    const stage = e.target.getStage();
-    if (!stage) return;
-    
-    // Obtener posición exacta del ratón relativa al contenedor
-    const rect = stage.container().getBoundingClientRect();
-    const mouseX = e.evt.clientX - rect.left;
-    const mouseY = e.evt.clientY - rect.top;
-    
-    // Convertir a coordenadas del canvas (ajustando por la escala y posición)
-    const adjustedPoint = {
-      x: (mouseX - position.x) / scale,
-      y: (mouseY - position.y) / scale
-    };
-    
-    // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
-    const effectiveSize = tool === 'eraser' ? brushSize * 2.5 : brushSize;
-    
-    const newLine: Line = {
-      tool,
-      points: [adjustedPoint.x, adjustedPoint.y],
-      color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
-      strokeWidth: effectiveSize
-    };
-    
-    setLines([...lines, newLine]);
-    setUndoHistory([...undoHistory, [...lines]]);
-    setRedoHistory([]);
-  };
-  
-  // Función para continuar dibujando (mouse)
-  const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-    // Si estamos en modo movimiento, manejar desplazamiento del canvas con animación suave
-    if (mode === 'panning' && isDragging) {
-      const stage = e.target.getStage();
-      if (!stage) return;
-      
-      // Mantener cursor de "mano cerrada" durante el arrastre
-      document.body.style.cursor = 'grabbing';
-      
-      // Obtener posición actual del puntero
-      const pointerPos = stage.getPointerPosition();
-      if (!pointerPos || !stage.lastMousePos) return;
-      
-      // Calcular desplazamiento desde la última posición
-      const dx = pointerPos.x - stage.lastMousePos.x;
-      const dy = pointerPos.y - stage.lastMousePos.y;
-      
-      // Actualizar posición del stage
-      const newPos = {
-        x: position.x + dx,
-        y: position.y + dy
-      };
-      
-      setPosition(newPos);
-      
-      // Actualizar referencia para el próximo movimiento
-      stage.lastMousePos = pointerPos;
-      
-      // Forzar renderizado para movimiento más fluido
-      stage.batchDraw();
-      return;
-    }
-    
-    // Si estamos en modo dibujo, manejar el dibujo
-    if (mode === 'drawing' && isDrawing) {
-      const stage = e.target.getStage();
-      if (!stage) return;
-      
-      // Obtener posición exacta del ratón relativa al contenedor
-      const rect = stage.container().getBoundingClientRect();
-      const mouseX = e.evt.clientX - rect.left;
-      const mouseY = e.evt.clientY - rect.top;
-      
-      // Convertir a coordenadas del canvas (ajustando por la escala y posición)
-      const point = {
-        x: (mouseX - position.x) / scale,
-        y: (mouseY - position.y) / scale
-      };
-      
-      const lastLine = lines[lines.length - 1];
-      if (!lastLine) return;
-      
-      // Para el borrador, mejorar la densidad de puntos para un borrado más completo
-      if (tool === 'eraser') {
-        // Obtener el último punto registrado
-        const len = lastLine.points.length;
-        if (len >= 2) {
-          const prevX = lastLine.points[len - 2];
-          const prevY = lastLine.points[len - 1];
-          
-          // Calculamos la distancia entre el punto anterior y el actual
-          const dx = point.x - prevX;
-          const dy = point.y - prevY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Si hay una distancia significativa, interpolamos puntos intermedios
-          // para asegurar un borrado continuo y completo
-          if (distance > 5) {
-            const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
-            for (let i = 1; i < steps; i++) {
-              const ratio = i / steps;
-              const x = prevX + dx * ratio;
-              const y = prevY + dy * ratio;
-              lastLine.points = lastLine.points.concat([x, y]);
-            }
-          }
-        }
-      }
-      
-      lastLine.points = lastLine.points.concat([point.x, point.y]);
-      
-      // Actualizar inmediatamente para mayor precisión
-      setLines([...lines.slice(0, -1), lastLine]);
-    }
-  };
-  
-  // Función para terminar de dibujar o mover con mejor manejo del cursor
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-    
-    if (isDragging) {
-      setIsDragging(false);
-      
-      // Actualizar el cursor según el modo actual cuando se termina el arrastre
-      if (mode === 'panning' && stageRef.current) {
-        document.body.style.cursor = 'grab';
-      } else {
-        document.body.style.cursor = 'default';
-      }
-    }
-  };
-  
-  // Función para comenzar a mover el canvas
-  const handleDragStart = (e: KonvaEventObject<MouseEvent>) => {
-    if (mode !== 'panning') return;
-    
-    const stage = e.target.getStage();
-    if (!stage) return;
-    
-    // Cambiar el cursor a "mano cerrada" para indicar el arrastre
-    document.body.style.cursor = 'grabbing';
-    
-    setIsDragging(true);
-    const pos = stage.getPointerPosition();
-    if (pos) {
-      stage.lastMousePos = pos;
-    }
-  };
-  
-  // Función para deshacer
-  const handleUndo = () => {
-    if (undoHistory.length === 0) return;
-    
-    const previousLines = undoHistory[undoHistory.length - 1];
-    setRedoHistory([...redoHistory, [...lines]]);
-    setLines(previousLines);
-    setUndoHistory(undoHistory.slice(0, -1));
-  };
-  
-  // Función para rehacer
-  const handleRedo = () => {
-    if (redoHistory.length === 0) return;
-    
-    const nextLines = redoHistory[redoHistory.length - 1];
-    setUndoHistory([...undoHistory, [...lines]]);
-    setLines(nextLines);
-    setRedoHistory(redoHistory.slice(0, -1));
-  };
-  
-  // Función para exportar como PNG (solo stencil)
-  const exportAsPNG = () => {
-    if (!stageRef.current) return;
-    
-    const uri = stageRef.current.toDataURL({
-      pixelRatio: 2
-    });
-    
-    saveAs(uri, 'stencil-edited.png');
-  };
-  
-  // Función para exportar como PNG (combinado)
-  const exportAsMergedPNG = () => {
-    if (!stageRef.current) return;
-    
-    const uri = stageRef.current.toDataURL({
-      pixelRatio: 2
-    });
-    saveAs(uri, 'stencil-merged.png');
-  };
-  
-  // Función para exportar como PSD (simulado para compatibilidad con Procreate)
-  const exportAsPSD = () => {
-    alert("Esta función exportará un archivo compatible con Procreate que contendrá dos capas: la imagen original y el stencil editado.");
-    
-    // En una implementación real, aquí generaríamos un PSD con las capas
-    // Para este ejercicio, exportamos las dos imágenes por separado
-    // y mostramos una instrucción al usuario
-    
-    if (!stageRef.current) return;
-    
-    // Exportar la capa del stencil
-    const stencilUri = stageRef.current.toDataURL({
-      pixelRatio: 2
-    });
-    saveAs(stencilUri, 'stencil-layer.png');
-    
-    // Exportar la imagen original
-    saveAs(originalImage, 'original-layer.png');
-    
-    // Mensaje con instrucciones
-    alert("Se han descargado dos archivos PNG separados: la imagen original y el stencil editado. Puedes importarlos como capas en Procreate para continuar tu trabajo.");
-  };
-  
-  // Guardar la imagen editada
-  const saveEditedImage = () => {
-    if (!stageRef.current || !onSave) return;
-    
-    const uri = stageRef.current.toDataURL({
-      pixelRatio: 2
-    });
-    
-    onSave(uri);
-  };
-  
+  }, [applyInertia, endDrawing, isDragging, isDrawing, mode]);
+
   // Si no tenemos ambas imágenes cargadas, mostramos un indicador de carga
   if (!originalImageObj || !stencilImageObj) {
     return (
@@ -838,7 +626,14 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleUndo}
+              onClick={() => {
+                if (undoHistory.length > 0) {
+                  const prevLines = undoHistory[undoHistory.length - 1];
+                  setRedoHistory([...redoHistory, [...lines]]);
+                  setLines(prevLines);
+                  setUndoHistory(undoHistory.slice(0, -1));
+                }
+              }}
               disabled={undoHistory.length === 0}
               className="rounded-full w-8 h-8 p-0"
               title={t("undo") || "Deshacer"}
@@ -849,7 +644,14 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleRedo}
+              onClick={() => {
+                if (redoHistory.length > 0) {
+                  const nextLines = redoHistory[redoHistory.length - 1];
+                  setUndoHistory([...undoHistory, [...lines]]);
+                  setLines(nextLines);
+                  setRedoHistory(redoHistory.slice(0, -1));
+                }
+              }}
               disabled={redoHistory.length === 0}
               className="rounded-full w-8 h-8 p-0"
               title={t("redo") || "Rehacer"}
@@ -936,26 +738,74 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             <span className="text-xs bg-gray-800 px-2 py-1 rounded ml-1">{Math.round(scale * 100)}%</span>
           </div>
-          
-          {tool === 'brush' && (
-            <div className="flex items-center ml-2">
-              <label className="text-sm mr-2">{t("color") || "Color"}:</label>
-              <input
-                type="color"
-                value={brushColor}
-                onChange={(e) => setBrushColor(e.target.value)}
-                className="w-8 h-8 rounded-full cursor-pointer border-none"
-              />
-            </div>
-          )}
         </div>
         
-        {/* Panel de control de capas - Ahora en la parte superior con mejor distinción visual */}
+        {/* Panel desplegable de ajustes de herramienta */}
+        {showToolSettings && (
+          <div className="bg-gray-800 p-3 rounded-lg mb-2 flex flex-col space-y-2 animate-in fade-in duration-300">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-medium">
+                {tool === 'brush' 
+                  ? t("brush_settings") || "Ajustes del pincel" 
+                  : eraserTarget === 'drawing' 
+                    ? t("drawing_eraser") || "Borrador de dibujo" 
+                    : t("stencil_eraser") || "Borrador de stencil"
+                }
+              </h3>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 rounded-full"
+                onClick={() => setShowToolSettings(false)}
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs w-12">{t("size") || "Tamaño"}:</span>
+              <input
+                type="range"
+                min="1"
+                max={tool === 'eraser' ? 50 : 20}
+                value={tool === 'brush' ? brushSize : eraserSize}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (tool === 'brush') {
+                    setBrushSize(value);
+                  } else {
+                    setEraserSize(value);
+                  }
+                }}
+                className="flex-1"
+              />
+              <span className="text-xs w-6 text-center">{tool === 'brush' ? brushSize : eraserSize}</span>
+            </div>
+            
+            {tool === 'brush' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs w-12">{t("color") || "Color"}:</span>
+                <div className="flex gap-1">
+                  {['#ff0000', '#0000ff', '#00ff00', '#ffffff', '#000000'].map(color => (
+                    <button 
+                      key={color}
+                      className={`w-6 h-6 rounded-full border ${brushColor === color ? 'border-white ring-2 ring-blue-500' : 'border-gray-600'}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setBrushColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Panel de control de capas */}
         <div className="border border-gray-700 rounded-lg bg-gray-900 p-4 mb-4">
           <div className="flex flex-wrap items-center gap-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">{t("layers") || "CAPAS"}</h3>
             
-            {/* Control de capa original con mejor contraste visual */}
+            {/* Control de capa original */}
             <div className="flex items-center gap-2 border border-gray-600 rounded-md p-2 bg-gray-800">
               <span className="h-4 w-4 bg-gray-600 rounded-full inline-block mr-1"></span>
               <label className="text-sm font-medium whitespace-nowrap text-yellow-300">{t("original_image") || "FOTO ORIGINAL"}</label>
@@ -982,125 +832,36 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </div>
             
-            {/* Control de capa stencil con mejor contraste visual */}
+            {/* Control de capa stencil */}
             <div className="flex items-center gap-2 border border-gray-600 rounded-md p-2 bg-gray-800">
-              <span className="h-4 w-4 bg-red-500 rounded-full inline-block mr-1"></span>
-              <label className="text-sm font-medium whitespace-nowrap text-red-300">{t("stencil") || "STENCIL"}</label>
+              <span className="h-4 w-4 bg-blue-600 rounded-full inline-block mr-1"></span>
+              <label className="text-sm font-medium whitespace-nowrap text-blue-300">{t("stencil") || "STENCIL"}</label>
               <input
                 type="checkbox"
                 checked={stencilLayerVisible}
                 onChange={(e) => setStencilLayerVisible(e.target.checked)}
-                className="h-5 w-5 rounded border-gray-700 text-red-400"
+                className="h-5 w-5 rounded border-gray-700 text-blue-400"
               />
             </div>
           </div>
         </div>
         
-        {/* Controles de zoom y modo de interacción */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Button
-              variant={mode === 'drawing' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setMode('drawing');
-                if (stageRef.current) {
-                  document.body.style.cursor = 'default';
-                }
-              }}
-              className={mode === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""}
-            >
-              <Brush className="h-4 w-4 mr-1" />
-              {t("drawing_mode") || "Dibujar"}
-            </Button>
-            <Button
-              variant={mode === 'panning' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setMode('panning');
-                if (stageRef.current) {
-                  document.body.style.cursor = 'grab';
-                }
-              }}
-              className={mode === 'panning' ? "bg-green-600 hover:bg-green-700" : ""}
-            >
-              <Move className="h-4 w-4 mr-1" />
-              {t("move_mode") || "Mover/Zoom"}
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setScale(scale * 1.2);
-              }}
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setScale(Math.max(0.1, scale / 1.2));
-              }}
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setScale(1);
-                setPosition({ x: 0, y: 0 });
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M9 12h6" />
-              </svg>
-            </Button>
-          </div>
-        </div>
-
-        {/* Lienzo de edición con mejor manejo de dimensiones */}
-        <div className="border border-gray-700 rounded-lg" style={containerStyle}>
+        {/* Contenedor del canvas con tamaño ajustable */}
+        <div style={containerStyle} className="border border-gray-700 rounded-lg bg-black overflow-hidden">
           <Stage
             width={width}
             height={height}
-            onMouseDown={mode === 'drawing' ? handleMouseDown : handleDragStart}
-            onMousemove={handleMouseMove}
-            onMouseup={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onWheel={handleWheel}
             scaleX={scale}
             scaleY={scale}
             x={position.x}
             y={position.y}
             ref={stageRef}
-            draggable={mode === 'panning'}
-            onDragStart={() => {
-              document.body.style.cursor = 'grabbing';
-            }}
-            onDragMove={(e) => {
-              // Actualizar la posición durante el arrastre
-              const newPos = e.target.position();
-              setPosition(newPos);
-            }}
-            onDragEnd={() => {
-              document.body.style.cursor = 'default';
-              // Asegurar que el estado refleje la posición final
-              if (stageRef.current) {
-                const newPos = stageRef.current.position();
-                setPosition(newPos);
-              }
-            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {/* Capa de fondo: imagen original */}
-            <Layer name="background">
+            {/* Capa de imagen original con opacidad ajustable */}
+            <Layer name="original">
               {originalLayerVisible && originalImageObj && (
                 <Image
                   image={originalImageObj}
@@ -1111,8 +872,6 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 />
               )}
             </Layer>
-            
-            {/* IMPLEMENTACIÓN CON CAPAS INDEPENDIENTES Y BORRADOR SELECTIVO */}
             
             {/* Capa 1: Stencil (imagen base) */}
             <Layer name="stencil" ref={node => {
@@ -1200,33 +959,52 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 y={0}
                 width={width}
                 height={height}
-                fill="rgba(0,0,0,0)"
-                listening={true}
+                fill="rgba(0,0,0,0.001)"
               />
             </Layer>
           </Stage>
         </div>
         
-        <div className="text-center text-sm text-gray-400">
-          {t("use_tools_to_retouch") || "Usa las herramientas para retocar el stencil"}
-        </div>
-      </div>
-      
-      <div className="flex flex-wrap gap-2 mt-4">
-        <Button variant="outline" onClick={exportAsPNG}>
-          <Download className="h-4 w-4 mr-2" />
-          {t("export_stencil_png") || "Exportar stencil (PNG)"}
-        </Button>
-        <Button variant="outline" onClick={exportAsMergedPNG}>
-          <ImageDown className="h-4 w-4 mr-2" />
-          {t("export_merged_png") || "Exportar combinado (PNG)"}
-        </Button>
-        {onSave && (
-          <Button variant="default" onClick={saveEditedImage}>
-            <Save className="h-4 w-4 mr-2" />
+        {/* Acciones de exportación */}
+        <div className="flex flex-wrap gap-2 mt-4 justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (!stageRef.current || !onSave) return;
+              
+              const uri = stageRef.current.toDataURL({
+                pixelRatio: 2
+              });
+              
+              onSave(uri);
+              toast({
+                title: t("saved") || "Guardado",
+                description: t("stencil_saved") || "Stencil guardado correctamente",
+              });
+            }}
+          >
+            <Save className="h-4 w-4 mr-1" />
             {t("save") || "Guardar"}
           </Button>
-        )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (!stageRef.current) return;
+              
+              const uri = stageRef.current.toDataURL({
+                pixelRatio: 2
+              });
+              
+              saveAs(uri, 'stencil-edited.png');
+            }}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            {t("download") || "Descargar"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import StencilEditor from '@/components/StencilEditor/StencilEditor';
+import StencilEditor from '@/components/StencilEditor/StencilEditorFixed';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/hooks/use-auth';
 import axios from 'axios';
