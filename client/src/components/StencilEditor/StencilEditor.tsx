@@ -58,6 +58,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const stageRef = useRef<Konva.Stage | null>(null);
   const stencilImageRef = useRef<Konva.Image | null>(null);
   
+  // Referencia para cerrar menús al hacer clic fuera
+  const eraserMenuRef = useRef<HTMLDivElement | null>(null);
+  
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
   const [stencilImageObj, setStencilImageObj] = useState<HTMLImageElement | null>(null);
@@ -71,10 +74,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
-  // Estado para gestionar capas
+  // Estado para gestionar el borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
-  const [layersMenuOpen, setLayersMenuOpen] = useState<boolean>(false);
-  const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
+  const [eraserMenuOpen, setEraserMenuOpen] = useState<boolean>(false);
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -784,81 +786,52 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Brush className="h-4 w-4 mr-1" />
             {t("brush") || "Pincel"}
           </Button>
-          <Button
-            variant={tool === 'eraser' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setTool('eraser');
-              // El borrador usará la capa activa
-              setEraserTarget(activeLayer);
-              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ffffff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-            }}
-            className={tool === 'eraser' ? "bg-red-600 hover:bg-red-700" : ""}
-          >
-            <Eraser className="h-4 w-4 mr-1" />
-            {t("eraser") || "Borrador"}
-          </Button>
-          
-          {/* Botón de capas con menú desplegable */}
-          <div className="relative">
+          {/* Botón de borrador con menú desplegable */}
+          <div className="relative" ref={eraserMenuRef}>
             <Button
-              variant="outline"
+              variant={tool === 'eraser' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setLayersMenuOpen(!layersMenuOpen)}
-              className={layersMenuOpen ? "bg-gray-700" : ""}
+              onClick={() => setEraserMenuOpen(!eraserMenuOpen)}
+              className={tool === 'eraser' ? "bg-red-600 hover:bg-red-700" : ""}
             >
-              <Layers className="h-4 w-4 mr-1" />
-              {t("layers") || "Capas"}
+              <Eraser className="h-4 w-4 mr-1" />
+              {t("eraser") || "Borrador"}
             </Button>
             
-            {/* Menú desplegable de capas */}
-            {layersMenuOpen && (
+            {/* Menú desplegable de opciones de borrador */}
+            {eraserMenuOpen && (
               <div className="absolute z-50 mt-1 right-0 w-48 rounded-md shadow-lg bg-gray-800 border border-gray-700">
                 <div className="py-1">
                   <div className="px-4 py-2 text-xs text-gray-400 border-b border-gray-700">
-                    {t("select_active_layer") || "Seleccionar capa activa"}
+                    {t("erase_from") || "Borrar de:"}
                   </div>
                   
-                  {/* Capa de dibujo */}
+                  {/* Borrar capa de dibujo */}
                   <button 
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 ${activeLayer === 'drawing' ? 'bg-gray-700 text-blue-400' : 'text-gray-200'}`}
+                    className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 text-blue-400"
                     onClick={() => {
-                      setActiveLayer('drawing');
+                      setTool('eraser');
                       setEraserTarget('drawing');
-                      // Si estamos en modo borrador, actualizar cursor
-                      if (tool === 'eraser') {
-                        document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-                      }
+                      setEraserMenuOpen(false);
+                      document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
                     }}
                   >
-                    <div className="flex items-center flex-1">
-                      <Eye className="h-4 w-4 mr-2 text-blue-500" />
-                      <span>{t("drawing_layer") || "Capa de Dibujo"}</span>
-                    </div>
-                    {activeLayer === 'drawing' && (
-                      <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>
-                    )}
+                    <Eraser className="h-4 w-4 mr-2 text-blue-500" />
+                    <span>{t("erase_drawing") || "Borrar Dibujo"}</span>
                   </button>
                   
-                  {/* Capa de stencil */}
+                  {/* Borrar capa de stencil */}
                   <button 
-                    className={`flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 ${activeLayer === 'stencil' ? 'bg-gray-700 text-red-400' : 'text-gray-200'}`}
+                    className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 text-red-400"
                     onClick={() => {
-                      setActiveLayer('stencil');
+                      setTool('eraser');
                       setEraserTarget('stencil');
-                      // Si estamos en modo borrador, actualizar cursor
-                      if (tool === 'eraser') {
-                        document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-                      }
+                      setEraserMenuOpen(false);
+                      document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
                     }}
                   >
-                    <div className="flex items-center flex-1">
-                      <Eye className="h-4 w-4 mr-2 text-red-500" />
-                      <span>{t("stencil_layer") || "Capa de Stencil"}</span>
-                    </div>
-                    {activeLayer === 'stencil' && (
-                      <span className="ml-2 h-2 w-2 rounded-full bg-red-500"></span>
-                    )}
+                    <Eraser className="h-4 w-4 mr-2 text-red-500" />
+                    <span>{t("erase_stencil") || "Borrar Stencil"}</span>
                   </button>
                 </div>
               </div>
