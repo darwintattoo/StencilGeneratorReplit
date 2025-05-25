@@ -4,7 +4,7 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { setupTouchGestures } from './TouchGestures.js';
+import { setupProcreateTouchGestures } from './ProcreateTouchHandler';
 import { 
   Brush, 
   Eraser, 
