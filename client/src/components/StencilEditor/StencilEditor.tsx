@@ -4,7 +4,6 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { setupTouchGestures } from './ProcreateTouchGestures';
 import { 
   Brush, 
   Eraser, 
@@ -87,27 +86,6 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
   const lastTouchDistance = useRef<number | null>(null);
   const lastTouchCenter = useRef<{ x: number, y: number } | null>(null);
-  
-  // Estado para gestos táctiles avanzados estilo Procreate
-  const previousModeRef = useRef<'drawing' | 'panning'>(mode);
-  const velocityRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
-  const lastTimestampRef = useRef<number>(0);
-  const isPinchingRef = useRef<boolean>(false);
-  
-  // Configurar manejadores de gestos táctiles avanzados (estilo Procreate)
-  const touchGestureHandlers = useMemo(() => {
-    return setupTouchGestures(
-      stageRef,        // Referencia al Stage
-      scale,           // Escala actual
-      position,        // Posición actual
-      setScale,        // Función para actualizar escala
-      setPosition,     // Función para actualizar posición
-      setMode,         // Función para cambiar modo
-      setIsDrawing,    // Función para activar/desactivar dibujo
-      mode,            // Modo actual
-      setIsDragging    // Función para activar/desactivar arrastre
-    );
-  }, [scale, position, mode, setScale, setPosition, setMode, setIsDrawing, setIsDragging]);
   
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
@@ -986,10 +964,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             onMouseDown={mode === 'drawing' ? handleMouseDown : handleDragStart}
             onMousemove={handleMouseMove}
             onMouseup={handleMouseUp}
-            onTouchStart={touchGestureHandlers.handleTouchStart}
-            onTouchMove={touchGestureHandlers.handleTouchMove}
-            onTouchEnd={touchGestureHandlers.handleTouchEnd}
-            onWheel={touchGestureHandlers.handleWheel}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onWheel={handleWheel}
             scaleX={scale}
             scaleY={scale}
             x={position.x}
