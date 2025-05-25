@@ -32,12 +32,13 @@ declare module 'konva/lib/Stage' {
   }
 }
 
-// Tipo para los trazos de pincel
+// Tipo para los trazos de pincel/borrador
 interface Line {
   tool: 'brush' | 'eraser';
   points: number[];
   color: string;
   strokeWidth: number;
+  affectsStencil?: boolean; // Indica si el trazo debe afectar también a la capa del stencil
 }
 
 interface StencilEditorProps {
@@ -369,7 +370,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [isDrawing, lines, position, scale, mode, isDragging]);
 
-  // Función para manejar el inicio de toques táctiles - Con soporte mejorado para paneo con dos dedos
+  // Función para manejar el inicio de toques táctiles - Con soporte para borrador en ambas capas
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
@@ -410,7 +411,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           tool,
           points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
           color: tool === 'brush' ? brushColor : '#ffffff',
-          strokeWidth: effectiveSize
+          strokeWidth: effectiveSize,
+          // Marcar si este trazo debe afectar también al stencil
+          affectsStencil: tool === 'eraser' // Solo los trazos de borrador afectan al stencil
         };
         
         // Actualizar estado
@@ -1001,8 +1004,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa de stencil simplificada */}
-            <Layer name="stencil">
+            {/* Capa de stencil con soporte para borrado */}
+            <Layer 
+              name="stencil" 
+              ref={(node) => {
+                // Guardar referencia para acceso directo a la capa
+                if (node) {
+                  (window as any).layerStencil = node;
+                }
+              }}
+            >
               {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
@@ -1012,10 +1023,38 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   listening={false}
                 />
               )}
+              
+              {/* Trazos de borrador que afectan al stencil */}
+              {lines
+                .filter(line => line.tool === 'eraser' && line.affectsStencil)
+                .map((line, i) => (
+                  <Line
+                    key={`stencil-eraser-${i}`}
+                    points={line.points}
+                    stroke="#ffffff"
+                    strokeWidth={line.strokeWidth}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation="destination-out"
+                    perfectDrawEnabled={true}
+                    shadowForStrokeEnabled={false}
+                    listening={false}
+                  />
+                ))
+              }
             </Layer>
             
-            {/* CAPA ÚNICA para dibujo y borrado (crucial para que funcione destination-out) */}
-            <Layer name="drawingLayer">
+            {/* Capa para dibujo y borrado de trazos */}
+            <Layer 
+              name="drawingLayer"
+              ref={(node) => {
+                // Guardar referencia para acceso directo a la capa
+                if (node) {
+                  (window as any).layerDraw = node;
+                }
+              }}
+            >
               {lines.map((line, i) => (
                 <Line
                   key={`line-${i}`}
