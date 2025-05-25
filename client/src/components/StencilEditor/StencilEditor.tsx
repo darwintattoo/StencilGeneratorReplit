@@ -762,93 +762,180 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     overflow: 'auto'
   };
   
+  // Estado para controlar el panel de ajustes
+  const [showToolSettings, setShowToolSettings] = useState(false);
+  
   return (
-    <div className="flex flex-col w-full space-y-4">
-      <div className="flex flex-col space-y-4">
-        <div className="flex flex-wrap gap-2 mb-2">
-          <Button
-            variant={tool === 'brush' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setTool('brush');
-              // Restaurar globalCompositeOperation normal
-              // (aunque esto se maneja automáticamente en el renderizado de Line)
-            }}
-            className={tool === 'brush' ? "bg-blue-600 hover:bg-blue-700" : ""}
-          >
-            <Brush className="h-4 w-4 mr-1" />
-            {t("brush") || "Pincel"}
-          </Button>
-          <Button
-            variant={tool === 'eraser' && eraserTarget === 'drawing' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setTool('eraser');
-              setEraserTarget('drawing');
-              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-            }}
-            className={tool === 'eraser' && eraserTarget === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""}
-          >
-            <Eraser className="h-4 w-4 mr-1" />
-            {t("erase_drawing") || "Borrar Dibujo"}
-          </Button>
+    <div className="flex flex-col w-full space-y-2">
+      <div className="flex flex-col">
+        {/* Barra de herramientas organizada en 3 secciones */}
+        <div className="flex flex-wrap justify-between items-center bg-gray-900 p-2 rounded-lg mb-2">
+          {/* Sección 1: Herramientas de dibujo */}
+          <div className="flex gap-1 items-center">
+            {/* Toggle Dibujar/Mover */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMode(mode === 'drawing' ? 'panning' : 'drawing')}
+              className={`rounded-full ${mode === 'panning' ? "bg-gray-700" : ""} w-8 h-8 p-0`}
+              title={mode === 'drawing' ? t("pan_mode") || "Mover lienzo" : t("draw_mode") || "Dibujar"}
+            >
+              {mode === 'drawing' ? <Move className="h-4 w-4" /> : <Brush className="h-4 w-4" />}
+            </Button>
+            
+            {/* Separador */}
+            <div className="h-6 w-px bg-gray-700 mx-1"></div>
+            
+            {/* Pincel */}
+            <Button
+              variant={tool === 'brush' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => {
+                setTool('brush');
+                document.body.style.cursor = 'crosshair';
+                setShowToolSettings(true);
+              }}
+              className={`rounded-full ${tool === 'brush' ? "bg-blue-600 hover:bg-blue-700" : ""} w-8 h-8 p-0`}
+              title={t("brush") || "Pincel"}
+            >
+              <Brush className="h-4 w-4" />
+            </Button>
+            
+            {/* Borrar Dibujo */}
+            <Button
+              variant={tool === 'eraser' && eraserTarget === 'drawing' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => {
+                setTool('eraser');
+                setEraserTarget('drawing');
+                document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+                setShowToolSettings(true);
+              }}
+              className={`rounded-full ${tool === 'eraser' && eraserTarget === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""} w-8 h-8 p-0`}
+              title={t("erase_drawing") || "Borrar dibujo"}
+            >
+              <Eraser className="h-4 w-4" />
+            </Button>
+            
+            {/* Borrar Stencil */}
+            <Button
+              variant={tool === 'eraser' && eraserTarget === 'stencil' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => {
+                setTool('eraser');
+                setEraserTarget('stencil');
+                document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+                setShowToolSettings(true);
+              }}
+              className={`rounded-full ${tool === 'eraser' && eraserTarget === 'stencil' ? "bg-red-600 hover:bg-red-700" : ""} w-8 h-8 p-0`}
+              title={t("erase_stencil") || "Borrar stencil"}
+            >
+              <Eraser className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
           
-          <Button
-            variant={tool === 'eraser' && eraserTarget === 'stencil' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setTool('eraser');
-              setEraserTarget('stencil');
-              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-            }}
-            className={tool === 'eraser' && eraserTarget === 'stencil' ? "bg-red-600 hover:bg-red-700" : ""}
-          >
-            <Eraser className="h-4 w-4 mr-1" />
-            {t("erase_stencil") || "Borrar Stencil"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleUndo}
-            disabled={undoHistory.length === 0}
-          >
-            <Undo2 className="h-4 w-4 mr-1" />
-            {t("undo") || "Deshacer"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRedo}
-            disabled={redoHistory.length === 0}
-          >
-            <Redo2 className="h-4 w-4 mr-1" />
-            {t("redo") || "Rehacer"}
-          </Button>
+          {/* Sección 2: Acciones (undo/redo) */}
+          <div className="flex gap-1 items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleUndo}
+              disabled={undoHistory.length === 0}
+              className="rounded-full w-8 h-8 p-0"
+              title={t("undo") || "Deshacer"}
+            >
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRedo}
+              disabled={redoHistory.length === 0}
+              className="rounded-full w-8 h-8 p-0"
+              title={t("redo") || "Rehacer"}
+            >
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          </div>
           
-          <div className="flex items-center ml-2">
-            <label className="text-sm mr-2">
-              {tool === 'brush' 
-                ? (t("brush_size") || "Tamaño del pincel") 
-                : (t("eraser_size") || "Tamaño del borrador")}:
-            </label>
-            <input
-              type="range"
-              min="1"
-              max={tool === 'eraser' ? 30 : 20} // Mayor rango para el borrador
-              value={tool === 'brush' ? brushSize : eraserSize}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                if (tool === 'brush') {
-                  setBrushSize(value);
-                } else {
-                  setEraserSize(value);
+          {/* Sección 3: Controles de zoom */}
+          <div className="flex gap-1 items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // Reset zoom y posición
+                setScale(1);
+                setPosition({ x: 0, y: 0 });
+              }}
+              className="rounded-full w-8 h-8 p-0"
+              title={t("reset_view") || "Restablecer vista"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              </svg>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // Zoom in (aumentar escala)
+                const newScale = Math.min(scale * 1.2, 10);
+                setScale(newScale);
+                
+                // Centrar zoom
+                if (stageRef.current) {
+                  const stage = stageRef.current;
+                  const stageWidth = stage.width();
+                  const stageHeight = stage.height();
+                  
+                  const centerX = stageWidth / 2;
+                  const centerY = stageHeight / 2;
+                  
+                  setPosition({
+                    x: centerX - (centerX - position.x) * (newScale / scale),
+                    y: centerY - (centerY - position.y) * (newScale / scale)
+                  });
                 }
               }}
-              className="w-24"
-            />
-            <span className="text-sm ml-1">
-              {tool === 'brush' ? brushSize : eraserSize}px
-            </span>
+              className="rounded-full w-8 h-8 p-0"
+              title={t("zoom_in") || "Acercar"}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // Zoom out (reducir escala)
+                const newScale = Math.max(scale / 1.2, 0.1);
+                setScale(newScale);
+                
+                // Centrar zoom
+                if (stageRef.current) {
+                  const stage = stageRef.current;
+                  const stageWidth = stage.width();
+                  const stageHeight = stage.height();
+                  
+                  const centerX = stageWidth / 2;
+                  const centerY = stageHeight / 2;
+                  
+                  setPosition({
+                    x: centerX - (centerX - position.x) * (newScale / scale),
+                    y: centerY - (centerY - position.y) * (newScale / scale)
+                  });
+                }
+              }}
+              className="rounded-full w-8 h-8 p-0"
+              title={t("zoom_out") || "Alejar"}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            
+            <span className="text-xs bg-gray-800 px-2 py-1 rounded ml-1">{Math.round(scale * 100)}%</span>
           </div>
           
           {tool === 'brush' && (
