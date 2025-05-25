@@ -11,7 +11,6 @@ import {
   Redo2, 
   Download, 
   Save,
-  ImageDown,
   ZoomIn,
   ZoomOut,
   Move
@@ -38,7 +37,6 @@ interface Line {
   points: number[];
   color: string;
   strokeWidth: number;
-  affectsStencil?: boolean; // Indica si el trazo debe afectar también a la capa del stencil
 }
 
 interface StencilEditorProps {
@@ -61,15 +59,17 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Estados para la herramienta de dibujo
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
-  // Separamos las líneas por capa para evitar conflictos entre el borrador de stencil y el de dibujo
+  
+  // Separamos las líneas por capa para evitar conflictos entre los borradores
   const [drawingLines, setDrawingLines] = useState<Line[]>([]);
   const [stencilLines, setStencilLines] = useState<Line[]>([]);
-  const [undoHistory, setUndoHistory] = useState<{drawing: Line[][], stencil: Line[][]}>(
-    {drawing: [], stencil: []}
-  );
-  const [redoHistory, setRedoHistory] = useState<{drawing: Line[][], stencil: Line[][]}>(
-    {drawing: [], stencil: []}
-  );
+  
+  // Historiales separados para deshacer/rehacer
+  const [drawingUndoHistory, setDrawingUndoHistory] = useState<Line[][]>([]);
+  const [drawingRedoHistory, setDrawingRedoHistory] = useState<Line[][]>([]);
+  const [stencilUndoHistory, setStencilUndoHistory] = useState<Line[][]>([]);
+  const [stencilRedoHistory, setStencilRedoHistory] = useState<Line[][]>([]);
+  
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); 
@@ -211,7 +211,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     lastPointerPosition.current = null;
   }, []);
 
-  // Función para manejar el inicio de toques táctiles - Con soporte para borrador en capas separadas
+  // Función para manejar el inicio de toques táctiles
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     
@@ -252,28 +252,27 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           tool,
           points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
           color: tool === 'brush' ? brushColor : '#ffffff',
-          strokeWidth: effectiveSize,
+          strokeWidth: effectiveSize
         };
         
-        // Actualizar estado de la capa correspondiente
-        if (tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing')) {
-          // Para pincel o borrador de dibujo, afectamos la capa de dibujo
+        // Actualizar estado dependiendo de la herramienta y capa objetivo
+        if (tool === 'brush') {
+          // Si estamos dibujando, afecta solo a la capa de dibujo
           setDrawingLines(prevLines => [...prevLines, newLine]);
-          setUndoHistory(prev => ({
-            ...prev,
-            drawing: [...prev.drawing, [...drawingLines]]
-          }));
-        } else if (tool === 'eraser' && eraserTarget === 'stencil') {
-          // Para borrador de stencil, afectamos la capa de stencil
-          setStencilLines(prevLines => [...prevLines, newLine]);
-          setUndoHistory(prev => ({
-            ...prev,
-            stencil: [...prev.stencil, [...stencilLines]]
-          }));
+          setDrawingUndoHistory(prev => [...prev, [...drawingLines]]);
+          setDrawingRedoHistory([]);
+        } else if (tool === 'eraser') {
+          // Si estamos borrando, afecta a la capa seleccionada
+          if (eraserTarget === 'drawing') {
+            setDrawingLines(prevLines => [...prevLines, newLine]);
+            setDrawingUndoHistory(prev => [...prev, [...drawingLines]]);
+            setDrawingRedoHistory([]);
+          } else if (eraserTarget === 'stencil') {
+            setStencilLines(prevLines => [...prevLines, newLine]);
+            setStencilUndoHistory(prev => [...prev, [...stencilLines]]);
+            setStencilRedoHistory([]);
+          }
         }
-        
-        // Resetear historial de rehacer
-        setRedoHistory({drawing: [], stencil: []});
         
         // Guardar posición para suavizado
         lastPointerPosition.current = actualPos;
@@ -317,7 +316,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         setIsDrawing(false);
       }
     }
-  }, [brushColor, brushSize, eraserSize, isDrawing, lines, mode, position.x, position.y, scale, tool, eraserTarget]);
+  }, [
+    brushColor, 
+    brushSize, 
+    drawingLines, 
+    eraserSize, 
+    eraserTarget, 
+    isDrawing, 
+    mode, 
+    position.x, 
+    position.y, 
+    scale, 
+    stencilLines, 
+    tool
+  ]);
 
   // Función para manejar el movimiento de toques táctiles
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
@@ -466,19 +478,47 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         return;
       }
       
-      // Obtener última línea
-      const lastLineIdx = lines.length - 1;
-      if (lastLineIdx < 0) return;
-      
-      // Copiar array para inmutabilidad
-      const newLines = [...lines];
-      
-      // Añadir nuevos puntos a la última línea
-      const newPoints = [...newLines[lastLineIdx].points, actualPos.x, actualPos.y];
-      newLines[lastLineIdx].points = newPoints;
-      
-      // Actualizar estado
-      setLines(newLines);
+      // Determinar qué capa estamos afectando
+      if (tool === 'brush') {
+        // Si estamos dibujando, siempre es en la capa de dibujo
+        if (drawingLines.length > 0) {
+          // Copiar array para inmutabilidad
+          const newLines = [...drawingLines];
+          const lastIdx = newLines.length - 1;
+          
+          // Añadir nuevos puntos a la última línea
+          const newPoints = [...newLines[lastIdx].points, actualPos.x, actualPos.y];
+          newLines[lastIdx].points = newPoints;
+          
+          // Actualizar estado
+          setDrawingLines(newLines);
+        }
+      } else if (tool === 'eraser') {
+        // Si estamos borrando, depende de la capa objetivo
+        if (eraserTarget === 'drawing' && drawingLines.length > 0) {
+          // Borrado en capa de dibujo
+          const newLines = [...drawingLines];
+          const lastIdx = newLines.length - 1;
+          
+          // Añadir nuevos puntos a la última línea
+          const newPoints = [...newLines[lastIdx].points, actualPos.x, actualPos.y];
+          newLines[lastIdx].points = newPoints;
+          
+          // Actualizar estado
+          setDrawingLines(newLines);
+        } else if (eraserTarget === 'stencil' && stencilLines.length > 0) {
+          // Borrado en capa de stencil
+          const newLines = [...stencilLines];
+          const lastIdx = newLines.length - 1;
+          
+          // Añadir nuevos puntos a la última línea
+          const newPoints = [...newLines[lastIdx].points, actualPos.x, actualPos.y];
+          newLines[lastIdx].points = newPoints;
+          
+          // Actualizar estado
+          setStencilLines(newLines);
+        }
+      }
       
       // Actualizar posición para suavizado
       lastPointerPosition.current = actualPos;
@@ -486,7 +526,17 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       // Renderizar inmediatamente
       stage.batchDraw();
     }
-  }, [isDrawing, isDragging, lines, mode, position, scale]);
+  }, [
+    drawingLines, 
+    eraserTarget, 
+    isDragging, 
+    isDrawing, 
+    mode, 
+    position, 
+    scale, 
+    stencilLines, 
+    tool
+  ]);
 
   // Función para manejar el fin de toques táctiles
   const handleTouchEnd = useCallback((e: KonvaEventObject<TouchEvent>) => {
@@ -527,6 +577,50 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [applyInertia, endDrawing, isDragging, isDrawing, mode]);
 
+  // Función para deshacer específica para cada capa
+  const handleUndo = () => {
+    // Deshacer en la capa de dibujo
+    if (tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing')) {
+      if (drawingUndoHistory.length === 0) return;
+      
+      const previousLines = drawingUndoHistory[drawingUndoHistory.length - 1];
+      setDrawingRedoHistory([...drawingRedoHistory, [...drawingLines]]);
+      setDrawingLines(previousLines);
+      setDrawingUndoHistory(drawingUndoHistory.slice(0, -1));
+    }
+    // Deshacer en la capa de stencil
+    else if (tool === 'eraser' && eraserTarget === 'stencil') {
+      if (stencilUndoHistory.length === 0) return;
+      
+      const previousLines = stencilUndoHistory[stencilUndoHistory.length - 1];
+      setStencilRedoHistory([...stencilRedoHistory, [...stencilLines]]);
+      setStencilLines(previousLines);
+      setStencilUndoHistory(stencilUndoHistory.slice(0, -1));
+    }
+  };
+
+  // Función para rehacer específica para cada capa
+  const handleRedo = () => {
+    // Rehacer en la capa de dibujo
+    if (tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing')) {
+      if (drawingRedoHistory.length === 0) return;
+      
+      const nextLines = drawingRedoHistory[drawingRedoHistory.length - 1];
+      setDrawingUndoHistory([...drawingUndoHistory, [...drawingLines]]);
+      setDrawingLines(nextLines);
+      setDrawingRedoHistory(drawingRedoHistory.slice(0, -1));
+    }
+    // Rehacer en la capa de stencil
+    else if (tool === 'eraser' && eraserTarget === 'stencil') {
+      if (stencilRedoHistory.length === 0) return;
+      
+      const nextLines = stencilRedoHistory[stencilRedoHistory.length - 1];
+      setStencilUndoHistory([...stencilUndoHistory, [...stencilLines]]);
+      setStencilLines(nextLines);
+      setStencilRedoHistory(stencilRedoHistory.slice(0, -1));
+    }
+  };
+
   // Si no tenemos ambas imágenes cargadas, mostramos un indicador de carga
   if (!originalImageObj || !stencilImageObj) {
     return (
@@ -551,6 +645,15 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     maxHeight: '80vh',
     overflow: 'auto'
   };
+  
+  // Determinar si hay historial de deshacer/rehacer para la capa actual
+  const hasUndo = tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing') 
+    ? drawingUndoHistory.length > 0 
+    : stencilUndoHistory.length > 0;
+    
+  const hasRedo = tool === 'brush' || (tool === 'eraser' && eraserTarget === 'drawing')
+    ? drawingRedoHistory.length > 0
+    : stencilRedoHistory.length > 0;
   
   return (
     <div className="flex flex-col w-full space-y-2">
@@ -626,15 +729,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                if (undoHistory.length > 0) {
-                  const prevLines = undoHistory[undoHistory.length - 1];
-                  setRedoHistory([...redoHistory, [...lines]]);
-                  setLines(prevLines);
-                  setUndoHistory(undoHistory.slice(0, -1));
-                }
-              }}
-              disabled={undoHistory.length === 0}
+              onClick={handleUndo}
+              disabled={!hasUndo}
               className="rounded-full w-8 h-8 p-0"
               title={t("undo") || "Deshacer"}
             >
@@ -644,15 +740,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                if (redoHistory.length > 0) {
-                  const nextLines = redoHistory[redoHistory.length - 1];
-                  setUndoHistory([...undoHistory, [...lines]]);
-                  setLines(nextLines);
-                  setRedoHistory(redoHistory.slice(0, -1));
-                }
-              }}
-              disabled={redoHistory.length === 0}
+              onClick={handleRedo}
+              disabled={!hasRedo}
               className="rounded-full w-8 h-8 p-0"
               title={t("redo") || "Rehacer"}
             >
@@ -873,10 +962,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa 1: Stencil (imagen base) */}
-            <Layer name="stencil" ref={node => {
-              if (node) (window as any).layerStencil = node;
-            }}>
+            {/* Capa de stencil con soporte para borrado */}
+            <Layer name="stencil">
               {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
@@ -887,69 +974,42 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 />
               )}
               
-              {/* Borrador aplicado SOLO a la capa de stencil */}
-              {lines
-                .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
-                .map((line, i) => (
-                  <Line
-                    key={`stencil-eraser-${i}`}
-                    points={line.points}
-                    stroke="#ffffff" // El color no importa con destination-out
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="destination-out"
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
+              {/* Trazos de borrador que afectan al stencil */}
+              {stencilLines.map((line, i) => (
+                <Line
+                  key={`stencil-eraser-${i}`}
+                  points={line.points}
+                  stroke="#ffffff"
+                  strokeWidth={line.strokeWidth}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="destination-out"
+                  perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false}
+                  listening={false}
+                />
+              ))}
             </Layer>
             
-            {/* Capa 2: Dibujo (trazos del usuario) */}
-            <Layer name="drawingLayer" ref={node => {
-              if (node) (window as any).layerDraw = node;
-            }}>
-              {/* Trazos de pincel (dibujo) */}
-              {lines
-                .filter(line => line.tool === 'brush')
-                .map((line, i) => (
-                  <Line
-                    key={`brush-${i}`}
-                    points={line.points}
-                    stroke={line.color}
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
-              
-              {/* Borrador aplicado SOLO a la capa de dibujo */}
-              {lines
-                .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
-                .map((line, i) => (
-                  <Line
-                    key={`drawing-eraser-${i}`}
-                    points={line.points}
-                    stroke="#ffffff"
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="destination-out"
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
+            {/* Capa para trazos de dibujo */}
+            <Layer name="drawingLayer">
+              {/* Trazos de pincel (dibujo) y borrador de dibujo */}
+              {drawingLines.map((line, i) => (
+                <Line
+                  key={`drawing-line-${i}`}
+                  points={line.points}
+                  stroke={line.tool === 'brush' ? line.color : '#ffffff'}
+                  strokeWidth={line.strokeWidth}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation={line.tool === 'eraser' ? 'destination-out' : 'source-over'}
+                  perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false}
+                  listening={false}
+                />
+              ))}
             </Layer>
             
             {/* Capa para capturar eventos */}
