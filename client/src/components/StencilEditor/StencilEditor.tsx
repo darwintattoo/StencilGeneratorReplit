@@ -68,8 +68,19 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
-  // Variable para rastrear cuántos dedos están tocando la pantalla
+  // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
+  const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
+  const lastTouchDistance = useRef<number | null>(null);
+  const lastTouchCenter = useRef<{ x: number, y: number } | null>(null);
+  
+  // Variables para inercia y gestos
+  const velocity = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  const lastPanTime = useRef<number>(0);
+  const lastPanPosition = useRef<{ x: number, y: number } | null>(null);
+  const animationFrameId = useRef<number | null>(null);
+  const isPinching = useRef<boolean>(false);
+  const inertiaAnimationId = useRef<number | null>(null);
   
   // Estados para controlar las capas
   const [originalLayerOpacity, setOriginalLayerOpacity] = useState(0.3);
@@ -81,11 +92,6 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [mode, setMode] = useState<'drawing' | 'panning'>('drawing');
-  
-  // Estado para puntos temporales (para dibujo más suave)
-  const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
-  const lastTouchDistance = useRef<number | null>(null);
-  const lastTouchCenter = useRef<{ x: number, y: number } | null>(null);
   
   // Cargar las imágenes cuando los props cambien
   useEffect(() => {
@@ -1004,16 +1010,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa de stencil con soporte para borrado */}
-            <Layer 
-              name="stencil" 
-              ref={(node) => {
-                // Guardar referencia para acceso directo a la capa
-                if (node) {
-                  (window as any).layerStencil = node;
-                }
-              }}
-            >
+            {/* Capa de stencil (capa inferior) */}
+            <Layer name="stencil" ref={node => {
+              // Referencia global para debugging y acceso directo
+              if (node) (window as any).layerStencil = node;
+            }}>
               {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
@@ -1023,15 +1024,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   listening={false}
                 />
               )}
-              
-              {/* Trazos de borrador que afectan al stencil */}
+            </Layer>
+            
+            {/* Capa para borrador de stencil (controla borrado en la imagen stencil) */}
+            <Layer name="stencilEraser">
+              {/* Solo los trazos de borrador */}
               {lines
                 .filter(line => line.tool === 'eraser' && line.affectsStencil)
                 .map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
                     points={line.points}
-                    stroke="#ffffff"
+                    stroke="#ffffff" // El color no importa para destination-out
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
@@ -1045,33 +1049,51 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               }
             </Layer>
             
-            {/* Capa para dibujo y borrado de trazos */}
-            <Layer 
-              name="drawingLayer"
-              ref={(node) => {
-                // Guardar referencia para acceso directo a la capa
-                if (node) {
-                  (window as any).layerDraw = node;
-                }
-              }}
-            >
-              {lines.map((line, i) => (
-                <Line
-                  key={`line-${i}`}
-                  points={line.points}
-                  stroke={line.tool === 'brush' ? line.color : '#ffffff'} // Color normal para pincel, blanco para borrador
-                  strokeWidth={line.strokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation={
-                    line.tool === 'eraser' ? 'destination-out' : 'source-over'
-                  }
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                  listening={false}
-                />
-              ))}
+            {/* Capa para trazos de dibujo */}
+            <Layer name="drawingLayer" ref={node => {
+              if (node) (window as any).layerDraw = node;
+            }}>
+              {/* Solo las líneas de dibujo (pincel) */}
+              {lines
+                .filter(line => line.tool === 'brush')
+                .map((line, i) => (
+                  <Line
+                    key={`brush-${i}`}
+                    points={line.points}
+                    stroke={line.color}
+                    strokeWidth={line.strokeWidth}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    perfectDrawEnabled={true}
+                    shadowForStrokeEnabled={false}
+                    listening={false}
+                  />
+                ))
+              }
+            </Layer>
+            
+            {/* Capa para borrador de dibujo (controla borrado en las líneas dibujadas) */}
+            <Layer name="drawingEraser">
+              {/* Solo los trazos de borrador */}
+              {lines
+                .filter(line => line.tool === 'eraser')
+                .map((line, i) => (
+                  <Line
+                    key={`drawing-eraser-${i}`}
+                    points={line.points}
+                    stroke="#ffffff" // El color no importa para destination-out
+                    strokeWidth={line.strokeWidth}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation="destination-out"
+                    perfectDrawEnabled={true}
+                    shadowForStrokeEnabled={false}
+                    listening={false}
+                  />
+                ))
+              }
             </Layer>
             
             {/* Capa para capturar eventos */}
