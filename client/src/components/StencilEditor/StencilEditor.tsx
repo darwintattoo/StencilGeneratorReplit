@@ -53,7 +53,6 @@ interface Line {
   points: number[];
   color: string;
   strokeWidth: number;
-  target: 'drawing' | 'stencil' | 'both'; // Indica a qué capa afecta este trazo
 }
 
 interface StencilEditorProps {
@@ -73,17 +72,12 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const stencilLayerRef = useRef<Konva.Layer | null>(null);
   const drawingLayerRef = useRef<Konva.Layer | null>(null);
   
-  // Referencias para manipulación HTML canvas (fuera de Konva)
-  const stencilCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stencilImageElementRef = useRef<HTMLImageElement | null>(null);
-  
   // Referencia para cerrar menús al hacer clic fuera
   const eraserMenuRef = useRef<HTMLDivElement | null>(null);
   
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
   const [stencilImageObj, setStencilImageObj] = useState<HTMLImageElement | null>(null);
-  const [stencilDataUrl, setStencilDataUrl] = useState<string | null>(null);
   
   // Estados para la herramienta de dibujo
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
@@ -96,14 +90,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   const [eraserMenuOpen, setEraserMenuOpen] = useState<boolean>(false);
   
-  // Estados para manejo de capas
+  // Estados para las líneas de dibujo y borrado separadas
   const [drawingLines, setDrawingLines] = useState<Line[]>([]);
-  const [drawingUndoHistory, setDrawingUndoHistory] = useState<Line[][]>([]);
-  const [drawingRedoHistory, setDrawingRedoHistory] = useState<Line[][]>([]);
-  
-  // Historia para el stencil (manipulado a nivel de píxel)
-  const [stencilHistory, setStencilHistory] = useState<string[]>([]);
-  const [stencilHistoryIndex, setStencilHistoryIndex] = useState<number>(-1);
+  const [stencilEraseLines, setStencilEraseLines] = useState<Line[]>([]);
+  const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
+  const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -1214,7 +1205,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* CAPA DE STENCIL - Simplificada a solo la imagen */}
+            {/* CAPA DE STENCIL - Versión simplificada */}
             <Layer 
               name="stencil"
               ref={node => {
@@ -1222,7 +1213,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 if (node) (window as any).layerStencil = node;
               }}
             >
-              {/* Solo mostramos la imagen original del stencil */}
+              {/* Imagen del stencil */}
               {stencilLayerVisible && stencilImageObj && (
                 <Image
                   image={stencilImageObj}
@@ -1230,40 +1221,38 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   width={width}
                   height={height}
                   listening={false}
-                  globalCompositeOperation="source-over"
                 />
               )}
 
-              {/* LÍNEAS DE BORRADO APLICADAS DIRECTAMENTE SOBRE LA IMAGEN */}
-              {eraserTarget === 'stencil' && drawingLines
-                .filter(line => line.tool === 'eraser' && line.affectsStencil)
-                .map((line, i) => (
-                  <Line
-                    key={`stencil-eraser-${i}`}
-                    points={line.points}
-                    stroke="white"
-                    strokeWidth={line.strokeWidth * 4} // Significativamente más grande para el stencil
-                    tension={0.2}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation="destination-out"
-                    perfectDrawEnabled={true}
-                    shadowForStrokeEnabled={false}
-                    listening={false}
-                  />
-                ))
-              }
+              {/* LÍNEAS DE BORRADO ESPECÍFICAS PARA EL STENCIL */}
+              {stencilEraseLines.map((line, i) => (
+                <Line
+                  key={`stencil-eraser-${i}`}
+                  points={line.points}
+                  stroke="#ffffff"
+                  strokeWidth={line.strokeWidth * 5} // Más grueso para el stencil
+                  tension={0.3}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation="destination-out"
+                  perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false}
+                  listening={false}
+                />
+              ))}
             </Layer>
             
             {/* CAPA DE DIBUJO INDEPENDIENTE */}
             <Layer 
               name="drawingLayer" 
               ref={node => {
+                drawingLayerRef.current = node;
                 if (node) (window as any).layerDraw = node;
               }}
             >
-              {/* Trazos de pincel (dibujo) */}
+              {/* Trazos de pincel y borrador para dibujo */}
               {drawingLines.map((line, i) => {
+                // Si es un trazo de pincel
                 if (line.tool === 'brush') {
                   return (
                     <Line
@@ -1280,7 +1269,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                       listening={false}
                     />
                   );
-                } else if (line.tool === 'eraser') {
+                } 
+                // Si es borrador para la capa de dibujo
+                else if (line.tool === 'eraser') {
                   return (
                     <Line
                       key={`drawing-eraser-${i}`}
