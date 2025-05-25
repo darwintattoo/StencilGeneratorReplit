@@ -1057,7 +1057,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* IMPLEMENTACIÓN CON CAPAS INDEPENDIENTES Y BORRADOR SELECTIVO */}
+            {/* IMPLEMENTACIÓN MEJORADA PARA PERMITIR DIBUJAR DONDE SE HA BORRADO */}
             
             {/* Capa 1: Stencil (imagen base) */}
             <Layer name="stencil" ref={node => {
@@ -1072,8 +1072,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   listening={false}
                 />
               )}
-              
-              {/* Borrador aplicado SOLO a la capa de stencil */}
+            </Layer>
+            
+            {/* Capa para borrador de stencil - separada para evitar conflictos */}
+            <Layer name="stencilEraser">
+              {/* Solo los trazos de borrador para stencil */}
               {lines
                 .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
                 .map((line, i) => (
@@ -1110,14 +1113,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                     tension={0.5}
                     lineCap="round"
                     lineJoin="round"
+                    globalCompositeOperation="source-over" // Asegurar que siempre sea source-over para el pincel
                     perfectDrawEnabled={true}
                     shadowForStrokeEnabled={false}
                     listening={false}
                   />
                 ))
               }
-              
-              {/* Borrador aplicado SOLO a la capa de dibujo */}
+            </Layer>
+            
+            {/* Capa separada para el borrador de dibujo */}
+            <Layer name="drawingEraser">
+              {/* Solo los trazos de borrador para dibujo */}
               {lines
                 .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
                 .map((line, i) => (
