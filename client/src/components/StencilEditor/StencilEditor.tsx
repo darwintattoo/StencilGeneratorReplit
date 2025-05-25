@@ -14,7 +14,10 @@ import {
   ImageDown,
   ZoomIn,
   ZoomOut,
-  Move
+  Move,
+  Layers,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { saveAs } from 'file-saver';
@@ -68,8 +71,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
   const [brushColor, setBrushColor] = useState('#ff0000');
-  // Estado para determinar la capa objetivo del borrador
+  // Estado para gestionar capas
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
+  const [layersMenuOpen, setLayersMenuOpen] = useState<boolean>(false);
+  const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -780,32 +785,85 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             {t("brush") || "Pincel"}
           </Button>
           <Button
-            variant={tool === 'eraser' && eraserTarget === 'drawing' ? 'default' : 'outline'}
+            variant={tool === 'eraser' ? 'default' : 'outline'}
             size="sm"
             onClick={() => {
               setTool('eraser');
-              setEraserTarget('drawing');
-              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+              // El borrador usará la capa activa
+              setEraserTarget(activeLayer);
+              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ffffff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
             }}
-            className={tool === 'eraser' && eraserTarget === 'drawing' ? "bg-blue-600 hover:bg-blue-700" : ""}
+            className={tool === 'eraser' ? "bg-red-600 hover:bg-red-700" : ""}
           >
             <Eraser className="h-4 w-4 mr-1" />
-            {t("erase_drawing") || "Borrar Dibujo"}
+            {t("eraser") || "Borrador"}
           </Button>
           
-          <Button
-            variant={tool === 'eraser' && eraserTarget === 'stencil' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setTool('eraser');
-              setEraserTarget('stencil');
-              document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
-            }}
-            className={tool === 'eraser' && eraserTarget === 'stencil' ? "bg-red-600 hover:bg-red-700" : ""}
-          >
-            <Eraser className="h-4 w-4 mr-1" />
-            {t("erase_stencil") || "Borrar Stencil"}
-          </Button>
+          {/* Botón de capas con menú desplegable */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLayersMenuOpen(!layersMenuOpen)}
+              className={layersMenuOpen ? "bg-gray-700" : ""}
+            >
+              <Layers className="h-4 w-4 mr-1" />
+              {t("layers") || "Capas"}
+            </Button>
+            
+            {/* Menú desplegable de capas */}
+            {layersMenuOpen && (
+              <div className="absolute z-50 mt-1 right-0 w-48 rounded-md shadow-lg bg-gray-800 border border-gray-700">
+                <div className="py-1">
+                  <div className="px-4 py-2 text-xs text-gray-400 border-b border-gray-700">
+                    {t("select_active_layer") || "Seleccionar capa activa"}
+                  </div>
+                  
+                  {/* Capa de dibujo */}
+                  <button 
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 ${activeLayer === 'drawing' ? 'bg-gray-700 text-blue-400' : 'text-gray-200'}`}
+                    onClick={() => {
+                      setActiveLayer('drawing');
+                      setEraserTarget('drawing');
+                      // Si estamos en modo borrador, actualizar cursor
+                      if (tool === 'eraser') {
+                        document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230000ff\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+                      }
+                    }}
+                  >
+                    <div className="flex items-center flex-1">
+                      <Eye className="h-4 w-4 mr-2 text-blue-500" />
+                      <span>{t("drawing_layer") || "Capa de Dibujo"}</span>
+                    </div>
+                    {activeLayer === 'drawing' && (
+                      <span className="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>
+                    )}
+                  </button>
+                  
+                  {/* Capa de stencil */}
+                  <button 
+                    className={`flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-700 ${activeLayer === 'stencil' ? 'bg-gray-700 text-red-400' : 'text-gray-200'}`}
+                    onClick={() => {
+                      setActiveLayer('stencil');
+                      setEraserTarget('stencil');
+                      // Si estamos en modo borrador, actualizar cursor
+                      if (tool === 'eraser') {
+                        document.body.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff0000\' stroke-width=\'1\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M19 15l-1 2a1 1 0 01-1 1H7a1 1 0 01-1-1L3.4 5.3a1 1 0 011-1.3H19a1 1 0 011 1v10z\'%3E%3C/path%3E%3C/svg%3E") 0 24, auto';
+                      }
+                    }}
+                  >
+                    <div className="flex items-center flex-1">
+                      <Eye className="h-4 w-4 mr-2 text-red-500" />
+                      <span>{t("stencil_layer") || "Capa de Stencil"}</span>
+                    </div>
+                    {activeLayer === 'stencil' && (
+                      <span className="ml-2 h-2 w-2 rounded-full bg-red-500"></span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <Button
             variant="outline"
             size="sm"
