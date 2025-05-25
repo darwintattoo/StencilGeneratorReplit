@@ -1074,9 +1074,23 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa para borrador de stencil - separada para evitar conflictos */}
-            <Layer name="stencilEraser">
-              {/* Solo los trazos de borrador para stencil */}
+            {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
+            
+            {/* Capa 1: Stencil (imagen base) con borrador integrado */}
+            <Layer name="stencil" ref={node => {
+              if (node) (window as any).layerStencil = node;
+            }}>
+              {stencilLayerVisible && stencilImageObj && (
+                <Image
+                  image={stencilImageObj}
+                  width={width}
+                  height={height}
+                  ref={stencilImageRef}
+                  listening={false}
+                />
+              )}
+              
+              {/* Trazos de borrador directamente en la capa stencil */}
               {lines
                 .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
                 .map((line, i) => (
@@ -1097,7 +1111,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               }
             </Layer>
             
-            {/* Capa 2: Dibujo (trazos del usuario) */}
+            {/* Capa 2: Dibujo (trazos del usuario) con borrador integrado */}
             <Layer name="drawingLayer" ref={node => {
               if (node) (window as any).layerDraw = node;
             }}>
@@ -1120,11 +1134,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                   />
                 ))
               }
-            </Layer>
-            
-            {/* Capa separada para el borrador de dibujo */}
-            <Layer name="drawingEraser">
-              {/* Solo los trazos de borrador para dibujo */}
+              
+              {/* Trazos de borrador directamente en la capa de dibujo */}
               {lines
                 .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
                 .map((line, i) => (
