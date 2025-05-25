@@ -1014,38 +1014,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
             </Layer>
             
-            {/* Capa de dibujo: todas las líneas de pincel */}
-            <Layer name="brushStrokes">
-              {lines.filter(line => line.tool === 'brush').map((line, i) => (
+            {/* CAPA ÚNICA para dibujo y borrado (crucial para que funcione destination-out) */}
+            <Layer name="drawingLayer">
+              {lines.map((line, i) => (
                 <Line
-                  key={`brush-${i}`}
+                  key={`line-${i}`}
                   points={line.points}
-                  stroke={line.color}
+                  stroke={line.tool === 'brush' ? line.color : '#ffffff'} // Color normal para pincel, blanco para borrador
                   strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap="round"
                   lineJoin="round"
-                  listening={false}
-                />
-              ))}
-            </Layer>
-            
-            {/* Capa de borrador real con globalCompositeOperation */}
-            <Layer 
-              name="eraser"
-            >
-              {lines.filter(line => line.tool === 'eraser').map((line, i) => (
-                <Line
-                  key={`eraser-${i}`}
-                  points={line.points}
-                  stroke="rgba(255,255,255,1)" // Blanco sólido para borrar completamente
-                  strokeWidth={line.strokeWidth} // Usar el tamaño definido
-                  tension={0.2} // Suavizado para borrado natural
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation="destination-out" // Esta es la clave para el borrado real con transparencia
+                  globalCompositeOperation={
+                    line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                  }
                   perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false} // Mejora el rendimiento
+                  shadowForStrokeEnabled={false}
                   listening={false}
                 />
               ))}
