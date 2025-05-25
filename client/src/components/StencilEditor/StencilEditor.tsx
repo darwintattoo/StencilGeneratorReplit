@@ -1076,42 +1076,47 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* Capa 1: Stencil (imagen base) */}
-            <Layer name="stencil" ref={node => {
-              if (node) (window as any).layerStencil = node;
-            }}>
+            {/* SOLUCIÓN ALTERNATIVA PARA BORRADO DEL STENCIL */}
+            {/* Primero una capa base para el stencil */}
+            <Layer name="stencilBase">
               {stencilLayerVisible && stencilImageObj && (
-                <Group>
-                  {/* Imagen base del stencil */}
-                  <Image
-                    image={stencilImageObj}
-                    width={width}
-                    height={height}
-                    ref={stencilImageRef}
-                    listening={false}
-                  />
-                  
-                  {/* Trazos de borrador aplicados directamente */}
-                  {lines
-                    .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
-                    .map((line, i) => (
-                      <Line
-                        key={`stencil-eraser-${i}`}
-                        points={line.points}
-                        stroke="rgba(255,255,255,1)" // Color sólido para borrar completamente
-                        strokeWidth={line.strokeWidth * 1.2} // Ligeramente más grande para mejor borrado
-                        tension={0.5}
-                        lineCap="round"
-                        lineJoin="round"
-                        globalCompositeOperation="destination-out"
-                        perfectDrawEnabled={true}
-                        shadowForStrokeEnabled={false}
-                        listening={false}
-                      />
-                    ))
-                  }
-                </Group>
+                <Image
+                  image={stencilImageObj}
+                  width={width}
+                  height={height}
+                  ref={stencilImageRef}
+                  listening={false}
+                />
               )}
+            </Layer>
+            
+            {/* Segunda capa exclusivamente para el borrador del stencil con canvas directo */}
+            <Layer 
+              name="stencilEraser" 
+              ref={node => {
+                if (node) (window as any).layerStencil = node;
+              }}
+            >
+              <Group>
+                {lines
+                  .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
+                  .map((line, i) => (
+                    <Line
+                      key={`stencil-eraser-${i}`}
+                      points={line.points}
+                      stroke="#ffffff"
+                      strokeWidth={line.strokeWidth * 2} // Doble de grosor para borrar más efectivamente
+                      tension={0.5}
+                      lineCap="round"
+                      lineJoin="round"
+                      globalCompositeOperation="destination-out"
+                      perfectDrawEnabled={true}
+                      shadowForStrokeEnabled={false}
+                      listening={false}
+                    />
+                  ))
+                }
+              </Group>
             </Layer>
             
             {/* Capa 2: Dibujo (trazos del usuario) con borrador integrado */}
