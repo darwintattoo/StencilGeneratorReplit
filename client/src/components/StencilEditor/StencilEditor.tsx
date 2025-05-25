@@ -57,9 +57,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   // Referencias a los elementos de canvas
   const stageRef = useRef<Konva.Stage | null>(null);
   const stencilImageRef = useRef<Konva.Image | null>(null);
+  const stencilLayerRef = useRef<Konva.Layer | null>(null);
   
   // Referencia para cerrar menús al hacer clic fuera
   const eraserMenuRef = useRef<HTMLDivElement | null>(null);
+  
+  // Canvas temporal para aplicar borrador al stencil
+  const stencilCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
@@ -90,6 +94,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const animationFrameId = useRef<number | null>(null);
   const isPinching = useRef<boolean>(false);
   const inertiaAnimationId = useRef<number | null>(null);
+  
+  // Canvas independiente para stencil (para manipulación directa)
+  const [stencilCanvasReady, setStencilCanvasReady] = useState<boolean>(false);
+  const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [stencilContext, setStencilContext] = useState<CanvasRenderingContext2D | null>(null);
   
   // Estados para controlar las capas
   const [originalLayerOpacity, setOriginalLayerOpacity] = useState(0.3);
@@ -1076,37 +1085,37 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* SOLUCIÓN ALTERNATIVA PARA BORRADO DEL STENCIL */}
-            {/* Primero una capa base para el stencil */}
-            <Layer name="stencilBase">
-              {stencilLayerVisible && stencilImageObj && (
-                <Image
-                  image={stencilImageObj}
-                  width={width}
-                  height={height}
-                  ref={stencilImageRef}
-                  listening={false}
-                />
-              )}
-            </Layer>
-            
-            {/* Segunda capa exclusivamente para el borrador del stencil con canvas directo */}
+            {/* SOLUCIÓN SIMPLIFICADA CON UNA ÚNICA CAPA PARA EL STENCIL */}
             <Layer 
-              name="stencilEraser" 
+              name="stencil"
               ref={node => {
+                stencilLayerRef.current = node;
                 if (node) (window as any).layerStencil = node;
               }}
             >
+              {/* Grupo para encapsular imagen y borrador */}
               <Group>
+                {/* Imagen del stencil */}
+                {stencilLayerVisible && stencilImageObj && (
+                  <Image
+                    image={stencilImageObj}
+                    width={width}
+                    height={height}
+                    ref={stencilImageRef}
+                    listening={false}
+                  />
+                )}
+                
+                {/* Borrador aplicado directamente en la misma capa */}
                 {lines
                   .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
                   .map((line, i) => (
                     <Line
                       key={`stencil-eraser-${i}`}
                       points={line.points}
-                      stroke="#ffffff"
-                      strokeWidth={line.strokeWidth * 2} // Doble de grosor para borrar más efectivamente
-                      tension={0.5}
+                      stroke="rgba(255,255,255,1)"
+                      strokeWidth={line.strokeWidth * 5} // Aumentamos aún más el grosor
+                      tension={0.3}
                       lineCap="round"
                       lineJoin="round"
                       globalCompositeOperation="destination-out"
