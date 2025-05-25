@@ -406,7 +406,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: touch.clientY
       };
     }
-  }, [isDrawing, lines, position, scale, mode, isDragging]);
+  }, [isDrawing, drawingLines, stencilEraseLines, position, scale, mode, isDragging, eraserTarget, tool]);
 
   // Función para manejar el inicio de toques táctiles - Con soporte para borrador en ambas capas
   const handleTouchStart = useCallback((e: KonvaEventObject<TouchEvent>) => {
@@ -1205,13 +1205,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* CAPA DE STENCIL - Versión simplificada */}
+            {/* CAPA DE STENCIL CON EFECTO DE BORRADO SIMPLIFICADO */}
             <Layer 
               name="stencil"
-              ref={node => {
-                stencilLayerRef.current = node;
-                if (node) (window as any).layerStencil = node;
-              }}
+              ref={stencilLayerRef}
             >
               {/* Imagen del stencil */}
               {stencilLayerVisible && stencilImageObj && (
@@ -1224,22 +1221,33 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 />
               )}
 
-              {/* LÍNEAS DE BORRADO ESPECÍFICAS PARA EL STENCIL */}
-              {stencilEraseLines.map((line, i) => (
-                <Line
-                  key={`stencil-eraser-${i}`}
-                  points={line.points}
-                  stroke="#ffffff"
-                  strokeWidth={line.strokeWidth * 5} // Más grueso para el stencil
-                  tension={0.3}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation="destination-out"
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                  listening={false}
-                />
-              ))}
+              {/* APLICAR BORRADOR COMO CÍRCULOS BLANCOS */}
+              <Group globalCompositeOperation="destination-out">
+                {eraserTarget === 'stencil' && tool === 'eraser' && (
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={width}
+                    height={height}
+                    fill="rgba(0,0,0,0.01)"
+                    listening={false}
+                  />
+                )}
+                {stencilEraseLines.map((line, i) => (
+                  <Line
+                    key={`stencil-eraser-${i}`}
+                    points={line.points}
+                    stroke="white"
+                    strokeWidth={line.strokeWidth * 8}
+                    tension={0.2}
+                    lineCap="round"
+                    lineJoin="round"
+                    perfectDrawEnabled={false}
+                    shadowForStrokeEnabled={false}
+                    listening={false}
+                  />
+                ))}
+              </Group>
             </Layer>
             
             {/* CAPA DE DIBUJO INDEPENDIENTE */}
