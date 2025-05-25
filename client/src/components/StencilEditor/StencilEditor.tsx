@@ -81,6 +81,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   // Estado para gestionar el borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   const [eraserMenuOpen, setEraserMenuOpen] = useState<boolean>(false);
+  
+  // Estados independientes para cada capa
+  const [drawingLines, setDrawingLines] = useState<Line[]>([]);
+  const [stencilEraserLines, setStencilEraserLines] = useState<Line[]>([]);
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -543,19 +547,52 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       y: (mouseY - position.y) / scale
     };
     
-    // Aumentar el tamaño del borrador para que borre más rápido y sea más eficiente
-    const effectiveSize = tool === 'eraser' ? brushSize * 2.5 : brushSize;
-    
-    const newLine: Line = {
-      tool,
-      points: [adjustedPoint.x, adjustedPoint.y],
-      color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
-      strokeWidth: effectiveSize
-    };
-    
-    setLines([...lines, newLine]);
-    setUndoHistory([...undoHistory, [...lines]]);
-    setRedoHistory([]);
+    // Crear un nuevo trazo basado en la herramienta y el objetivo
+    if (tool === 'brush') {
+      // Para dibujo, siempre va a la capa de dibujo
+      const newLine: Line = {
+        tool: 'brush',
+        points: [adjustedPoint.x, adjustedPoint.y],
+        color: brushColor,
+        strokeWidth: brushSize
+      };
+      
+      // Actualizar los trazos de dibujo
+      setDrawingLines([...drawingLines, newLine]);
+      setUndoHistory([...undoHistory, [...drawingLines]]);
+      setRedoHistory([]);
+    } 
+    else if (tool === 'eraser') {
+      // Determinar tamaño efectivo según la capa objetivo
+      const eraserEffectiveSize = eraserTarget === 'stencil' ? eraserSize * 5 : eraserSize;
+      
+      if (eraserTarget === 'drawing') {
+        // Borrador para la capa de dibujo
+        const newLine: Line = {
+          tool: 'eraser',
+          points: [adjustedPoint.x, adjustedPoint.y],
+          color: '#ffffff',
+          strokeWidth: eraserEffectiveSize
+        };
+        
+        // Actualizar los trazos de dibujo
+        setDrawingLines([...drawingLines, newLine]);
+        setUndoHistory([...undoHistory, [...drawingLines]]);
+        setRedoHistory([]);
+      } 
+      else if (eraserTarget === 'stencil') {
+        // Borrador específico para la capa de stencil
+        const newLine: Line = {
+          tool: 'eraser',
+          points: [adjustedPoint.x, adjustedPoint.y],
+          color: '#ffffff',
+          strokeWidth: eraserEffectiveSize
+        };
+        
+        // Actualizar los trazos de borrado del stencil
+        setStencilEraserLines([...stencilEraserLines, newLine]);
+      }
+    }
   };
   
   // Función para continuar dibujando (mouse)
@@ -608,12 +645,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: (mouseY - position.y) / scale
       };
       
-      const lastLine = lines[lines.length - 1];
-      if (!lastLine) return;
+      // IMPLEMENTACIÓN DE BORRADORES INDEPENDIENTES
       
-      // Para el borrador, mejorar la densidad de puntos para un borrado más completo
-      if (tool === 'eraser') {
-        // Obtener el último punto registrado
+      // Manejar trazos de dibujo
+      if (tool === 'brush') {
+        const lastLine = drawingLines[drawingLines.length - 1];
+        if (!lastLine) return;
+        
+        lastLine.points = lastLine.points.concat([point.x, point.y]);
+        setDrawingLines([...drawingLines.slice(0, -1), lastLine]);
+      }
+      // Manejar borrador de dibujo
+      else if (tool === 'eraser' && eraserTarget === 'drawing') {
+        const lastLine = drawingLines[drawingLines.length - 1];
+        if (!lastLine) return;
+        
+        // Mejorar densidad de puntos para borrado
         const len = lastLine.points.length;
         if (len >= 2) {
           const prevX = lastLine.points[len - 2];
@@ -625,9 +672,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           // Si hay una distancia significativa, interpolamos puntos intermedios
-          // para asegurar un borrado continuo y completo
           if (distance > 5) {
-            const steps = Math.ceil(distance / 2); // Más puntos = borrado más completo
+            const steps = Math.ceil(distance / 2);
             for (let i = 1; i < steps; i++) {
               const ratio = i / steps;
               const x = prevX + dx * ratio;
@@ -636,12 +682,46 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             }
           }
         }
+        
+        lastLine.points = lastLine.points.concat([point.x, point.y]);
+        setDrawingLines([...drawingLines.slice(0, -1), lastLine]);
       }
-      
-      lastLine.points = lastLine.points.concat([point.x, point.y]);
-      
-      // Actualizar inmediatamente para mayor precisión
-      setLines([...lines.slice(0, -1), lastLine]);
+      // Manejar borrador de stencil (independiente)
+      else if (tool === 'eraser' && eraserTarget === 'stencil') {
+        const lastLine = stencilEraserLines[stencilEraserLines.length - 1];
+        if (!lastLine) return;
+        
+        // Densidad de puntos mucho mayor para borrado de stencil
+        const len = lastLine.points.length;
+        if (len >= 2) {
+          const prevX = lastLine.points[len - 2];
+          const prevY = lastLine.points[len - 1];
+          
+          // Calculamos la distancia entre el punto anterior y el actual
+          const dx = point.x - prevX;
+          const dy = point.y - prevY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Más puntos y más densidad para el stencil
+          if (distance > 2) {  // Menor umbral = más puntos
+            const steps = Math.ceil(distance / 1); // Aún más puntos
+            for (let i = 1; i < steps; i++) {
+              const ratio = i / steps;
+              const x = prevX + dx * ratio;
+              const y = prevY + dy * ratio;
+              lastLine.points = lastLine.points.concat([x, y]);
+            }
+          }
+        }
+        
+        lastLine.points = lastLine.points.concat([point.x, point.y]);
+        setStencilEraserLines([...stencilEraserLines.slice(0, -1), lastLine]);
+        
+        // Forzar redibujado para que el borrado sea visible inmediatamente
+        if (stencilLayerRef.current) {
+          stencilLayerRef.current.batchDraw();
+        }
+      }
     }
   };
   
