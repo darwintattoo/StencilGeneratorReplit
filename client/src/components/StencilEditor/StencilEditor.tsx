@@ -22,6 +22,18 @@ import {
 import { useLanguage } from '@/hooks/use-language';
 import { saveAs } from 'file-saver';
 
+// Función auxiliar para crear un canvas HTML con una imagen
+function createCanvasFromImage(image: HTMLImageElement): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.drawImage(image, 0, 0);
+  }
+  return canvas;
+}
+
 // Extensión de los tipos de Konva para propiedades personalizadas
 declare module 'konva/lib/Stage' {
   interface Stage {
@@ -41,7 +53,7 @@ interface Line {
   points: number[];
   color: string;
   strokeWidth: number;
-  affectsStencil?: boolean; // Indica si el trazo debe afectar también a la capa del stencil
+  target: 'drawing' | 'stencil' | 'both'; // Indica a qué capa afecta este trazo
 }
 
 interface StencilEditorProps {
@@ -57,16 +69,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   // Referencias a los elementos de canvas
   const stageRef = useRef<Konva.Stage | null>(null);
   const stencilImageRef = useRef<Konva.Image | null>(null);
+  const originalImageLayerRef = useRef<Konva.Layer | null>(null);
   const stencilLayerRef = useRef<Konva.Layer | null>(null);
   const drawingLayerRef = useRef<Konva.Layer | null>(null);
-  const eraserLayerRef = useRef<Konva.Layer | null>(null);
+  
+  // Referencias para manipulación HTML canvas (fuera de Konva)
+  const stencilCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const stencilImageElementRef = useRef<HTMLImageElement | null>(null);
   
   // Referencia para cerrar menús al hacer clic fuera
   const eraserMenuRef = useRef<HTMLDivElement | null>(null);
-  
-  // Canvas físico para manipulación directa del stencil (estilo Procreate)
-  const stencilCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stencilContextRef = useRef<CanvasRenderingContext2D | null>(null);
   
   // Estado para las imágenes
   const [originalImageObj, setOriginalImageObj] = useState<HTMLImageElement | null>(null);
@@ -75,23 +87,21 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Estados para la herramienta de dibujo
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
-  const [lines, setLines] = useState<Line[]>([]);
-  const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
-  const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
-  const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
+  const [eraserSize, setEraserSize] = useState(10);
   const [brushColor, setBrushColor] = useState('#ff0000');
   
   // Estado para gestionar el borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
   const [eraserMenuOpen, setEraserMenuOpen] = useState<boolean>(false);
   
-  // Estados para manejo de capas (estilo Procreate)
+  // Estados para manejo de capas
   const [drawingLines, setDrawingLines] = useState<Line[]>([]);
-  const [needsStencilUpdate, setNeedsStencilUpdate] = useState<boolean>(false);
+  const [drawingUndoHistory, setDrawingUndoHistory] = useState<Line[][]>([]);
+  const [drawingRedoHistory, setDrawingRedoHistory] = useState<Line[][]>([]);
   
-  // Estado para historia de acciones del stencil
+  // Historia para el stencil (manipulado a nivel de píxel)
   const [stencilHistory, setStencilHistory] = useState<string[]>([]);
   const [stencilHistoryIndex, setStencilHistoryIndex] = useState<number>(-1);
   // Variables para rastrear gestos táctiles (estilo Procreate)
@@ -1204,7 +1214,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             
             {/* SOLUCIÓN MEJORADA: Reorganizar capas para corregir el borrado */}
             
-            {/* CAPA DE STENCIL MANIPULADA DIRECTAMENTE */}
+            {/* CAPA DE STENCIL - Simplificada a solo la imagen */}
             <Layer 
               name="stencil"
               ref={node => {
@@ -1212,17 +1222,37 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 if (node) (window as any).layerStencil = node;
               }}
             >
-              {/* Imagen del stencil que se actualiza directamente */}
-              {stencilLayerVisible && stencilDataUrl && (
+              {/* Solo mostramos la imagen original del stencil */}
+              {stencilLayerVisible && stencilImageObj && (
                 <Image
-                  image={new window.Image()}
+                  image={stencilImageObj}
                   ref={stencilImageRef}
                   width={width}
                   height={height}
                   listening={false}
-                  src={stencilDataUrl}
+                  globalCompositeOperation="source-over"
                 />
               )}
+
+              {/* LÍNEAS DE BORRADO APLICADAS DIRECTAMENTE SOBRE LA IMAGEN */}
+              {eraserTarget === 'stencil' && drawingLines
+                .filter(line => line.tool === 'eraser' && line.affectsStencil)
+                .map((line, i) => (
+                  <Line
+                    key={`stencil-eraser-${i}`}
+                    points={line.points}
+                    stroke="white"
+                    strokeWidth={line.strokeWidth * 4} // Significativamente más grande para el stencil
+                    tension={0.2}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation="destination-out"
+                    perfectDrawEnabled={true}
+                    shadowForStrokeEnabled={false}
+                    listening={false}
+                  />
+                ))
+              }
             </Layer>
             
             {/* CAPA DE DIBUJO INDEPENDIENTE */}
