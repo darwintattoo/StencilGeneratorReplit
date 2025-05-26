@@ -100,6 +100,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [isPanning, setIsPanning] = useState(false);
   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
   const [isLayersOpen, setIsLayersOpen] = useState(false);
+  const [touches, setTouches] = useState<Touch[]>([]);
+  const [lastPinchDistance, setLastPinchDistance] = useState(0);
+  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
 
   const {
     tool,
@@ -234,6 +237,91 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     });
   };
 
+  // Funciones para gestos táctiles
+  const getDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getCenter = (touch1: Touch, touch2: Touch) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  };
+
+  const handleTouchStart = (e: any) => {
+    const touchList = Array.from(e.evt.touches) as Touch[];
+    setTouches(touchList);
+
+    if (touchList.length === 2) {
+      // Inicio de pinch
+      const distance = getDistance(touchList[0], touchList[1]);
+      const center = getCenter(touchList[0], touchList[1]);
+      setLastPinchDistance(distance);
+      setLastTouchCenter(center);
+      setIsPanning(false);
+      setIsDrawing(false);
+    } else if (touchList.length === 1) {
+      // Toque único - dibujo o pan
+      handleMouseDown(e);
+    }
+  };
+
+  const handleTouchMove = (e: any) => {
+    e.evt.preventDefault();
+    const touchList = Array.from(e.evt.touches) as Touch[];
+
+    if (touchList.length === 2) {
+      // Pinch zoom y pan con dos dedos
+      const distance = getDistance(touchList[0], touchList[1]);
+      const center = getCenter(touchList[0], touchList[1]);
+
+      if (lastPinchDistance > 0) {
+        // Zoom
+        const scale = distance / lastPinchDistance;
+        const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
+        
+        // Pan
+        const deltaX = center.x - lastTouchCenter.x;
+        const deltaY = center.y - lastTouchCenter.y;
+
+        handleGesture('pinch', {
+          scale: newScale,
+          centerX: center.x,
+          centerY: center.y
+        });
+
+        handleGesture('pan', { deltaX, deltaY });
+      }
+
+      setLastPinchDistance(distance);
+      setLastTouchCenter(center);
+    } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
+      // Dibujo con un dedo
+      handleMouseMove(e);
+    }
+  };
+
+  const handleTouchEnd = (e: any) => {
+    const touchList = Array.from(e.evt.touches) as Touch[];
+    setTouches(touchList);
+
+    if (touchList.length < 2) {
+      setLastPinchDistance(0);
+    }
+
+    if (touchList.length === 0) {
+      handleMouseUp();
+    }
+  };
+
+  // Doble tap para reset
+  const handleDoubleTap = () => {
+    resetView();
+  };
+
   return (
     <div className="h-screen bg-gray-100 relative flex">
       {/* Canvas principal */}
@@ -245,7 +333,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           onMousemove={handleMouseMove}
           onMouseup={handleMouseUp}
           onWheel={handleWheel}
-          onDblTap={resetView}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onDblTap={handleDoubleTap}
           ref={stageRef}
           scaleX={viewTransform.scale}
           scaleY={viewTransform.scale}
