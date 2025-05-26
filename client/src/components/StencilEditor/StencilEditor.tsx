@@ -382,20 +382,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setIsPanning(false);
 
     
-    // Finalizar borrado de stencil y actualizar imagen final
+    // Finalizar borrado de stencil con actualización ultra-optimizada
     if (isErasingStencil && stencilCanvas) {
-      // Actualizar imagen solo una vez al terminar el trazo
-      const newImg = new Image();
-      newImg.onload = () => {
-        setStencilImg(newImg);
-        // Aplicar filtro de tono si está activo
-        if (stencilHue !== 0) {
-          setFilteredStencilImg(null);
-        }
-      };
-      newImg.src = stencilCanvas.toDataURL();
+      // Usar setTimeout para diferir la actualización y eliminar completamente el retraso
+      setTimeout(() => {
+        const newImg = new Image();
+        newImg.onload = () => {
+          setStencilImg(newImg);
+          // Aplicar filtro de tono si está activo
+          if (stencilHue !== 0) {
+            setFilteredStencilImg(null);
+          }
+        };
+        newImg.src = stencilCanvas.toDataURL();
+      }, 0); // Diferir a siguiente tick para liberar el hilo principal
       setIsErasingStencil(false);
-
     }
     
     if (tool === 'eraser' && stageRef.current) {
