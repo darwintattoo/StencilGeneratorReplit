@@ -457,7 +457,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                   image={stencilImg}
                   width={nativeSize.width}
                   height={nativeSize.height}
-                  filters={stencilHue !== 0 ? [window.Konva.Filters.HSL] : []}
+                  filters={stencilHue !== 0 ? ['HSL'] : []}
                   hue={stencilHue}
                 />
               )}
@@ -700,15 +700,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 )}
               </div>
               <div className="ml-7 mt-2">
-                <div className="text-xs text-red-200 mb-1">Tono</div>
-                <Slider
-                  value={[stencilHue]}
-                  onValueChange={([value]) => setStencilHue(value)}
-                  max={360}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
+                <div className="text-xs text-red-200 mb-2">Tono</div>
+                <div className="relative">
+                  {/* Barra de colores de fondo */}
+                  <div 
+                    className="h-6 rounded-lg mb-2" 
+                    style={{
+                      background: 'linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%))'
+                    }}
+                  />
+                  <Slider
+                    value={[stencilHue]}
+                    onValueChange={([value]) => setStencilHue(value)}
+                    max={360}
+                    min={0}
+                    step={1}
+                    className="w-full absolute top-0"
+                  />
+                </div>
+                <div className="text-xs text-red-200 text-center mt-1">{Math.round(stencilHue)}°</div>
               </div>
             </div>
 
