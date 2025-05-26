@@ -274,9 +274,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         y: (pos.y - viewTransform.y) / viewTransform.scale
       };
 
-      // Si es borrador en capa stencil, crear canvas temporal para edición
+      // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
         setIsErasingStencil(true);
+        
+        // Crear canvas de trabajo si no existe
         if (!stencilCanvas) {
           const canvas = document.createElement('canvas');
           canvas.width = stencilImg.width;
@@ -285,38 +287,20 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           if (ctx) {
             ctx.drawImage(stencilImg, 0, 0);
             setStencilCanvas(canvas);
-            
-            // Aplicar borrado inicial inmediatamente
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.restore();
-            
-            // Actualizar imagen inmediatamente
-            const newImg = new Image();
-            newImg.onload = () => {
-              setStencilImg(newImg);
-            };
-            newImg.src = canvas.toDataURL();
           }
-        } else {
-          // Si ya existe el canvas, borrar directamente
+        }
+        
+        // Aplicar borrado inmediato para mejor respuesta
+        if (stencilCanvas) {
           const ctx = stencilCanvas.getContext('2d');
           if (ctx) {
             ctx.save();
             ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.beginPath();
             ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
             ctx.fill();
             ctx.restore();
-            
-            const newImg = new Image();
-            newImg.onload = () => {
-              setStencilImg(newImg);
-            };
-            newImg.src = stencilCanvas.toDataURL();
           }
         }
         return;
@@ -353,27 +337,34 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, borrar directamente en el canvas con interpolación
+    // Si es borrador en capa stencil, aplicar borrado continuo con precisión
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Aplicar borrado con mayor suavidad
+        // Aplicar borrado preciso y fluido
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Crear borrado suave y preciso
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
         
-        // Actualizar imagen con throttling para mejor rendimiento
-        requestAnimationFrame(() => {
-          const newImg = new Image();
-          newImg.onload = () => {
-            setStencilImg(newImg);
-          };
-          newImg.src = stencilCanvas.toDataURL();
-        });
+        // Actualizar imagen de forma más eficiente
+        const newImg = new Image();
+        newImg.onload = () => {
+          setStencilImg(newImg);
+          // Aplicar filtro de tono si está activo
+          if (stencilHue !== 0) {
+            setFilteredStencilImg(null); // Forzar recálculo
+          }
+        };
+        newImg.src = stencilCanvas.toDataURL();
       }
       return;
     }
@@ -387,7 +378,16 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const handleMouseUp = () => {
     setIsDrawing(false);
     setIsPanning(false);
-    setIsErasingStencil(false);
+    
+    // Finalizar borrado de stencil y actualizar imagen final
+    if (isErasingStencil && stencilCanvas) {
+      const newImg = new Image();
+      newImg.onload = () => {
+        setStencilImg(newImg);
+      };
+      newImg.src = stencilCanvas.toDataURL();
+      setIsErasingStencil(false);
+    }
     
     if (tool === 'eraser' && stageRef.current) {
       setTimeout(() => {
