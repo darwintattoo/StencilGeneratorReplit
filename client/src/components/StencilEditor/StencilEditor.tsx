@@ -619,7 +619,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
             {/* Stencil Layer */}
             <div className="bg-red-600 rounded-lg p-3">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3">
                 <GripVertical className="w-4 h-4 text-red-200" />
                 <Switch
                   checked={layers.stencil.visible}
@@ -633,21 +633,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                   <EyeOff className="w-4 h-4 text-red-200" />
                 )}
               </div>
-              <div className="ml-7 mt-2">
-                <Slider
-                  value={[layers.stencil.opacity]}
-                  onValueChange={([value]) => setOpacity('stencil', value)}
-                  max={100}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
             </div>
 
             {/* Original Layer */}
             <div className="bg-gray-600 rounded-lg p-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-2">
                 <GripVertical className="w-4 h-4 text-gray-400" />
                 <Switch
                   checked={layers.original.visible}
@@ -660,6 +650,16 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 ) : (
                   <EyeOff className="w-4 h-4 text-gray-400" />
                 )}
+              </div>
+              <div className="ml-7 mt-2">
+                <Slider
+                  value={[layers.original.opacity]}
+                  onValueChange={([value]) => setOpacity('original', value)}
+                  max={100}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
               </div>
             </div>
 
