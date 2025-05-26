@@ -16,6 +16,17 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
+// Colores disponibles para el dibujo
+const DRAWING_COLORS = [
+  '#000000', // Negro
+  '#ef4444', // Rojo
+  '#3b82f6', // Azul
+  '#22c55e', // Verde
+  '#eab308', // Amarillo
+  '#a855f7', // Morado
+  '#f97316', // Naranja
+];
+
 // Hook personalizado para manejar la lógica del canvas
 function useStencilCanvas() {
   const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
