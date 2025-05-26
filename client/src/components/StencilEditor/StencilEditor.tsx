@@ -11,7 +11,8 @@ import {
   GripVertical,
   ArrowLeft,
   Eye,
-  EyeOff
+  EyeOff,
+  Move
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -140,9 +141,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: any) => {
     const stage = e.target.getStage();
-    const pos = stage.getRelativePointerPosition();
+    const pos = stage.getPointerPosition();
     
-    if (tool === 'move' || e.evt.button === 1) {
+    if (tool === 'move' || e.evt.button === 1 || e.evt.button === 2) { // Move tool, middle click or right click for panning
+      e.evt.preventDefault();
       setIsPanning(true);
       setLastPointerPosition(pos);
       return;
@@ -167,7 +169,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   const handleMouseMove = (e: any) => {
     const stage = e.target.getStage();
-    const pos = stage.getRelativePointerPosition();
+    const pos = stage.getPointerPosition();
 
     if (isPanning) {
       const deltaX = pos.x - lastPointerPosition.x;
@@ -177,7 +179,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
 
-    if (!isDrawing || tool === 'move') return;
+    if (!isDrawing) return;
     
     const adjustedPos = {
       x: (pos.x - viewTransform.x) / viewTransform.scale,
@@ -327,6 +329,15 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
               className="bg-white/90 hover:bg-white shadow-sm"
             >
               <Eraser className="w-4 h-4" />
+            </Button>
+
+            <Button
+              variant={tool === 'move' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTool('move')}
+              className="bg-white/90 hover:bg-white shadow-sm"
+            >
+              <Move className="w-4 h-4" />
             </Button>
 
             <Button
