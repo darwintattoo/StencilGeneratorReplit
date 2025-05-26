@@ -426,8 +426,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           points: [actualPos.x, actualPos.y, actualPos.x, actualPos.y],
           color: tool === 'brush' ? brushColor : '#ffffff',
           strokeWidth: effectiveSize,
-          // Marcar si este trazo debe afectar también al stencil
-          affectsStencil: tool === 'eraser' // Solo los trazos de borrador afectan al stencil
+          // Marcar en qué capa debe aplicarse este borrador
+          affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
         };
         
         // Actualizar estado
@@ -568,7 +568,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       points: [adjustedPoint.x, adjustedPoint.y],
       color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
       strokeWidth: effectiveSize,
-      pressurePoints: pointerEvent.pointerType === 'pen' ? [pressure] : undefined
+      pressurePoints: pointerEvent.pointerType === 'pen' ? [pressure] : undefined,
+      // Marcar en qué capa debe aplicarse este borrador
+      affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
     };
     
     setLines([...lines, newLine]);
@@ -602,7 +604,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       tool,
       points: [adjustedPoint.x, adjustedPoint.y],
       color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
-      strokeWidth: effectiveSize
+      strokeWidth: effectiveSize,
+      // Marcar en qué capa debe aplicarse este borrador
+      affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
     };
     
     setLines([...lines, newLine]);
