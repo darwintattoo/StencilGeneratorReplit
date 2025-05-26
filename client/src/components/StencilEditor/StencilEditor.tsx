@@ -65,8 +65,9 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [lines, setLines] = useState<Line[]>([]);
   const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
   const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
-  const [erasedStencilImage, setErasedStencilImage] = useState<string | null>(null);
-  const [erasedDrawingImage, setErasedDrawingImage] = useState<string | null>(null);
+  // Estados para manejar las capas de borrado de forma separada
+  const [stencilMask, setStencilMask] = useState<Line[]>([]);
+  const [drawingMask, setDrawingMask] = useState<Line[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
@@ -432,10 +433,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
           affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
         };
         
-        // Actualizar estado
-        setLines(prevLines => [...prevLines, newLine]);
-        setUndoHistory(prev => [...prev, [...lines]]);
-        setRedoHistory([]);
+        // Actualizar estado según el tipo de línea
+        if (tool === 'eraser') {
+          if (eraserTarget === 'stencil') {
+            setStencilMask(prev => [...prev, newLine]);
+          } else {
+            setDrawingMask(prev => [...prev, newLine]);
+          }
+        } else {
+          setLines(prevLines => [...prevLines, newLine]);
+          setUndoHistory(prev => [...prev, [...lines]]);
+          setRedoHistory([]);
+        }
         
         // Guardar posición para suavizado
         lastPointerPosition.current = actualPos;
@@ -575,9 +584,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
     };
     
-    setLines([...lines, newLine]);
-    setUndoHistory([...undoHistory, [...lines]]);
-    setRedoHistory([]);
+    // Actualizar estado según el tipo de línea
+    if (tool === 'eraser') {
+      if (eraserTarget === 'stencil') {
+        setStencilMask([...stencilMask, newLine]);
+      } else {
+        setDrawingMask([...drawingMask, newLine]);
+      }
+    } else {
+      setLines([...lines, newLine]);
+      setUndoHistory([...undoHistory, [...lines]]);
+      setRedoHistory([]);
+    }
   }, [mode, tool, brushColor, brushSize, eraserSize, lines, undoHistory, position, scale, isPencilActive, calculatePressureWidth]);
 
   // Función para comenzar a dibujar (mouse - fallback)
@@ -611,9 +629,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       affectsStencil: tool === 'eraser' && eraserTarget === 'stencil'
     };
     
-    setLines([...lines, newLine]);
-    setUndoHistory([...undoHistory, [...lines]]);
-    setRedoHistory([]);
+    // Actualizar estado según el tipo de línea
+    if (tool === 'eraser') {
+      if (eraserTarget === 'stencil') {
+        setStencilMask([...stencilMask, newLine]);
+      } else {
+        setDrawingMask([...drawingMask, newLine]);
+      }
+    } else {
+      setLines([...lines, newLine]);
+      setUndoHistory([...undoHistory, [...lines]]);
+      setRedoHistory([]);
+    }
   };
   
   // Función para manejar movimiento del Pointer (Apple Pencil con presión)
@@ -663,7 +690,23 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: (pointerY - position.y) / scale
       };
       
-      const lastLine = lines[lines.length - 1];
+      // Determinar qué array usar según la herramienta
+      let lastLine: Line | undefined;
+      let updateFunction: (updater: (prev: Line[]) => Line[]) => void;
+      
+      if (tool === 'eraser') {
+        if (eraserTarget === 'stencil') {
+          lastLine = stencilMask[stencilMask.length - 1];
+          updateFunction = setStencilMask;
+        } else {
+          lastLine = drawingMask[drawingMask.length - 1];
+          updateFunction = setDrawingMask;
+        }
+      } else {
+        lastLine = lines[lines.length - 1];
+        updateFunction = setLines;
+      }
+      
       if (!lastLine) return;
       
       // Calcular grosor dinámico basado en presión para Apple Pencil
@@ -681,18 +724,19 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         ? lastLine.pressurePoints.concat([pressure])
         : undefined;
       
-      const updatedLines = [...lines];
-      updatedLines[updatedLines.length - 1] = {
-        ...lastLine,
-        points: newPoints,
-        strokeWidth: dynamicWidth,
-        pressurePoints: newPressurePoints
-      };
-      
-      setLines(updatedLines);
+      updateFunction(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...lastLine!,
+          points: newPoints,
+          strokeWidth: dynamicWidth,
+          pressurePoints: newPressurePoints
+        };
+        return updated;
+      });
       stage.batchDraw();
     }
-  }, [mode, isDragging, isDrawing, lines, position, scale, isPencilActive, tool, brushSize, eraserSize, calculatePressureWidth]);
+  }, [mode, isDragging, isDrawing, lines, stencilMask, drawingMask, position, scale, isPencilActive, tool, brushSize, eraserSize, eraserTarget, calculatePressureWidth]);
 
   // Función para continuar dibujando (mouse - fallback)
   const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
@@ -744,7 +788,23 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
         y: (mouseY - position.y) / scale
       };
       
-      const lastLine = lines[lines.length - 1];
+      // Determinar qué array usar según la herramienta
+      let lastLine: Line | undefined;
+      let updateFunction: (updater: (prev: Line[]) => Line[]) => void;
+      
+      if (tool === 'eraser') {
+        if (eraserTarget === 'stencil') {
+          lastLine = stencilMask[stencilMask.length - 1];
+          updateFunction = setStencilMask;
+        } else {
+          lastLine = drawingMask[drawingMask.length - 1];
+          updateFunction = setDrawingMask;
+        }
+      } else {
+        lastLine = lines[lines.length - 1];
+        updateFunction = setLines;
+      }
+      
       if (!lastLine) return;
       
       // Para el borrador, mejorar la densidad de puntos para un borrado más completo
@@ -777,32 +837,13 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
       lastLine.points = lastLine.points.concat([point.x, point.y]);
       
       // Actualizar inmediatamente para mayor precisión
-      setLines([...lines.slice(0, -1), lastLine]);
+      updateFunction(prev => [...prev.slice(0, -1), lastLine!]);
     }
   };
   
   // Función para terminar de dibujar o mover con mejor manejo del cursor
   const handleMouseUp = () => {
-    const wasDrawing = isDrawing;
     setIsDrawing(false);
-    
-    // Si terminamos de dibujar con el borrador, eliminar la línea de borrador después de aplicar el efecto
-    if (wasDrawing && tool === 'eraser' && lines.length > 0) {
-      const lastLine = lines[lines.length - 1];
-      if (lastLine && lastLine.tool === 'eraser') {
-        // Dar tiempo para que se renderice el efecto de borrado, luego eliminar la línea
-        setTimeout(() => {
-          setLines(prevLines => {
-            // Eliminar solo la última línea si sigue siendo la misma línea de borrador
-            const updatedLines = [...prevLines];
-            if (updatedLines.length > 0 && updatedLines[updatedLines.length - 1].tool === 'eraser') {
-              updatedLines.pop(); // Eliminar la última línea de borrador
-            }
-            return updatedLines;
-          });
-        }, 100); // Breve delay para asegurar que el borrado se aplique visualmente
-      }
-    }
     
     if (isDragging) {
       setIsDragging(false);
@@ -1230,9 +1271,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               )}
               
               {/* Borrador aplicado SOLO a la capa de stencil */}
-              {lines
-                .filter(line => line.tool === 'eraser' && line.affectsStencil === true)
-                .map((line, i) => (
+              {stencilMask.map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
                     points={line.points}
@@ -1274,9 +1313,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               }
               
               {/* Borrador aplicado SOLO a la capa de dibujo */}
-              {lines
-                .filter(line => line.tool === 'eraser' && line.affectsStencil !== true)
-                .map((line, i) => (
+              {drawingMask.map((line, i) => (
                   <Line
                     key={`drawing-eraser-${i}`}
                     points={line.points}
