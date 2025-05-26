@@ -1270,19 +1270,21 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 />
               )}
               
-              {/* Líneas de borrador como overlay blanco para simular borrado sin dañar el bitmap */}
+              {/* Borrador real aplicado al stencil con destination-out */}
               {stencilMask.map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
                     points={line.points}
-                    stroke="#f0f0f0" // Color gris claro para simular borrado
+                    stroke="#ffffff"
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
                     lineJoin="round"
+                    globalCompositeOperation="destination-out"
                     perfectDrawEnabled={true}
                     shadowForStrokeEnabled={false}
                     listening={false}
+                    hitStrokeWidth={0}  // Evitar capturas de eventos
                   />
                 ))
               }
@@ -1311,19 +1313,21 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 ))
               }
               
-              {/* Líneas de borrador como overlay blanco para simular borrado sin dañar el bitmap */}
+              {/* Borrador real aplicado al dibujo con destination-out */}
               {drawingMask.map((line, i) => (
                   <Line
                     key={`drawing-eraser-${i}`}
                     points={line.points}
-                    stroke="#f0f0f0" // Color gris claro para simular borrado
+                    stroke="#ffffff"
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
                     lineJoin="round"
+                    globalCompositeOperation="destination-out"
                     perfectDrawEnabled={true}
                     shadowForStrokeEnabled={false}
                     listening={false}
+                    hitStrokeWidth={0}  // Evitar capturas de eventos
                   />
                 ))
               }
