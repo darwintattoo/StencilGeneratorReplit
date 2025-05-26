@@ -348,25 +348,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, aplicar técnica de borrado profesional sin retrasos
+    // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Técnica profesional: borrado continuo sin actualizaciones de imagen
-        ctx.save();
+        // Borrado inmediato sin operaciones bloqueantes
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        ctx.fillStyle = '#000';
         
-        // Borrado inmediato y preciso
+        // Borrado instantáneo con mínimo procesamiento
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.restore();
         
-        // CLAVE: No actualizar imagen durante el movimiento para eliminar completamente retraso y puntos
+        // Sin restaurar contexto durante movimiento para máxima velocidad
       }
       return;
     }
@@ -382,20 +378,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setIsPanning(false);
 
     
-    // Finalizar borrado de stencil con actualización ultra-optimizada
+    // Finalizar borrado de stencil con restauración del contexto
     if (isErasingStencil && stencilCanvas) {
-      // Usar setTimeout para diferir la actualización y eliminar completamente el retraso
+      // Restaurar contexto una sola vez al final
+      const ctx = stencilCanvas.getContext('2d');
+      if (ctx) {
+        ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
+      }
+      
+      // Actualización diferida para no bloquear
       setTimeout(() => {
         const newImg = new Image();
         newImg.onload = () => {
           setStencilImg(newImg);
-          // Aplicar filtro de tono si está activo
           if (stencilHue !== 0) {
             setFilteredStencilImg(null);
           }
         };
         newImg.src = stencilCanvas.toDataURL();
-      }, 0); // Diferir a siguiente tick para liberar el hilo principal
+      }, 0);
       setIsErasingStencil(false);
     }
     
