@@ -843,7 +843,20 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Función para terminar de dibujar o mover con mejor manejo del cursor
   const handleMouseUp = () => {
+    const wasDrawing = isDrawing;
     setIsDrawing(false);
+    
+    // Si terminamos de usar el borrador, forzar reconstrucción del hit-testing
+    if (wasDrawing && tool === 'eraser' && stageRef.current) {
+      // Forzar re-renderizado completo para reconstruir el mapa de hit-testing
+      setTimeout(() => {
+        if (stageRef.current) {
+          stageRef.current.batchDraw();
+          // Forzar recálculo de offset para hit-testing
+          stageRef.current.setPointersPositions();
+        }
+      }, 50);
+    }
     
     if (isDragging) {
       setIsDragging(false);
