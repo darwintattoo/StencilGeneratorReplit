@@ -35,7 +35,6 @@ function useStencilCanvas() {
   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
   const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
   const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
-  const [isUpdatingStencil, setIsUpdatingStencil] = useState(false);
   const [layers, setLayers] = useState({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -353,7 +352,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
-      if (ctx && !isUpdatingStencil) {
+      if (ctx) {
         // Aplicar borrado directo al canvas sin actualizaciones intermedias
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
@@ -369,20 +368,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.fill();
         ctx.restore();
         
-        // Actualización ultra-optimizada: solo cada 3 frames para <20ms de retraso
-        if (!isUpdatingStencil) {
-          setIsUpdatingStencil(true);
-          setTimeout(() => {
-            requestAnimationFrame(() => {
-              const newImg = new Image();
-              newImg.onload = () => {
-                setStencilImg(newImg);
-                setTimeout(() => setIsUpdatingStencil(false), 16); // ~60fps throttling
-              };
-              newImg.src = stencilCanvas.toDataURL();
-            });
-          }, 8); // Micro delay para mejor fluidez
-        }
+        // Actualización optimizada sin variables problemáticas
+        requestAnimationFrame(() => {
+          const newImg = new Image();
+          newImg.onload = () => {
+            setStencilImg(newImg);
+          };
+          newImg.src = stencilCanvas.toDataURL();
+        });
       }
       return;
     }
