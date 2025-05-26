@@ -106,6 +106,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [touches, setTouches] = useState<Touch[]>([]);
   const [lastPinchDistance, setLastPinchDistance] = useState(0);
   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+  const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
 
   const {
     tool,
@@ -164,6 +165,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         x: (pos.x - viewTransform.x) / viewTransform.scale,
         y: (pos.y - viewTransform.y) / viewTransform.scale
       };
+
+      // Si es borrador en capa stencil, crear canvas temporal para edición
+      if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+        if (!stencilCanvas) {
+          const canvas = document.createElement('canvas');
+          canvas.width = stencilImg.width;
+          canvas.height = stencilImg.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(stencilImg, 0, 0);
+            setStencilCanvas(canvas);
+          }
+        }
+        return;
+      }
       
       const newLine = {
         tool,
@@ -194,6 +210,29 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       x: (pos.x - viewTransform.x) / viewTransform.scale,
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
+
+    // Si es borrador en capa stencil, borrar directamente en el canvas
+    if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas) {
+      const ctx = stencilCanvas.getContext('2d');
+      
+      if (ctx) {
+        // Aplicar borrado
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+        
+        // Actualizar la imagen inmediatamente
+        const newImg = new Image();
+        newImg.onload = () => {
+          setStencilImg(newImg);
+        };
+        newImg.src = stencilCanvas.toDataURL();
+      }
+      return;
+    }
     
     const newLines = [...lines];
     const lastLine = newLines[newLines.length - 1];
