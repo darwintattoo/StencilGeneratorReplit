@@ -1210,7 +1210,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               
               {/* Borrador aplicado SOLO a la capa de stencil */}
               {lines
-                .filter(line => line.tool === 'eraser' && eraserTarget === 'stencil')
+                .filter(line => line.tool === 'eraser' && line.affectsStencil === true)
                 .map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
@@ -1254,7 +1254,7 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
               
               {/* Borrador aplicado SOLO a la capa de dibujo */}
               {lines
-                .filter(line => line.tool === 'eraser' && eraserTarget === 'drawing')
+                .filter(line => line.tool === 'eraser' && line.affectsStencil !== true)
                 .map((line, i) => (
                   <Line
                     key={`drawing-eraser-${i}`}
