@@ -302,13 +302,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           }
         }
         
-        // Aplicar borrado inmediato para mejor respuesta
+        // Aplicar borrado inicial
         if (stencilCanvas) {
           const ctx = stencilCanvas.getContext('2d');
           if (ctx) {
             ctx.save();
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.beginPath();
             ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
             ctx.fill();
@@ -349,31 +348,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, aplicar borrado continuo y fluido
+    // Si es borrador en capa stencil, aplicar borrado directo y fluido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Aplicar borrado suave y continuo
+        // Aplicar borrado suave y continuo sin actualizar constantemente
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = eraserSize * 2;
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
         
-        // Borrado continuo y suave
+        // Crear trazo de borrado continuo
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
-        
-        // Actualizar imagen inmediatamente
-        const newImg = new Image();
-        newImg.onload = () => {
-          setStencilImg(newImg);
-        };
-        newImg.src = stencilCanvas.toDataURL();
       }
       return;
     }
@@ -391,6 +384,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     
     // Finalizar borrado de stencil y actualizar imagen final
     if (isErasingStencil && stencilCanvas) {
+      // Actualizar imagen solo una vez al terminar el trazo
       const newImg = new Image();
       newImg.onload = () => {
         setStencilImg(newImg);
@@ -401,6 +395,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       };
       newImg.src = stencilCanvas.toDataURL();
       setIsErasingStencil(false);
+
     }
     
     if (tool === 'eraser' && stageRef.current) {
