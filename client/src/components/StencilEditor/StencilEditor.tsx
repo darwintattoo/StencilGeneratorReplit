@@ -579,19 +579,19 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
         {/* Brush size slider (izquierda) */}
         {tool === 'brush' && (
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-3 h-40 w-12 flex items-center shadow-lg">
-              <div className="transform -rotate-90 w-24">
+          <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-30">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-4 h-44 w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
+              <div className="transform -rotate-90 w-28 flex flex-col items-center">
                 <Slider
                   value={[brushSize]}
                   onValueChange={([value]) => setBrushSize(value)}
                   max={30}
                   min={1}
                   step={1}
-                  className="w-24"
+                  className="w-28 mb-2"
                 />
-                <div className="text-xs text-center mt-2 transform rotate-90 text-gray-600">
-                  {brushSize}px
+                <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
+                  {brushSize}
                 </div>
               </div>
             </div>
@@ -600,19 +600,19 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
         {/* Eraser size slider (derecha) */}
         {tool === 'eraser' && (
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-3 h-40 w-12 flex items-center shadow-lg">
-              <div className="transform -rotate-90 w-24">
+          <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-30">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-4 h-44 w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
+              <div className="transform -rotate-90 w-28 flex flex-col items-center">
                 <Slider
                   value={[eraserSize]}
                   onValueChange={([value]) => setEraserSize(value)}
                   max={100}
                   min={1}
                   step={1}
-                  className="w-24"
+                  className="w-28 mb-2"
                 />
-                <div className="text-xs text-center mt-2 transform rotate-90 text-gray-600">
-                  {eraserSize}px
+                <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
+                  {eraserSize}
                 </div>
               </div>
             </div>
