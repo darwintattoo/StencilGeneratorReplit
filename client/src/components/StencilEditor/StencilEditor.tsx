@@ -21,6 +21,7 @@ function useStencilCanvas() {
   const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
   const [brushSize, setBrushSize] = useState(4);
   const [eraserSize, setEraserSize] = useState(10);
+  const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
   const [layers, setLayers] = useState({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -75,6 +76,8 @@ function useStencilCanvas() {
     setBrushSize,
     eraserSize,
     setEraserSize,
+    activeLayer,
+    setActiveLayer,
     layers,
     toggleLayer,
     setOpacity,
@@ -111,6 +114,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setBrushSize,
     eraserSize,
     setEraserSize,
+    activeLayer,
+    setActiveLayer,
     layers,
     toggleLayer,
     setOpacity,
@@ -164,7 +169,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         tool,
         points: [adjustedPos.x, adjustedPos.y],
         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
-        globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over'
+        globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+        layer: activeLayer
       };
       setLines([...lines, newLine]);
     }
@@ -356,7 +362,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
             </Layer>
           )}
 
-          {/* Layer Stencil */}
+          {/* Layer Stencil - Solo imagen de fondo */}
           {layers.stencil.visible && (
             <Layer opacity={layers.stencil.opacity / 100}>
               {stencilImg && (
@@ -372,9 +378,36 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           {/* Layer Drawing */}
           {layers.drawing.visible && (
             <Layer opacity={layers.drawing.opacity / 100}>
-              {lines.map((line, i) => (
+              {lines.filter(line => line.layer === 'drawing').map((line, i) => (
                 <Line
                   key={i}
+                  points={line.points}
+                  stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
+                  strokeWidth={line.strokeWidth}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  globalCompositeOperation={line.globalCompositeOperation}
+                  perfectDrawEnabled={true}
+                  shadowForStrokeEnabled={false}
+                />
+              ))}
+            </Layer>
+          )}
+
+          {/* Layer Stencil Editable */}
+          {layers.stencil.visible && (
+            <Layer opacity={layers.stencil.opacity / 100}>
+              {stencilImg && (
+                <KonvaImage
+                  image={stencilImg}
+                  width={nativeSize.width}
+                  height={nativeSize.height}
+                />
+              )}
+              {lines.filter(line => line.layer === 'stencil').map((line, i) => (
+                <Line
+                  key={`stencil-${i}`}
                   points={line.points}
                   stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
                   strokeWidth={line.strokeWidth}
