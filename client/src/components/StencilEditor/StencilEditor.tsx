@@ -22,6 +22,8 @@ function useStencilCanvas() {
   const [brushSize, setBrushSize] = useState(4);
   const [eraserSize, setEraserSize] = useState(10);
   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
+  const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
+  const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
   const [layers, setLayers] = useState({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -78,6 +80,10 @@ function useStencilCanvas() {
     setEraserSize,
     activeLayer,
     setActiveLayer,
+    brushColor,
+    setBrushColor,
+    stencilHue,
+    setStencilHue,
     layers,
     toggleLayer,
     setOpacity,
@@ -118,6 +124,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setEraserSize,
     activeLayer,
     setActiveLayer,
+    brushColor,
+    setBrushColor,
+    stencilHue,
+    setStencilHue,
     layers,
     toggleLayer,
     setOpacity,
@@ -220,7 +230,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         points: [adjustedPos.x, adjustedPos.y],
         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
-        layer: activeLayer
+        layer: activeLayer,
+        color: tool === 'brush' ? brushColor : '#ffffff'
       };
       setLines([...lines, newLine]);
     }
@@ -446,6 +457,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                   image={stencilImg}
                   width={nativeSize.width}
                   height={nativeSize.height}
+                  filters={stencilHue !== 0 ? [window.Konva.Filters.HSL] : []}
+                  hue={stencilHue}
                 />
               )}
             </Layer>
@@ -458,7 +471,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 <Line
                   key={i}
                   points={line.points}
-                  stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
+                  stroke={line.tool === 'brush' ? (line.color || brushColor) : '#ffffff'}
                   strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap="round"
@@ -550,6 +563,22 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 >
                   Stencil
                 </Button>
+              </div>
+            )}
+
+            {/* Selector de color - visible cuando está el pincel */}
+            {tool === 'brush' && (
+              <div className="flex gap-2 bg-white/90 rounded-md p-2 shadow-sm">
+                {['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#000000'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setBrushColor(color)}
+                    className={`w-6 h-6 rounded-full border-2 ${
+                      brushColor === color ? 'border-gray-600' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
               </div>
             )}
 
@@ -656,7 +685,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
             {/* Stencil Layer */}
             <div className="bg-red-600 rounded-lg p-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-2">
                 <GripVertical className="w-4 h-4 text-red-200" />
                 <Switch
                   checked={layers.stencil.visible}
@@ -669,6 +698,17 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 ) : (
                   <EyeOff className="w-4 h-4 text-red-200" />
                 )}
+              </div>
+              <div className="ml-7 mt-2">
+                <div className="text-xs text-red-200 mb-1">Tono</div>
+                <Slider
+                  value={[stencilHue]}
+                  onValueChange={([value]) => setStencilHue(value)}
+                  max={360}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
               </div>
             </div>
 
