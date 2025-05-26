@@ -1,0 +1,47 @@
+Due to persistent issues with the current stencil editor, please rebuild the UI with the following requirements:
+
+────────────────────────────────────────
+▪ Replace the file at src/components/StencilEditor.tsx (keep the same filename).
+▪ Do NOT touch the logic inside my hook `useStencilCanvas()`; only call its exposed methods:
+
+  const {
+    setTool,           // 'brush' | 'eraser' | 'move'
+    setBrushSize,      // (number)
+    setEraserSize,     // (number)
+    toggleLayer,       // (key, visible)
+    setOpacity,        // (key, 0-100)
+    handleGesture      // (type: 'pan' | 'pinch', data)  ← already implemented inside the hook
+  } = useStencilCanvas();
+
+**New Procreate-style layout**
+1. Center floating toolbar (dark-glass, rounded-2xl):
+   – Brush   (PenTool icon)   → setTool('brush')
+   – Eraser  (Eraser icon)    → setTool('eraser')
+   – Layers  (Layers icon)    → open right-side sheet
+
+2. Right sheet (layer stack) — exactly three layers:
+   1. Drawing   · editable · opacity slider 0-100 %
+   2. Stencil   · editable · opacity slider 0-100 %
+   3. Original  · locked   · no opacity slider
+   Row layout: drag handle | eye toggle | name | opacity slider (except Original).
+
+3. Brush-size slider (horizontal, rotated –90°) on **left** edge when Brush is active (range 1-30 px, default 4).  
+   Calls setBrushSize() live.
+
+4. Eraser-size slider on **right** edge when Eraser is active (range 1-100 px, default 10).  
+   Calls setEraserSize() live.
+
+5. **Keep original stencil size**: the canvas must render at the stencil’s native resolution; all zooming/panning is viewport-only (no bitmap rescaling).
+
+6. **Gestures**  
+   – One-finger drag  ➜ pan   → call handleGesture('pan', data)  
+   – Pinch-to-zoom    ➜ zoom  → call handleGesture('pinch', data)  
+   – Double-tap with two fingers ➜ reset view (same hook)
+
+7. UI must be **clear and fluid**:  
+   • Use lucide-react icons + shadcn/ui components.  
+   • Apply small Framer-Motion fades/slides for sheet & toolbar.  
+   • Avoid layout jank; prefer CSS transforms for smoothness.
+
+Deliver the full updated source of `StencilEditor.tsx`, ready to overwrite the old one.
+────────────────────────────────────────
