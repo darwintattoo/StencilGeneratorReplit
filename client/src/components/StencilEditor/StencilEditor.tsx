@@ -114,6 +114,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState(false);
+  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
 
   const {
     tool,
@@ -157,6 +158,32 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       img.src = originalImage;
     }
   }, [originalImage]);
+
+  // Aplicar filtro de tono al stencil
+  useEffect(() => {
+    if (stencilImg && stencilHue !== 0) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        canvas.width = stencilImg.width;
+        canvas.height = stencilImg.height;
+        
+        // Aplicar filtro CSS
+        ctx.filter = `hue-rotate(${stencilHue}deg)`;
+        ctx.drawImage(stencilImg, 0, 0);
+        
+        // Crear nueva imagen con el filtro aplicado
+        const newImg = new Image();
+        newImg.onload = () => {
+          setFilteredStencilImg(newImg);
+        };
+        newImg.src = canvas.toDataURL();
+      }
+    } else {
+      setFilteredStencilImg(null);
+    }
+  }, [stencilImg, stencilHue]);
 
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: any) => {
@@ -452,13 +479,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           {/* Layer Stencil - Solo imagen de fondo */}
           {layers.stencil.visible && (
             <Layer opacity={layers.stencil.opacity / 100}>
-              {stencilImg && (
+              {(filteredStencilImg || stencilImg) && (
                 <KonvaImage
-                  image={stencilImg}
+                  image={filteredStencilImg || stencilImg}
                   width={nativeSize.width}
                   height={nativeSize.height}
-                  filters={stencilHue !== 0 ? ['HSL'] : []}
-                  hue={stencilHue}
                 />
               )}
             </Layer>
