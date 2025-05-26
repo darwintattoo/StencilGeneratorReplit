@@ -848,12 +848,22 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     
     // Si terminamos de usar el borrador, forzar reconstrucción del hit-testing
     if (wasDrawing && tool === 'eraser' && stageRef.current) {
-      // Forzar re-renderizado completo para reconstruir el mapa de hit-testing
+      // Forzar reconstrucción completa del hit canvas para permitir dibujar sobre áreas borradas
       setTimeout(() => {
         if (stageRef.current) {
+          const layers = stageRef.current.find('Layer');
+          layers.forEach((layer: any) => {
+            // Limpiar el hit canvas manualmente
+            const hitCanvas = layer.getHitCanvas();
+            if (hitCanvas) {
+              const hitContext = hitCanvas.getContext('2d');
+              hitContext.clearRect(0, 0, stageRef.current!.width(), stageRef.current!.height());
+            }
+            // Reconstruir el hit canvas
+            layer.batchDraw();
+          });
+          // Forzar recálculo completo
           stageRef.current.batchDraw();
-          // Forzar recálculo de offset para hit-testing
-          stageRef.current.setPointersPositions();
         }
       }, 50);
     }
