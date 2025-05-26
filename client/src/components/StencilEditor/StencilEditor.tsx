@@ -1148,6 +1148,10 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onWheel={handleWheel}
+            // Eventos específicos para Apple Pencil con Pointer Events API
+            onPointerDown={mode === 'drawing' ? handlePointerDown : handleDragStart}
+            onPointerMove={handlePointerMove}
+            onPointerUp={() => setIsDrawing(false)}
             scaleX={scale}
             scaleY={scale}
             x={position.x}
