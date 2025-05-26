@@ -543,7 +543,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         {/* Brush size slider (izquierda) */}
         {tool === 'brush' && (
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 h-40 flex items-center shadow-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 h-40 flex items-center shadow-lg">
               <div className="transform -rotate-90 w-24">
                 <Slider
                   value={[brushSize]}
@@ -564,7 +564,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         {/* Eraser size slider (derecha) */}
         {tool === 'eraser' && (
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 h-40 flex items-center shadow-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 h-40 flex items-center shadow-lg">
               <div className="transform -rotate-90 w-24">
                 <Slider
                   value={[eraserSize]}
