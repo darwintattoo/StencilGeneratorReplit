@@ -368,14 +368,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.fill();
         ctx.restore();
         
-        // Actualización optimizada sin variables problemáticas
-        requestAnimationFrame(() => {
-          const newImg = new Image();
-          newImg.onload = () => {
-            setStencilImg(newImg);
-          };
-          newImg.src = stencilCanvas.toDataURL();
-        });
+        // NO actualizar durante el movimiento para eliminar retraso y puntos
       }
       return;
     }
