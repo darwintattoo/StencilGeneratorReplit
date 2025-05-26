@@ -366,16 +366,18 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.fill();
         ctx.restore();
         
-        // Actualizar imagen de forma más eficiente
-        const newImg = new Image();
-        newImg.onload = () => {
-          setStencilImg(newImg);
-          // Aplicar filtro de tono si está activo
-          if (stencilHue !== 0) {
-            setFilteredStencilImg(null); // Forzar recálculo
-          }
-        };
-        newImg.src = stencilCanvas.toDataURL();
+        // Actualizar imagen inmediatamente para eliminar retraso
+        requestAnimationFrame(() => {
+          const newImg = new Image();
+          newImg.onload = () => {
+            setStencilImg(newImg);
+            // Aplicar filtro de tono si está activo
+            if (stencilHue !== 0) {
+              setFilteredStencilImg(null); // Forzar recálculo
+            }
+          };
+          newImg.src = stencilCanvas.toDataURL();
+        });
       }
       return;
     }
@@ -780,13 +782,13 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       {/* Panel de capas - estilo Procreate */}
       {isLayersOpen && (
         <div className="w-80 bg-gray-800 border-l border-gray-600 p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-800 pb-2 z-50">
             <h3 className="text-white font-medium">Capas</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsLayersOpen(false)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 min-w-[32px] h-8"
             >
               ×
             </Button>
