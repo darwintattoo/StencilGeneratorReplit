@@ -39,6 +39,10 @@ const enTranslations: Record<string, string> = {
   "param_enhance_shadows": "Activate",
   "param_line_color": "Color",
   
+  // Posterize and Gamma descriptions
+  "posterize_description": "Reduces tones to improve contrast",
+  "gamma_description": "Automatically optimizes brightness and contrast",
+  
   // Form errors
   "error": "Error",
   "error_file_type": "Please upload an image file (JPEG, PNG, etc.)",
@@ -92,6 +96,10 @@ const esTranslations: Record<string, string> = {
   "param_transparency": "Activar",
   "param_enhance_shadows": "Activar",
   "param_line_color": "Color",
+  
+  // Posterize and Gamma descriptions
+  "posterize_description": "Reduce los tonos para mejorar el contraste",
+  "gamma_description": "Optimiza el brillo y contraste automáticamente",
   
   // Posterize y Gamma
   "posterizado": "Posterizado",

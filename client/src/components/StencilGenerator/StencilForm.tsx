@@ -482,7 +482,7 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">Reduce los tonos para mejorar el contraste</p>
+                <p className="text-sm text-gray-400">{t("posterize_description") || "Reduce los tonos para mejorar el contraste"}</p>
                 
                 {/* Mostrar el nivel de posterizado solo si está activado */}
                 {activarPosterize && (
@@ -523,7 +523,7 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">Optimiza el brillo y contraste automáticamente</p>
+                <p className="text-sm text-gray-400">{t("gamma_description") || "Optimiza el brillo y contraste automáticamente"}</p>
               </div>
             </div>
           )}
