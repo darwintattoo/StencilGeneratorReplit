@@ -46,6 +46,7 @@ function useStencilCanvas() {
     scale: 1
   });
 
+
   const toggleLayer = (key: string, visible: boolean) => {
     setLayers(prev => ({
       ...prev,
@@ -348,36 +349,31 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, aplicar borrado continuo con precisión
+    // Si es borrador en capa stencil, aplicar borrado continuo y fluido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Aplicar borrado preciso y fluido
+        // Aplicar borrado suave y continuo
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.fillStyle = 'rgba(0,0,0,1)';
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = eraserSize * 2;
         
-        // Crear borrado suave y preciso
+        // Borrado continuo y suave
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
         
-        // Actualizar imagen inmediatamente para eliminar retraso
-        requestAnimationFrame(() => {
-          const newImg = new Image();
-          newImg.onload = () => {
-            setStencilImg(newImg);
-            // Aplicar filtro de tono si está activo
-            if (stencilHue !== 0) {
-              setFilteredStencilImg(null); // Forzar recálculo
-            }
-          };
-          newImg.src = stencilCanvas.toDataURL();
-        });
+        // Actualizar imagen inmediatamente
+        const newImg = new Image();
+        newImg.onload = () => {
+          setStencilImg(newImg);
+        };
+        newImg.src = stencilCanvas.toDataURL();
       }
       return;
     }
@@ -391,12 +387,17 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const handleMouseUp = () => {
     setIsDrawing(false);
     setIsPanning(false);
+
     
     // Finalizar borrado de stencil y actualizar imagen final
     if (isErasingStencil && stencilCanvas) {
       const newImg = new Image();
       newImg.onload = () => {
         setStencilImg(newImg);
+        // Aplicar filtro de tono si está activo
+        if (stencilHue !== 0) {
+          setFilteredStencilImg(null);
+        }
       };
       newImg.src = stencilCanvas.toDataURL();
       setIsErasingStencil(false);
