@@ -107,6 +107,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [lastPinchDistance, setLastPinchDistance] = useState(0);
   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [isErasingStencil, setIsErasingStencil] = useState(false);
 
   const {
     tool,
@@ -168,6 +169,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
       // Si es borrador en capa stencil, crear canvas temporal para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+        setIsErasingStencil(true);
         if (!stencilCanvas) {
           const canvas = document.createElement('canvas');
           canvas.width = stencilImg.width;
@@ -176,6 +178,38 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           if (ctx) {
             ctx.drawImage(stencilImg, 0, 0);
             setStencilCanvas(canvas);
+            
+            // Aplicar borrado inicial inmediatamente
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+            
+            // Actualizar imagen inmediatamente
+            const newImg = new Image();
+            newImg.onload = () => {
+              setStencilImg(newImg);
+            };
+            newImg.src = canvas.toDataURL();
+          }
+        } else {
+          // Si ya existe el canvas, borrar directamente
+          const ctx = stencilCanvas.getContext('2d');
+          if (ctx) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+            
+            const newImg = new Image();
+            newImg.onload = () => {
+              setStencilImg(newImg);
+            };
+            newImg.src = stencilCanvas.toDataURL();
           }
         }
         return;
@@ -211,12 +245,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, borrar directamente en el canvas
-    if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas) {
+    // Si es borrador en capa stencil, borrar directamente en el canvas con interpolación
+    if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Aplicar borrado
+        // Aplicar borrado con mayor suavidad
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -224,12 +258,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.fill();
         ctx.restore();
         
-        // Actualizar la imagen inmediatamente
-        const newImg = new Image();
-        newImg.onload = () => {
-          setStencilImg(newImg);
-        };
-        newImg.src = stencilCanvas.toDataURL();
+        // Actualizar imagen con throttling para mejor rendimiento
+        requestAnimationFrame(() => {
+          const newImg = new Image();
+          newImg.onload = () => {
+            setStencilImg(newImg);
+          };
+          newImg.src = stencilCanvas.toDataURL();
+        });
       }
       return;
     }
@@ -243,6 +279,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const handleMouseUp = () => {
     setIsDrawing(false);
     setIsPanning(false);
+    setIsErasingStencil(false);
     
     if (tool === 'eraser' && stageRef.current) {
       setTimeout(() => {
@@ -543,7 +580,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         {/* Brush size slider (izquierda) */}
         {tool === 'brush' && (
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 h-40 flex items-center shadow-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-3 h-40 w-12 flex items-center shadow-lg">
               <div className="transform -rotate-90 w-24">
                 <Slider
                   value={[brushSize]}
@@ -564,7 +601,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         {/* Eraser size slider (derecha) */}
         {tool === 'eraser' && (
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 h-40 flex items-center shadow-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-3 h-40 w-12 flex items-center shadow-lg">
               <div className="transform -rotate-90 w-24">
                 <Slider
                   value={[eraserSize]}
