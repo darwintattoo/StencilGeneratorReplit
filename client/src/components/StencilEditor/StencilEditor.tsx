@@ -27,7 +27,7 @@ function useStencilCanvas() {
   const [layers, setLayers] = useState({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
-    original: { visible: true, opacity: 100 }
+    original: { visible: true, opacity: 20 }
   });
   const [viewTransform, setViewTransform] = useState({
     x: 0,
@@ -700,6 +700,22 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
             >
               <Layers className="w-4 h-4" />
             </Button>
+          </div>
+
+          {/* Control de opacidad de la imagen original */}
+          <div className="flex items-center gap-2 bg-white/90 rounded-md px-3 py-2 shadow-sm">
+            <span className="text-xs text-gray-600 font-medium">Original</span>
+            <div className="w-20">
+              <Slider
+                value={[layers.original.opacity]}
+                onValueChange={([value]) => setOpacity('original', value)}
+                max={100}
+                min={0}
+                step={1}
+                className="w-20"
+              />
+            </div>
+            <span className="text-xs text-gray-600 min-w-[30px]">{layers.original.opacity}%</span>
           </div>
 
           <div className="text-sm text-gray-600">
