@@ -32,13 +32,14 @@ declare module 'konva/lib/Stage' {
   }
 }
 
-// Tipo para los trazos de pincel/borrador
+// Tipo para los trazos de pincel/borrador con soporte para Apple Pencil
 interface Line {
   tool: 'brush' | 'eraser';
   points: number[];
   color: string;
   strokeWidth: number;
   affectsStencil?: boolean; // Indica si el trazo debe afectar también a la capa del stencil
+  pressurePoints?: number[]; // Puntos de presión para Apple Pencil (0-1)
 }
 
 interface StencilEditorProps {
@@ -70,6 +71,11 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [brushColor, setBrushColor] = useState('#ff0000');
   // Estado para determinar la capa objetivo del borrador
   const [eraserTarget, setEraserTarget] = useState<'drawing' | 'stencil'>('drawing');
+  
+  // Estados específicos para Apple Pencil y Pointer Events
+  const [isPencilActive, setIsPencilActive] = useState(false);
+  const [basePressure, setBasePressure] = useState(0.5); // Presión base para normalizar
+  const [pressureSensitivity, setPressureSensitivity] = useState(3); // Multiplicador de presión
   // Variables para rastrear gestos táctiles (estilo Procreate)
   const touchFingerCount = useRef<number>(0);
   const lastPointerPosition = useRef<{ x: number, y: number } | null>(null);
@@ -508,7 +514,69 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     }
   }, [mode]);
   
-  // Función para comenzar a dibujar (mouse)
+  // Función para calcular grosor basado en presión del Apple Pencil
+  const calculatePressureWidth = useCallback((pressure: number, baseSize: number): number => {
+    // Normalizar presión (algunos dispositivos pueden reportar valores fuera de 0-1)
+    const normalizedPressure = Math.max(0.1, Math.min(1.0, pressure || 0.5));
+    
+    // Aplicar sensibilidad y calcular grosor dinámico
+    const pressureMultiplier = basePressure + (normalizedPressure * pressureSensitivity);
+    return baseSize * pressureMultiplier;
+  }, [basePressure, pressureSensitivity]);
+
+  // Función para manejar Pointer Events (Apple Pencil, stylus, touch, mouse)
+  const handlePointerDown = useCallback((e: KonvaEventObject<PointerEvent>) => {
+    if (mode !== 'drawing') return;
+    
+    const pointerEvent = e.evt;
+    
+    // Filtrar solo eventos de stylus/pen si está habilitado el modo pencil
+    if (isPencilActive && pointerEvent.pointerType !== 'pen') {
+      return; // Ignorar touch y mouse cuando Apple Pencil está activo
+    }
+    
+    setIsDrawing(true);
+    const stage = e.target.getStage();
+    if (!stage) return;
+    
+    // Obtener posición exacta del pointer relativa al contenedor
+    const rect = stage.container().getBoundingClientRect();
+    const pointerX = pointerEvent.clientX - rect.left;
+    const pointerY = pointerEvent.clientY - rect.top;
+    
+    // Convertir a coordenadas del canvas (ajustando por la escala y posición)
+    const adjustedPoint = {
+      x: (pointerX - position.x) / scale,
+      y: (pointerY - position.y) / scale
+    };
+    
+    // Calcular grosor basado en presión (Apple Pencil) o usar tamaño base
+    let effectiveSize: number;
+    const pressure = pointerEvent.pressure || 0.5; // Fallback para dispositivos sin presión
+    
+    if (pointerEvent.pointerType === 'pen' && pressure > 0) {
+      // Apple Pencil: usar presión dinámica
+      const baseSize = tool === 'eraser' ? eraserSize : brushSize;
+      effectiveSize = calculatePressureWidth(pressure, baseSize);
+    } else {
+      // Touch/Mouse: usar tamaño fijo
+      effectiveSize = tool === 'eraser' ? eraserSize * 2.5 : brushSize;
+    }
+    
+    const newLine: Line = {
+      tool,
+      points: [adjustedPoint.x, adjustedPoint.y],
+      color: tool === 'brush' ? brushColor : '#ffffff', // Blanco para el borrador
+      strokeWidth: effectiveSize,
+      pressurePoints: pointerEvent.pointerType === 'pen' ? [pressure] : undefined
+    };
+    
+    setLines([...lines, newLine]);
+    setUndoHistory([...undoHistory, [...lines]]);
+    setRedoHistory([]);
+  }, [mode, tool, brushColor, brushSize, eraserSize, lines, undoHistory, position, scale, isPencilActive, calculatePressureWidth]);
+
+  // Función para comenzar a dibujar (mouse - fallback)
   const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     if (mode !== 'drawing') return;
     
@@ -542,7 +610,85 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     setRedoHistory([]);
   };
   
-  // Función para continuar dibujando (mouse)
+  // Función para manejar movimiento del Pointer (Apple Pencil con presión)
+  const handlePointerMove = useCallback((e: KonvaEventObject<PointerEvent>) => {
+    const pointerEvent = e.evt;
+    
+    // Filtrar solo eventos de stylus/pen si está habilitado el modo pencil
+    if (isPencilActive && pointerEvent.pointerType !== 'pen') {
+      return;
+    }
+    
+    // Si estamos en modo movimiento, manejar desplazamiento del canvas
+    if (mode === 'panning' && isDragging) {
+      const stage = e.target.getStage();
+      if (!stage) return;
+      
+      document.body.style.cursor = 'grabbing';
+      
+      const pointerPos = stage.getPointerPosition();
+      if (!pointerPos || !stage.lastMousePos) return;
+      
+      const dx = pointerPos.x - stage.lastMousePos.x;
+      const dy = pointerPos.y - stage.lastMousePos.y;
+      
+      const newPos = {
+        x: position.x + dx,
+        y: position.y + dy
+      };
+      
+      setPosition(newPos);
+      stage.lastMousePos = pointerPos;
+      stage.batchDraw();
+      return;
+    }
+    
+    // Si estamos en modo dibujo, manejar el dibujo con presión
+    if (mode === 'drawing' && isDrawing) {
+      const stage = e.target.getStage();
+      if (!stage) return;
+      
+      const rect = stage.container().getBoundingClientRect();
+      const pointerX = pointerEvent.clientX - rect.left;
+      const pointerY = pointerEvent.clientY - rect.top;
+      
+      const point = {
+        x: (pointerX - position.x) / scale,
+        y: (pointerY - position.y) / scale
+      };
+      
+      const lastLine = lines[lines.length - 1];
+      if (!lastLine) return;
+      
+      // Calcular grosor dinámico basado en presión para Apple Pencil
+      const pressure = pointerEvent.pressure || 0.5;
+      let dynamicWidth = lastLine.strokeWidth;
+      
+      if (pointerEvent.pointerType === 'pen' && pressure > 0) {
+        const baseSize = tool === 'eraser' ? eraserSize : brushSize;
+        dynamicWidth = calculatePressureWidth(pressure, baseSize);
+      }
+      
+      // Actualizar línea con nuevos puntos y presión
+      const newPoints = lastLine.points.concat([point.x, point.y]);
+      const newPressurePoints = lastLine.pressurePoints 
+        ? lastLine.pressurePoints.concat([pressure])
+        : undefined;
+      
+      const updatedLines = [...lines];
+      updatedLines[updatedLines.length - 1] = {
+        ...lastLine,
+        points: newPoints,
+        strokeWidth: dynamicWidth,
+        pressurePoints: newPressurePoints
+      };
+      
+      setLines(updatedLines);
+      stage.batchDraw();
+    }
+  }, [mode, isDragging, isDrawing, lines, position, scale, isPencilActive, tool, brushSize, eraserSize, calculatePressureWidth]);
+
+  // Función para continuar dibujando (mouse - fallback)
   const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
     // Si estamos en modo movimiento, manejar desplazamiento del canvas con animación suave
     if (mode === 'panning' && isDragging) {
@@ -806,6 +952,18 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
             <Eraser className="h-4 w-4 mr-1" />
             {t("erase_stencil") || "Borrar Stencil"}
           </Button>
+          
+          {/* Botón para activar Apple Pencil */}
+          <Button
+            variant={isPencilActive ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setIsPencilActive(!isPencilActive)}
+            className={isPencilActive ? "bg-purple-600 hover:bg-purple-700" : ""}
+            title="Activar Apple Pencil - Solo detecta trazos de stylus con sensibilidad a presión"
+          >
+            🖋️ {isPencilActive ? "Pencil ON" : "Pencil OFF"}
+          </Button>
+          
           <Button
             variant="outline"
             size="sm"
