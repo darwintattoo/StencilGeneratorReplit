@@ -35,6 +35,7 @@ function useStencilCanvas() {
   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
   const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
   const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
+  const [isUpdatingStencil, setIsUpdatingStencil] = useState(false);
   const [layers, setLayers] = useState({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -348,12 +349,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, aplicar borrado directo y fluido
+    // Si es borrador en capa stencil, aplicar borrado inmediato sin retrasos
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
-      if (ctx) {
-        // Aplicar borrado suave y continuo sin actualizar constantemente
+      if (ctx && !isUpdatingStencil) {
+        // Aplicar borrado directo al canvas sin actualizaciones intermedias
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.lineCap = 'round';
@@ -362,11 +363,26 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.strokeStyle = 'rgba(0,0,0,1)';
         ctx.fillStyle = 'rgba(0,0,0,1)';
         
-        // Crear trazo de borrado continuo
+        // Borrado inmediato en el canvas
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
+        
+        // Actualización ultra-optimizada: solo cada 3 frames para <20ms de retraso
+        if (!isUpdatingStencil) {
+          setIsUpdatingStencil(true);
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              const newImg = new Image();
+              newImg.onload = () => {
+                setStencilImg(newImg);
+                setTimeout(() => setIsUpdatingStencil(false), 16); // ~60fps throttling
+              };
+              newImg.src = stencilCanvas.toDataURL();
+            });
+          }, 8); // Micro delay para mejor fluidez
+        }
       }
       return;
     }
