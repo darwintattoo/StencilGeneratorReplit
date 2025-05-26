@@ -65,6 +65,8 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   const [lines, setLines] = useState<Line[]>([]);
   const [undoHistory, setUndoHistory] = useState<Line[][]>([]);
   const [redoHistory, setRedoHistory] = useState<Line[][]>([]);
+  const [erasedStencilImage, setErasedStencilImage] = useState<string | null>(null);
+  const [erasedDrawingImage, setErasedDrawingImage] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
   const [eraserSize, setEraserSize] = useState(10); // Tamaño específico para el borrador, más grande para mejor usabilidad
@@ -781,7 +783,26 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
   
   // Función para terminar de dibujar o mover con mejor manejo del cursor
   const handleMouseUp = () => {
+    const wasDrawing = isDrawing;
     setIsDrawing(false);
+    
+    // Si terminamos de dibujar con el borrador, eliminar la línea de borrador después de aplicar el efecto
+    if (wasDrawing && tool === 'eraser' && lines.length > 0) {
+      const lastLine = lines[lines.length - 1];
+      if (lastLine && lastLine.tool === 'eraser') {
+        // Dar tiempo para que se renderice el efecto de borrado, luego eliminar la línea
+        setTimeout(() => {
+          setLines(prevLines => {
+            // Eliminar solo la última línea si sigue siendo la misma línea de borrador
+            const updatedLines = [...prevLines];
+            if (updatedLines.length > 0 && updatedLines[updatedLines.length - 1].tool === 'eraser') {
+              updatedLines.pop(); // Eliminar la última línea de borrador
+            }
+            return updatedLines;
+          });
+        }, 100); // Breve delay para asegurar que el borrado se aplique visualmente
+      }
+    }
     
     if (isDragging) {
       setIsDragging(false);
