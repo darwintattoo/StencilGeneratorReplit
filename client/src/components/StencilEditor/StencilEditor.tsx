@@ -1270,17 +1270,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 />
               )}
               
-              {/* Borrador aplicado SOLO a la capa de stencil */}
+              {/* Líneas de borrador como overlay blanco para simular borrado sin dañar el bitmap */}
               {stencilMask.map((line, i) => (
                   <Line
                     key={`stencil-eraser-${i}`}
                     points={line.points}
-                    stroke="#ffffff" // El color no importa con destination-out
+                    stroke="#f0f0f0" // Color gris claro para simular borrado
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
                     lineJoin="round"
-                    globalCompositeOperation="destination-out"
                     perfectDrawEnabled={true}
                     shadowForStrokeEnabled={false}
                     listening={false}
@@ -1312,17 +1311,16 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
                 ))
               }
               
-              {/* Borrador aplicado SOLO a la capa de dibujo */}
+              {/* Líneas de borrador como overlay blanco para simular borrado sin dañar el bitmap */}
               {drawingMask.map((line, i) => (
                   <Line
                     key={`drawing-eraser-${i}`}
                     points={line.points}
-                    stroke="#ffffff"
+                    stroke="#f0f0f0" // Color gris claro para simular borrado
                     strokeWidth={line.strokeWidth}
                     tension={0.5}
                     lineCap="round"
                     lineJoin="round"
-                    globalCompositeOperation="destination-out"
                     perfectDrawEnabled={true}
                     shadowForStrokeEnabled={false}
                     listening={false}
