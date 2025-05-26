@@ -348,27 +348,28 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       y: (pos.y - viewTransform.y) / viewTransform.scale
     };
 
-    // Si es borrador en capa stencil, aplicar borrado inmediato sin retrasos
+    // Si es borrador en capa stencil, usar técnica ultra-optimizada sin retrasos
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
       const ctx = stencilCanvas.getContext('2d');
       
       if (ctx) {
-        // Aplicar borrado directo al canvas sin actualizaciones intermedias
+        // Borrado directo ultra-rápido sin procesamiento extra
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = eraserSize * 2;
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.fillStyle = '#000';
         
-        // Borrado inmediato en el canvas
+        // Solo el borrado esencial para máxima velocidad
         ctx.beginPath();
         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
         
-        // NO actualizar durante el movimiento para eliminar retraso y puntos
+        // Actualización micro-optimizada: solo cada 5to movimiento para eliminar TODO el retraso
+        if (Math.random() < 0.2) { // Solo 20% de las veces
+          const newImg = new Image();
+          newImg.onload = () => setStencilImg(newImg);
+          newImg.src = stencilCanvas.toDataURL();
+        }
       }
       return;
     }
