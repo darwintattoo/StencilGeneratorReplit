@@ -781,7 +781,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
             </Button>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-4">
             {/* Drawing Layer */}
             <div className="bg-blue-600 rounded-lg p-3">
               <div className="flex items-center gap-3 mb-2">
@@ -797,6 +797,24 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 ) : (
                   <EyeOff className="w-4 h-4 text-blue-200" />
                 )}
+              </div>
+              <div className="ml-7 space-y-3">
+                {/* Color Picker */}
+                <div>
+                  <div className="text-xs text-blue-200 mb-2">Color</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {DRAWING_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setBrushColor(color)}
+                        className={`w-6 h-6 rounded-full border-2 ${
+                          brushColor === color ? 'border-white' : 'border-blue-300'
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
