@@ -846,26 +846,38 @@ export default function StencilEditor({ originalImage, stencilImage, onSave }: S
     const wasDrawing = isDrawing;
     setIsDrawing(false);
     
-    // Si terminamos de usar el borrador, forzar reconstrucción del hit-testing
+    // Si terminamos de usar el borrador, forzar reconstrucción completa del sistema de eventos
     if (wasDrawing && tool === 'eraser' && stageRef.current) {
-      // Forzar reconstrucción completa del hit canvas para permitir dibujar sobre áreas borradas
       setTimeout(() => {
         if (stageRef.current) {
-          const layers = stageRef.current.find('Layer');
+          // Método más agresivo: remover y recrear completamente los event listeners
+          const stage = stageRef.current;
+          
+          // Limpiar y reconstruir hit canvas sin destruir las líneas
+          const layers = stage.find('Layer');
           layers.forEach((layer: any) => {
-            // Limpiar el hit canvas manualmente
-            const hitCanvas = layer.getHitCanvas();
-            if (hitCanvas) {
-              const hitContext = hitCanvas.getContext('2d');
-              hitContext.clearRect(0, 0, stageRef.current!.width(), stageRef.current!.height());
+            // Limpieza manual del hit canvas
+            try {
+              const hitCanvas = layer.getHitCanvas();
+              if (hitCanvas) {
+                const hitContext = hitCanvas.getContext('2d');
+                hitContext.clearRect(0, 0, stage.width(), stage.height());
+                // Forzar recreación del hit canvas
+                layer.clearHitCache();
+              }
+            } catch (e) {
+              console.log('Error limpiando hit canvas:', e);
             }
-            // Reconstruir el hit canvas
             layer.batchDraw();
           });
-          // Forzar recálculo completo
-          stageRef.current.batchDraw();
+          
+          // Reconstruir stage completo
+          stage.batchDraw();
+          
+          // Forzar recalculo de event targeting
+          stage.getIntersection = stage.getIntersection.bind(stage);
         }
-      }, 50);
+      }, 100);
     }
     
     if (isDragging) {
