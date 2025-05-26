@@ -455,6 +455,28 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
               <Eraser className="w-4 h-4" />
             </Button>
 
+            {/* Selector de capa activa - solo visible cuando está el borrador */}
+            {tool === 'eraser' && (
+              <div className="flex gap-1 bg-white/90 rounded-md p-1 shadow-sm">
+                <Button
+                  variant={activeLayer === 'drawing' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveLayer('drawing')}
+                  className="text-xs px-2 py-1 h-auto"
+                >
+                  Dibujo
+                </Button>
+                <Button
+                  variant={activeLayer === 'stencil' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveLayer('stencil')}
+                  className="text-xs px-2 py-1 h-auto"
+                >
+                  Stencil
+                </Button>
+              </div>
+            )}
+
             <Button
               variant={tool === 'move' ? 'default' : 'ghost'}
               size="sm"
