@@ -16,15 +16,11 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
-// Colores disponibles para el dibujo
+// Colores disponibles para el dibujo - solo negro, rojo y azul
 const DRAWING_COLORS = [
   '#000000', // Negro
   '#ef4444', // Rojo
   '#3b82f6', // Azul
-  '#22c55e', // Verde
-  '#eab308', // Amarillo
-  '#a855f7', // Morado
-  '#f97316', // Naranja
 ];
 
 // Hook personalizado para manejar la lógica del canvas
@@ -850,26 +846,23 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 <div className="text-xs text-red-200 mb-2">Color</div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
-                      setStencilHue(0);
-                      setFilteredStencilImg(null);
-                    }}
+                    onClick={() => setStencilHue(180)} // Verde para negro
                     className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 0 && !filteredStencilImg ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                      stencilHue === 180 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
                     }`}
                     style={{ backgroundColor: '#000000' }}
                     title="Negro"
                   />
                   <button
-                    onClick={() => setStencilHue(0)}
+                    onClick={() => setStencilHue(0)} // Rojo original
                     className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 0 && filteredStencilImg ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                      stencilHue === 0 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
                     }`}
                     style={{ backgroundColor: '#ef4444' }}
-                    title="Rojo (Original)"
+                    title="Rojo"
                   />
                   <button
-                    onClick={() => setStencilHue(240)}
+                    onClick={() => setStencilHue(240)} // Azul
                     className={`w-7 h-7 rounded-full border-2 ${
                       stencilHue === 240 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
                     }`}
