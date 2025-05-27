@@ -678,17 +678,18 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
               </div>
             )}
 
-            {/* Selector de color - visible cuando está el pincel */}
+            {/* Selector de color simplificado - visible cuando está el pincel */}
             {tool === 'brush' && (
               <div className="flex gap-2 bg-white/90 rounded-md p-2 shadow-sm">
-                {['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#000000'].map((color) => (
+                {['#000000', '#ef4444', '#3b82f6'].map((color, index) => (
                   <button
                     key={color}
                     onClick={() => setBrushColor(color)}
-                    className={`w-6 h-6 rounded-full border-2 ${
-                      brushColor === color ? 'border-gray-600' : 'border-gray-300'
+                    className={`w-7 h-7 rounded-full border-2 ${
+                      brushColor === color ? 'border-gray-700 ring-2 ring-blue-400' : 'border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}
+                    title={['Negro', 'Rojo', 'Azul'][index]}
                   />
                 ))}
               </div>
@@ -846,25 +847,36 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 )}
               </div>
               <div className="ml-7 mt-2">
-                <div className="text-xs text-red-200 mb-2">Tono</div>
-                <div className="relative">
-                  {/* Barra de colores de fondo */}
-                  <div 
-                    className="h-6 rounded-lg mb-2" 
-                    style={{
-                      background: 'linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%))'
+                <div className="text-xs text-red-200 mb-2">Color</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setStencilHue(0);
+                      setFilteredStencilImg(null);
                     }}
+                    className={`w-7 h-7 rounded-full border-2 ${
+                      stencilHue === 0 && !filteredStencilImg ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                    }`}
+                    style={{ backgroundColor: '#000000' }}
+                    title="Negro"
                   />
-                  <Slider
-                    value={[stencilHue]}
-                    onValueChange={([value]) => setStencilHue(value)}
-                    max={360}
-                    min={0}
-                    step={1}
-                    className="w-full absolute top-0"
+                  <button
+                    onClick={() => setStencilHue(0)}
+                    className={`w-7 h-7 rounded-full border-2 ${
+                      stencilHue === 0 && filteredStencilImg ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                    }`}
+                    style={{ backgroundColor: '#ef4444' }}
+                    title="Rojo (Original)"
+                  />
+                  <button
+                    onClick={() => setStencilHue(240)}
+                    className={`w-7 h-7 rounded-full border-2 ${
+                      stencilHue === 240 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                    }`}
+                    style={{ backgroundColor: '#3b82f6' }}
+                    title="Azul"
                   />
                 </div>
-                <div className="text-xs text-red-200 text-center mt-1">{Math.round(stencilHue)}°</div>
               </div>
             </div>
 
