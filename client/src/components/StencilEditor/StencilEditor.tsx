@@ -846,9 +846,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 <div className="text-xs text-red-200 mb-2">Color</div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setStencilHue(180)} // Verde para negro
+                    onClick={() => setStencilHue(200)} // Valor más fuerte para negro
                     className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 180 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                      stencilHue === 200 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
                     }`}
                     style={{ backgroundColor: '#000000' }}
                     title="Negro"
@@ -862,9 +862,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                     title="Rojo"
                   />
                   <button
-                    onClick={() => setStencilHue(240)} // Azul
+                    onClick={() => setStencilHue(220)} // Valor más fuerte para azul intenso
                     className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 240 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                      stencilHue === 220 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
                     }`}
                     style={{ backgroundColor: '#3b82f6' }}
                     title="Azul"
