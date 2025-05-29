@@ -263,51 +263,93 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
       {!isLoading && response && (
         <div>
           
-          {/* Enhanced Progress Display */}
+          {/* Modern Progress Display with Blur Animation */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-12 px-8 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg border border-gray-700 shadow-2xl">
-              <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="py-16 px-8 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl border border-gray-700/50 shadow-2xl relative overflow-hidden">
+              
+              {/* Animated Background Blur Effect */}
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute top-0 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+              </div>
+
+              <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
                 
-                {/* Progress Circle */}
+                {/* Modern Progress Circle */}
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-4 border-gray-600 flex items-center justify-center relative overflow-hidden">
-                    <div 
-                      className="absolute inset-0 rounded-full border-4 border-blue-500 transition-all duration-500 ease-out"
-                      style={{
-                        background: `conic-gradient(from 0deg, #3b82f6 ${(jobStatus?.progress || 0) * 360}deg, transparent 0deg)`
-                      }}
-                    ></div>
-                    <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center relative z-10">
-                      <span className="text-white text-lg font-bold">
-                        {Math.round((jobStatus?.progress || 0) * 100)}%
-                      </span>
-                    </div>
+                  <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+                    {/* Background circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="rgb(55, 65, 81)"
+                      strokeWidth="8"
+                      className="opacity-20"
+                    />
+                    {/* Progress circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 40}`}
+                      strokeDashoffset={`${2 * Math.PI * 40 * (1 - Math.max(0.05, jobStatus?.progress || 0.05))}`}
+                      className="transition-all duration-700 ease-out drop-shadow-lg"
+                    />
+                    {/* Gradient definition */}
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="50%" stopColor="#06b6d4" />
+                        <stop offset="100%" stopColor="#8b5cf6" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  
+                  {/* Center percentage */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-white text-xl font-bold tracking-wide">
+                      {Math.round(Math.max(5, (jobStatus?.progress || 0.05) * 100))}%
+                    </span>
                   </div>
                 </div>
 
-                {/* Process Description */}
-                <div className="text-center space-y-3">
-                  <h3 className="text-xl font-medium text-white">
+                {/* Process Description with Animation */}
+                <div className="text-center space-y-4 max-w-lg">
+                  <h3 className="text-2xl font-semibold text-white bg-clip-text">
                     {getProcessTitle(jobStatus?.live_status)}
                   </h3>
-                  <p className="text-gray-400 text-sm max-w-md">
+                  <p className="text-gray-300 text-base leading-relaxed animate-pulse">
                     {getProcessDescription(jobStatus?.live_status)}
                   </p>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="w-full max-w-md">
-                  <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                {/* Modern Progress Bar */}
+                <div className="w-full max-w-lg">
+                  <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden backdrop-blur-sm">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500 ease-out" 
-                      style={{ width: `${(jobStatus?.progress || 0) * 100}%` }}
+                      className="bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 h-2 rounded-full transition-all duration-700 ease-out shadow-lg" 
+                      style={{ width: `${Math.max(5, (jobStatus?.progress || 0.05) * 100)}%` }}
                     ></div>
                   </div>
                 </div>
 
+                {/* Floating dots animation */}
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-150"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-300"></div>
+                </div>
+
                 {/* Technical Status - Hidden for better UX */}
                 {process.env.NODE_ENV === 'development' && jobStatus?.live_status && (
-                  <div className="text-xs text-gray-500 opacity-50">
+                  <div className="text-xs text-gray-500 opacity-40 font-mono">
                     Debug: {jobStatus.live_status}
                   </div>
                 )}
