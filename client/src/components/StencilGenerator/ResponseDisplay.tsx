@@ -347,12 +347,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-300"></div>
                 </div>
 
-                {/* Technical Status - Hidden for better UX */}
-                {process.env.NODE_ENV === 'development' && jobStatus?.live_status && (
-                  <div className="text-xs text-gray-500 opacity-40 font-mono">
-                    Debug: {jobStatus.live_status}
-                  </div>
-                )}
+
               </div>
             </div>
           )}
