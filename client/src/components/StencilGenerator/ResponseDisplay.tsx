@@ -24,6 +24,37 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
 
   const { t } = useLanguage();
   
+  // Enhanced process descriptions
+  const getProcessTitle = (liveStatus?: string) => {
+    if (!liveStatus) return "Iniciando procesamiento...";
+    
+    if (liveStatus.includes("CLIPVisionLoader")) return "Analizando imagen";
+    if (liveStatus.includes("LineArt")) return "Detectando contornos";
+    if (liveStatus.includes("ControlNet")) return "Creando estructura";
+    if (liveStatus.includes("KSamplerAdvanced")) return "Generando diseño";
+    if (liveStatus.includes("EmptyLatentImage")) return "Preparando lienzo";
+    if (liveStatus.includes("ComfyDeployOutputImage")) return "Finalizando stencil";
+    if (liveStatus.includes("Image Input Switch")) return "Aplicando efectos";
+    if (liveStatus.includes("ImageMagick")) return "Optimizando calidad";
+    
+    return "Procesando stencil...";
+  };
+  
+  const getProcessDescription = (liveStatus?: string) => {
+    if (!liveStatus) return "Iniciando el proceso de conversión de imagen a stencil...";
+    
+    if (liveStatus.includes("CLIPVisionLoader")) return "Examinando los elementos visuales y composición de tu imagen";
+    if (liveStatus.includes("LineArt")) return "Identificando bordes y líneas principales para crear el arte lineal";
+    if (liveStatus.includes("ControlNet")) return "Estableciendo la estructura base del diseño del stencil";
+    if (liveStatus.includes("KSamplerAdvanced")) return "Creando el diseño final con algoritmos avanzados de IA";
+    if (liveStatus.includes("EmptyLatentImage")) return "Configurando el espacio de trabajo para tu stencil";
+    if (liveStatus.includes("ComfyDeployOutputImage")) return "Preparando tu stencil para descarga y edición";
+    if (liveStatus.includes("Image Input Switch")) return "Aplicando configuraciones de color y efectos seleccionados";
+    if (liveStatus.includes("ImageMagick")) return "Mejorando la calidad y nitidez del resultado final";
+    
+    return "Aplicando técnicas de inteligencia artificial para crear tu stencil perfecto...";
+  };
+  
   // Poll for job status when we have a run_id
   useEffect(() => {
     let intervalId: number;
@@ -230,51 +261,55 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
       {!isLoading && response && (
         <div>
           
-          {/* Job Status Loading or Processing */}
+          {/* Enhanced Progress Display */}
           {!jobStatus?.outputs?.image && (
-            <div className="py-4 bg-[#121212] rounded-lg border border-gray-800 shadow-inner progress-container">
-              <div className="flex justify-center items-center mb-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-                <p className="text-gray-400">
-                  Processing image...
-                </p>
-              </div>
-              
-              {/* Progress Bar - Only show when we have progress data */}
-              {jobStatus?.progress !== undefined && (
-                <div className="mt-2 px-4">
-                  <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Progress</span>
-                    <span>{Math.round(jobStatus.progress * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-[#222222] rounded-full h-2.5 overflow-hidden">
+            <div className="py-12 px-8 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg border border-gray-700 shadow-2xl">
+              <div className="flex flex-col items-center justify-center space-y-6">
+                
+                {/* Progress Circle */}
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-gray-600 flex items-center justify-center relative overflow-hidden">
                     <div 
-                      className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
-                      style={{ width: `${jobStatus.progress * 100}%` }}
+                      className="absolute inset-0 rounded-full border-4 border-blue-500 transition-all duration-500 ease-out"
+                      style={{
+                        background: `conic-gradient(from 0deg, #3b82f6 ${(jobStatus?.progress || 0) * 360}deg, transparent 0deg)`
+                      }}
+                    ></div>
+                    <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center relative z-10">
+                      <span className="text-white text-lg font-bold">
+                        {Math.round((jobStatus?.progress || 0) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Process Description */}
+                <div className="text-center space-y-3">
+                  <h3 className="text-xl font-medium text-white">
+                    {getProcessTitle(jobStatus?.live_status)}
+                  </h3>
+                  <p className="text-gray-400 text-sm max-w-md">
+                    {getProcessDescription(jobStatus?.live_status)}
+                  </p>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full max-w-md">
+                  <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500 ease-out" 
+                      style={{ width: `${(jobStatus?.progress || 0) * 100}%` }}
                     ></div>
                   </div>
-                  {jobStatus?.live_status && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {jobStatus.live_status === "Executing CLIPVisionLoader" && "Analyzing contours..."}
-                      {jobStatus.live_status === "Executing ComfyDeployOutputImage" && "Refining image..."}
-                      {jobStatus.live_status === "Executing Image Input Switch" && "Applying final effects..."}
-                      {jobStatus.live_status === "Executing ControlNetApply" && "Detecting edges..."}
-                      {jobStatus.live_status === "Executing LineArt" && "Drawing lines..."}
-                      {jobStatus.live_status === "Executing KSamplerAdvanced" && "Creating design..."}
-                      {jobStatus.live_status === "Executing EmptyLatentImage" && "Preparing canvas..."}
-                      {![
-                        "Executing CLIPVisionLoader",
-                        "Executing ComfyDeployOutputImage",
-                        "Executing Image Input Switch",
-                        "Executing ControlNetApply",
-                        "Executing LineArt",
-                        "Executing KSamplerAdvanced",
-                        "Executing EmptyLatentImage"
-                      ].includes(jobStatus.live_status) && "Processing stencil..."}
-                    </p>
-                  )}
                 </div>
-              )}
+
+                {/* Technical Status (optional) */}
+                {jobStatus?.live_status && (
+                  <div className="text-xs text-gray-500 opacity-75">
+                    Status: {jobStatus.live_status}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
