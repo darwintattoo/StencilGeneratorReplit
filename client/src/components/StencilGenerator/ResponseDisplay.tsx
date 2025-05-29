@@ -36,6 +36,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
     if (liveStatus.includes("ComfyDeployOutputImage")) return "Finalizando stencil";
     if (liveStatus.includes("Image Input Switch")) return "Aplicando efectos";
     if (liveStatus.includes("ImageMagick")) return "Optimizando calidad";
+    if (liveStatus.includes("ImageUpscale")) return "Mejorando resolución";
     
     return "Procesando stencil...";
   };
@@ -51,6 +52,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
     if (liveStatus.includes("ComfyDeployOutputImage")) return "Preparando tu stencil para descarga y edición";
     if (liveStatus.includes("Image Input Switch")) return "Aplicando configuraciones de color y efectos seleccionados";
     if (liveStatus.includes("ImageMagick")) return "Mejorando la calidad y nitidez del resultado final";
+    if (liveStatus.includes("ImageUpscale")) return "Aumentando la resolución para mayor detalle y claridad";
     
     return "Aplicando técnicas de inteligencia artificial para crear tu stencil perfecto...";
   };
@@ -303,10 +305,10 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                   </div>
                 </div>
 
-                {/* Technical Status (optional) */}
-                {jobStatus?.live_status && (
-                  <div className="text-xs text-gray-500 opacity-75">
-                    Status: {jobStatus.live_status}
+                {/* Technical Status - Hidden for better UX */}
+                {process.env.NODE_ENV === 'development' && jobStatus?.live_status && (
+                  <div className="text-xs text-gray-500 opacity-50">
+                    Debug: {jobStatus.live_status}
                   </div>
                 )}
               </div>
