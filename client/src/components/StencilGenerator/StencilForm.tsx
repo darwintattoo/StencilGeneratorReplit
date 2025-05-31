@@ -178,17 +178,17 @@ export function StencilForm({
   };
 
   return (
-    <div className="bg-[#0d0d0d] rounded-xl p-8 shadow-xl mb-8 border border-gray-800">
+    <div className="bg-[#0d0d0d] dark:bg-[#0d0d0d] bg-white rounded-xl p-8 shadow-xl mb-8 border border-gray-800 dark:border-gray-800 border-gray-200">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* SECCIÓN: CARGA DE IMAGEN */}
         <div className="space-y-4 mb-4">
-          <div className="border-b border-gray-800 pb-1 mb-2">
+          <div className="border-b border-gray-800 dark:border-gray-800 border-gray-200 pb-1 mb-2">
             <Label className="font-medium text-lg">{t("upload_label")}</Label>
           </div>
           
           {/* Drag & Drop Area */}
           <div 
-            className={`border-2 border-dashed rounded-xl p-8 transition-colors ${isDragging ? 'border-blue-500 bg-blue-900 bg-opacity-10' : 'border-gray-700 hover:border-blue-400'}`}
+            className={`border-2 border-dashed rounded-xl p-8 transition-colors ${isDragging ? 'border-blue-500 bg-blue-900 bg-opacity-10' : 'border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-400'}`}
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -222,9 +222,9 @@ export function StencilForm({
                 // Upload prompt
                 <>
                   <Upload className="h-16 w-16 text-blue-500" />
-                  <p className="text-center text-gray-300 text-lg">{t("drag_drop")}</p>
-                  <p className="text-sm text-gray-400 mt-1">{t("or_click")}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t("supported_formats")}</p>
+                  <p className="text-center text-gray-300 dark:text-gray-300 text-gray-600 text-lg">{t("drag_drop")}</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-500 mt-1">{t("or_click")}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 text-gray-400 mt-1">{t("supported_formats")}</p>
                 </>
               )}
               

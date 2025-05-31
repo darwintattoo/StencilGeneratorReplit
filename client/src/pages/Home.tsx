@@ -67,7 +67,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-black text-white font-sans min-h-screen">
+    <div className="bg-black dark:bg-black bg-white text-white dark:text-white text-gray-900 font-sans min-h-screen">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -77,11 +77,16 @@ export default function Home() {
             <img 
               src={new URL('../assets/tattoo-stencil-pro-logo-white.png', import.meta.url).href} 
               alt="TattooStencilPro" 
-              className="h-full" 
+              className="h-full dark:block hidden" 
+            />
+            <img 
+              src={new URL('../assets/tattoo-stencil-pro-logo-white.png', import.meta.url).href} 
+              alt="TattooStencilPro" 
+              className="h-full dark:hidden block filter brightness-0" 
             />
           </div>
-          <h2 className="text-2xl md:text-3xl font-light text-gray-300 mb-6">by Darwin Enriquez</h2>
-          <p className="text-xl text-gray-400 mb-8">Professional AI-powered stencil creator</p>
+          <h2 className="text-2xl md:text-3xl font-light text-gray-300 dark:text-gray-300 text-gray-600 mb-6">by Darwin Enriquez</h2>
+          <p className="text-xl text-gray-400 dark:text-gray-400 text-gray-700 mb-8">Professional AI-powered stencil creator</p>
         </header>
 
         {/* Form Component */}
