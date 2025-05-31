@@ -65,6 +65,10 @@
   isolation: isolate;
 }
 
+.light .progress-container {
+  background-color: #f8f9fa !important;
+}
+
 .progress-container::before {
   content: "";
   position: absolute;
@@ -73,12 +77,20 @@
   z-index: -1;
 }
 
+.light .progress-container::before {
+  background-color: #f8f9fa;
+}
+
 .progress-container::after {
   content: "";
   position: absolute;
   inset: 0;
   background-color: #111111;
   z-index: -2;
+}
+
+.light .progress-container::after {
+  background-color: #f8f9fa;
 }
 
 /* Asegurar que cualquier elemento interno no cause problemas excepto la barra de progreso */

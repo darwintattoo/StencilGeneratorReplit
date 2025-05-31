@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
-import { GlobeIcon } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
+import { GlobeIcon, Sun, Moon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +16,10 @@ import {
 export default function Navigation() {
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   
   return (
-    <nav className="bg-black text-white py-3 px-4 border-b border-gray-800">
+    <nav className="bg-black dark:bg-black bg-white dark:text-white text-gray-900 py-3 px-4 border-b border-gray-800 dark:border-gray-800 border-gray-200">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center text-xl font-bold hover:text-blue-400 transition">
@@ -38,6 +40,19 @@ export default function Navigation() {
               <span className="text-sm mr-2">{t("nav.mystencils")}</span>
             </Link>
           )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="p-2"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
