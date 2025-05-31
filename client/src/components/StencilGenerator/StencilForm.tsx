@@ -378,11 +378,11 @@ export function StencilForm({
           </button>
           
           {isAdvancedOptionsOpen && (
-            <div className="mt-4 pt-2 border-t border-gray-800/50 animate-in fade-in duration-200">
+            <div className="mt-4 pt-2 border-t border-gray-800/50 dark:border-gray-800/50 border-gray-200/50 animate-in fade-in duration-200">
               {/* AI Model */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">{t("ai_model") || "Modelo IA"}</Label>
+                  <Label className="font-medium text-white dark:text-white text-gray-900">{t("ai_model") || "Modelo IA"}</Label>
                   <span className="text-sm text-blue-400">{aiModel === "SDXL-Flash.safetensors" ? "FlasLine" : 
                     aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "ShaLine" : 
                     aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "ALine" : "FuLine"}</span>
@@ -392,7 +392,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("SDXL-Flash.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
                   >
                     FlasLine
                   </button>
@@ -400,7 +400,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
                   >
                     ShaLine
                   </button>
@@ -408,7 +408,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
                   >
                     ALine
                   </button>
@@ -416,7 +416,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] border border-gray-700 hover:border-blue-500"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
                   >
                     FuLine
                   </button>
@@ -469,11 +469,11 @@ export function StencilForm({
               </div>
               
               {/* Activar Posterize */}
-              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="activarPosterize" className="font-medium">{t("posterizado") || "Posterizado"}</Label>
+                  <Label htmlFor="activarPosterize" className="font-medium text-white dark:text-white text-gray-900">{t("posterizado") || "Posterizado"}</Label>
                   <div className="flex items-center">
-                    <span className="text-xs text-gray-400 mr-2">{t("param_posterize") || "Activar"}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_posterize") || "Activar"}</span>
                     <Switch
                       id="activarPosterize"
                       checked={activarPosterize}
@@ -482,7 +482,7 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">{t("posterize_description") || "Reduce los tonos para mejorar el contraste"}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("posterize_description") || "Reduce los tonos para mejorar el contraste"}</p>
                 
                 {/* Mostrar el nivel de posterizado solo si está activado */}
                 {activarPosterize && (
@@ -510,11 +510,11 @@ export function StencilForm({
               </div>
               
               {/* Activar Auto Gamma */}
-              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+              <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="activarAutoGamma" className="font-medium">{t("gamma") || "Auto Gamma"}</Label>
+                  <Label htmlFor="activarAutoGamma" className="font-medium text-white dark:text-white text-gray-900">{t("gamma") || "Auto Gamma"}</Label>
                   <div className="flex items-center">
-                    <span className="text-xs text-gray-400 mr-2">{t("param_gamma") || "Activar"}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_gamma") || "Activar"}</span>
                     <Switch
                       id="activarAutoGamma"
                       checked={activarAutoGamma}
@@ -523,7 +523,7 @@ export function StencilForm({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">{t("gamma_description") || "Optimiza el brillo y contraste automáticamente"}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("gamma_description") || "Optimiza el brillo y contraste automáticamente"}</p>
               </div>
             </div>
           )}
