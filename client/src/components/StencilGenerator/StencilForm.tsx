@@ -434,7 +434,7 @@ export function StencilForm({
               {/* estilo de linea */}
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">{t("line_style")}</Label>
+                  <Label className="font-medium text-white dark:text-white text-gray-900">{t("line_style") || "Estilo de línea"}</Label>
                   <span className="text-sm text-blue-400">
                     {selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "Darl" :
                     selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "LinFlux" :
