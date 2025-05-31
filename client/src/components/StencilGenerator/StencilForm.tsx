@@ -253,9 +253,9 @@ export function StencilForm({
         </div>
         
         {/* SECCIÓN: OPCIONES BÁSICAS - Los más usados primero */}
-        <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
-          <div className="border-b border-gray-800 pb-1 mb-4">
-            <h3 className="text-md font-medium text-gray-300">{t("basic_options")}</h3>
+        <div className="border-t border-gray-800 dark:border-gray-800 border-gray-200 pt-4 mt-6 mb-4">
+          <div className="border-b border-gray-800 dark:border-gray-800 border-gray-200 pb-1 mb-4">
+            <h3 className="text-md font-medium text-gray-300 dark:text-gray-300 text-gray-800">{t("basic_options")}</h3>
           </div>
           
           {/* line_color - El parámetro más usado primero */}
@@ -328,11 +328,11 @@ export function StencilForm({
           </div>
           
           {/* activar_transparencia */}
-          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="transparency" className="font-medium">{t("transparent_bg") || "Fondo transparente"}</Label>
+              <Label htmlFor="transparency" className="font-medium text-white dark:text-white text-gray-900">{t("transparent_bg") || "Fondo transparente"}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">{t("param_transparency") || "Activar"}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_transparency") || "Activar"}</span>
                 <Switch
                   id="transparency"
                   checked={transparentBackground}
@@ -341,15 +341,15 @@ export function StencilForm({
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-400">{t("transparent_bg_help") || "Elimina el fondo para mejor integración con diseños"}</p>
+            <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("transparent_bg_help") || "Elimina el fondo para mejor integración con diseños"}</p>
           </div>
           
           {/* iluminar sombras */}
-          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 rounded-lg">
+          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
             <div className="flex items-center justify-between">
-              <Label htmlFor="enhanceShadows" className="font-medium">{t("enhance_shadows") || "Mejorar sombras"}</Label>
+              <Label htmlFor="enhanceShadows" className="font-medium text-white dark:text-white text-gray-900">{t("enhance_shadows") || "Mejorar sombras"}</Label>
               <div className="flex items-center">
-                <span className="text-xs text-gray-400 mr-2">{t("param_enhance_shadows") || "Activar"}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_enhance_shadows") || "Activar"}</span>
                 <Switch
                   id="enhanceShadows"
                   checked={enhanceShadows}
@@ -358,18 +358,18 @@ export function StencilForm({
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-400">{t("enhance_shadows_help") || "Mejora la definición de sombras en la imagen"}</p>
+            <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("enhance_shadows_help") || "Mejora la definición de sombras en la imagen"}</p>
           </div>
         </div>
         
         {/* SECCIÓN: OPCIONES AVANZADAS (Desplegable) */}
-        <div className="border-t border-gray-800 pt-4 mt-6 mb-4">
+        <div className="border-t border-gray-800 dark:border-gray-800 border-gray-200 pt-4 mt-6 mb-4">
           <button 
             type="button"
             onClick={() => setIsAdvancedOptionsOpen(!isAdvancedOptionsOpen)}
-            className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 transition-colors"
+            className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 dark:hover:bg-gray-800/30 hover:bg-gray-100 transition-colors"
           >
-            <h3 className="text-md font-medium text-gray-300">{t("advanced_options") || "Opciones avanzadas"}</h3>
+            <h3 className="text-md font-medium text-gray-300 dark:text-gray-300 text-gray-800">{t("advanced_options") || "Opciones avanzadas"}</h3>
             <div className={`transition-transform duration-200 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
