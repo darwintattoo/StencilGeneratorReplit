@@ -268,9 +268,9 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
             <div className="py-16 px-8 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 rounded-2xl border border-gray-700/50 shadow-2xl relative overflow-hidden">
               
               {/* Animated Background Blur Effect */}
-              <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0 opacity-25">
                 <div className="absolute top-0 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-blue-600/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-500"></div>
               </div>
 
@@ -306,8 +306,8 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                     <defs>
                       <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="50%" stopColor="#06b6d4" />
-                        <stop offset="100%" stopColor="#8b5cf6" />
+                        <stop offset="50%" stopColor="#2563eb" />
+                        <stop offset="100%" stopColor="#1d4ed8" />
                       </linearGradient>
                     </defs>
                   </svg>
@@ -334,7 +334,7 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                 <div className="w-full max-w-lg">
                   <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden backdrop-blur-sm">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 h-2 rounded-full transition-all duration-700 ease-out shadow-lg" 
+                      className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-2 rounded-full transition-all duration-700 ease-out shadow-lg" 
                       style={{ width: `${Math.max(5, (jobStatus?.progress || 0.05) * 100)}%` }}
                     ></div>
                   </div>
@@ -343,8 +343,8 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
                 {/* Floating dots animation */}
                 <div className="flex space-x-2">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-150"></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-300"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-150"></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-300"></div>
                 </div>
 
 
