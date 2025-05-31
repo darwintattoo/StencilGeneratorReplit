@@ -26,35 +26,35 @@ export function ResponseDisplay({ response, error, isLoading, resetForm }: Respo
   
   // Enhanced process descriptions
   const getProcessTitle = (liveStatus?: string) => {
-    if (!liveStatus) return "Iniciando procesamiento...";
+    if (!liveStatus) return "Starting processing...";
     
-    if (liveStatus.includes("CLIPVisionLoader")) return "Analizando imagen";
-    if (liveStatus.includes("LineArt")) return "Detectando contornos";
-    if (liveStatus.includes("ControlNet")) return "Creando estructura";
-    if (liveStatus.includes("KSamplerAdvanced")) return "Generando diseño";
-    if (liveStatus.includes("EmptyLatentImage")) return "Preparando lienzo";
-    if (liveStatus.includes("ComfyDeployOutputImage")) return "Finalizando stencil";
-    if (liveStatus.includes("Image Input Switch")) return "Aplicando efectos";
-    if (liveStatus.includes("ImageMagick")) return "Optimizando calidad";
-    if (liveStatus.includes("ImageUpscale")) return "Mejorando resolución";
+    if (liveStatus.includes("CLIPVisionLoader")) return "Analyzing image";
+    if (liveStatus.includes("LineArt")) return "Detecting contours";
+    if (liveStatus.includes("ControlNet")) return "Creating structure";
+    if (liveStatus.includes("KSamplerAdvanced")) return "Generating design";
+    if (liveStatus.includes("EmptyLatentImage")) return "Preparing canvas";
+    if (liveStatus.includes("ComfyDeployOutputImage")) return "Finalizing stencil";
+    if (liveStatus.includes("Image Input Switch")) return "Applying effects";
+    if (liveStatus.includes("ImageMagick")) return "Optimizing quality";
+    if (liveStatus.includes("ImageUpscale")) return "Enhancing resolution";
     
-    return "Procesando stencil...";
+    return "Processing stencil...";
   };
   
   const getProcessDescription = (liveStatus?: string) => {
-    if (!liveStatus) return "Iniciando el proceso de conversión de imagen a stencil...";
+    if (!liveStatus) return "Starting image to stencil conversion process...";
     
-    if (liveStatus.includes("CLIPVisionLoader")) return "Examinando los elementos visuales y composición de tu imagen";
-    if (liveStatus.includes("LineArt")) return "Identificando bordes y líneas principales para crear el arte lineal";
-    if (liveStatus.includes("ControlNet")) return "Estableciendo la estructura base del diseño del stencil";
-    if (liveStatus.includes("KSamplerAdvanced")) return "Creando el diseño final con algoritmos avanzados de IA";
-    if (liveStatus.includes("EmptyLatentImage")) return "Configurando el espacio de trabajo para tu stencil";
-    if (liveStatus.includes("ComfyDeployOutputImage")) return "Preparando tu stencil para descarga y edición";
-    if (liveStatus.includes("Image Input Switch")) return "Aplicando configuraciones de color y efectos seleccionados";
-    if (liveStatus.includes("ImageMagick")) return "Mejorando la calidad y nitidez del resultado final";
-    if (liveStatus.includes("ImageUpscale")) return "Aumentando la resolución para mayor detalle y claridad";
+    if (liveStatus.includes("CLIPVisionLoader")) return "Examining visual elements and composition of your image";
+    if (liveStatus.includes("LineArt")) return "Identifying main edges and lines to create line art";
+    if (liveStatus.includes("ControlNet")) return "Establishing base structure of stencil design";
+    if (liveStatus.includes("KSamplerAdvanced")) return "Creating final design with advanced AI algorithms";
+    if (liveStatus.includes("EmptyLatentImage")) return "Setting up workspace for your stencil";
+    if (liveStatus.includes("ComfyDeployOutputImage")) return "Preparing your stencil for download and editing";
+    if (liveStatus.includes("Image Input Switch")) return "Applying selected color settings and effects";
+    if (liveStatus.includes("ImageMagick")) return "Improving quality and sharpness of final result";
+    if (liveStatus.includes("ImageUpscale")) return "Increasing resolution for greater detail and clarity";
     
-    return "Aplicando técnicas de inteligencia artificial para crear tu stencil perfecto...";
+    return "Applying artificial intelligence techniques to create your perfect stencil...";
   };
   
   // Poll for job status when we have a run_id
