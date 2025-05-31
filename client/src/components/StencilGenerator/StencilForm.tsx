@@ -392,7 +392,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("SDXL-Flash.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "SDXL-Flash.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     FlasLine
                   </button>
@@ -400,7 +400,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/dreamshaperXL_v21TurboDPMSDE.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     ShaLine
                   </button>
@@ -408,7 +408,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/aamXLAnimeMix_v10.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/aamXLAnimeMix_v10.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     ALine
                   </button>
@@ -416,7 +416,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setAiModel("Lineart/furryLineartXl_v30.safetensors")}
-                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${aiModel === "Lineart/furryLineartXl_v30.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     FuLine
                   </button>
@@ -437,7 +437,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setSelectedPreset("LoraLineart/Darwinstencil3-000007.safetensors")}
-                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/Darwinstencil3-000007.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     Darl
                   </button>
@@ -445,7 +445,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setSelectedPreset("LoraLineart/lineart_flux.safetensors")}
-                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "LoraLineart/lineart_flux.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     LinFlux
                   </button>
@@ -453,7 +453,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setSelectedPreset("anime-detailer-xl.safetensors")}
-                    className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "anime-detailer-xl.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     Animv
                   </button>
@@ -461,7 +461,7 @@ export function StencilForm({
                   <button
                     type="button"
                     onClick={() => setSelectedPreset("araminta_k_colorized_blockprint.safetensors")}
-                    className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-100 border border-gray-700 dark:border-gray-700 border-gray-300 hover:border-blue-500 text-white dark:text-white text-gray-900"}`}
+                    className={`p-3 rounded-lg text-center ${selectedPreset === "araminta_k_colorized_blockprint.safetensors" ? "bg-blue-600 text-white" : "bg-[#171717] dark:bg-[#171717] bg-gray-700 border border-gray-700 dark:border-gray-700 border-gray-500 hover:border-blue-500 text-white"}`}
                   >
                     BloPri
                   </button>
