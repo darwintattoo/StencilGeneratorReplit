@@ -480,7 +480,7 @@ export function StencilForm({
               <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Label htmlFor="activarPosterize" className="font-medium text-white dark:text-white text-gray-900">{t("posterizado") || "Posterizado"}</Label>
+                    <Label htmlFor="activarPosterize" className="font-medium text-white dark:text-white text-gray-900">{t("posterizado") || "Posterize"}</Label>
                     <span className="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">BETA</span>
                   </div>
                   <div className="flex items-center">
