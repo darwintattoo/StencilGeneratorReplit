@@ -367,10 +367,18 @@ export function StencilForm({
           <button 
             type="button"
             onClick={() => setIsAdvancedOptionsOpen(!isAdvancedOptionsOpen)}
-            className="w-full flex items-center justify-between py-2 px-1 rounded-lg hover:bg-gray-800/30 dark:hover:bg-gray-800/30 hover:bg-gray-100 transition-colors"
+            className="w-full flex items-center justify-between py-3 px-4 rounded-lg border-2 border-dashed border-gray-600 dark:border-gray-600 border-gray-400 hover:border-blue-500 hover:bg-gray-800/20 dark:hover:bg-gray-800/20 hover:bg-blue-50 transition-all duration-200 group"
           >
-            <h3 className="text-md font-medium text-gray-300 dark:text-gray-300 text-gray-800">{t("advanced_options") || "Opciones avanzadas"}</h3>
-            <div className={`transition-transform duration-200 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
+            <div className="flex items-center space-x-2">
+              <div className="p-1 rounded bg-gray-700 dark:bg-gray-700 bg-gray-300 group-hover:bg-blue-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white dark:text-white text-gray-700 group-hover:text-white">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                </svg>
+              </div>
+              <h3 className="text-md font-medium text-gray-300 dark:text-gray-300 text-gray-800 group-hover:text-blue-600 dark:group-hover:text-blue-400">{t("advanced_options") || "Opciones avanzadas"}</h3>
+            </div>
+            <div className={`transition-all duration-200 text-gray-500 dark:text-gray-500 text-gray-600 group-hover:text-blue-600 dark:group-hover:text-blue-400 ${isAdvancedOptionsOpen ? 'rotate-180' : ''}`}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
