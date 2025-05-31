@@ -481,7 +481,7 @@ export function StencilForm({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Label htmlFor="activarPosterize" className="font-medium text-white dark:text-white text-gray-900">{t("posterizado") || "Posterize"}</Label>
-                    <span className="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">BETA</span>
+                    <span className="px-1.5 py-0.5 text-xs font-normal bg-gray-500 dark:bg-gray-500 bg-gray-400 text-white rounded text-opacity-80">beta</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_posterize") || "Activar"}</span>
@@ -525,7 +525,7 @@ export function StencilForm({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Label htmlFor="activarAutoGamma" className="font-medium text-white dark:text-white text-gray-900">{t("gamma") || "Auto Gamma"}</Label>
-                    <span className="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">BETA</span>
+                    <span className="px-1.5 py-0.5 text-xs font-normal bg-gray-500 dark:bg-gray-500 bg-gray-400 text-white rounded text-opacity-80">beta</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">{t("param_gamma") || "Activar"}</span>
