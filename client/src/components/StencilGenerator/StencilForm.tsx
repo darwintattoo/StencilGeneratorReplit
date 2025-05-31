@@ -242,7 +242,7 @@ export function StencilForm({
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className="mt-2" 
+                  className="mt-2 border-gray-600 dark:border-gray-600 border-gray-400 text-gray-300 dark:text-gray-300 text-gray-700 hover:bg-gray-800 dark:hover:bg-gray-800 hover:bg-gray-100" 
                   onClick={() => document.getElementById('fileInput')?.click()}
                 >
                   {t("browse_files")}
