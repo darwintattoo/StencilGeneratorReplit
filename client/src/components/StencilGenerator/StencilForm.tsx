@@ -210,7 +210,7 @@ export function StencilForm({
                     alt="Preview" 
                     className="max-h-48 max-w-full mx-auto rounded-md object-contain" 
                     style={{
-                      filter: autoExposureCorrection ? 'contrast(1.2) brightness(1.1)' : 'none'
+                      filter: autoExposureCorrection ? `contrast(${1 + (claheClipLimit - 2) * 0.1}) brightness(${1 + (claheClipLimit - 2) * 0.05}) saturate(${1 + (8 - claheTileSize) * 0.02})` : 'none'
                     }}
                   />
                   
