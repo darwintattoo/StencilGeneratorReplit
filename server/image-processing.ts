@@ -41,9 +41,16 @@ export async function applyHistogramEqualization(imagePath: string): Promise<str
     // Normalize CDF for histogram equalization
     const totalPixels = data.length / info.channels;
     const cdfMin = cdf.find(val => val > 0) || 0;
+    const denominator = totalPixels - cdfMin;
+    
+    // Handle edge case where all pixels have the same luminance
+    if (denominator <= 0) {
+      console.warn("All pixels have the same luminance, skipping histogram equalization");
+      return imagePath;
+    }
     
     for (let i = 0; i < 256; i++) {
-      cdf[i] = Math.round(((cdf[i] - cdfMin) / (totalPixels - cdfMin)) * 255);
+      cdf[i] = Math.round(((cdf[i] - cdfMin) / denominator) * 255);
     }
     
     // Apply equalization to pixels
@@ -87,6 +94,13 @@ export async function applyHistogramEqualization(imagePath: string): Promise<str
  */
 export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, tileGridSize: number = 8): Promise<string> {
   try {
+    console.log(`🔬 CLAHE Processing Started:`, {
+      input: path.basename(imagePath),
+      clipLimit,
+      tileGridSize: `${tileGridSize}x${tileGridSize}`,
+      algorithm: 'LAB color space, L channel processing'
+    });
+    
     const ext = path.extname(imagePath);
     const basename = path.basename(imagePath, ext);
     const dirname = path.dirname(imagePath);
@@ -96,6 +110,13 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
       .raw()
       .toBuffer({ resolveWithObject: true });
     
+    console.log(`📊 Image Analysis:`, {
+      dimensions: `${info.width}x${info.height}`,
+      channels: info.channels,
+      totalPixels: info.width * info.height,
+      dataSize: `${Math.round(data.length / 1024)}KB`
+    });
+    
     const processedData = Buffer.from(data);
     const width = info.width;
     const height = info.height;
@@ -103,6 +124,15 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     // Calculate tile dimensions
     const tileWidth = Math.floor(width / tileGridSize);
     const tileHeight = Math.floor(height / tileGridSize);
+    const totalTiles = tileGridSize * tileGridSize;
+    
+    console.log(`🎯 Tile Configuration:`, {
+      tileSize: `${tileWidth}x${tileHeight}`,
+      totalTiles,
+      coverage: `${(tileWidth * tileGridSize)}x${(tileHeight * tileGridSize)} of ${width}x${height}`
+    });
+    
+    let processedTiles = 0;
     
     // Process each tile with CLAHE
     for (let tileY = 0; tileY < tileGridSize; tileY++) {
@@ -114,8 +144,14 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
         
         // Apply CLAHE to this tile
         processTileWithCLAHE(data, processedData, startX, startY, endX, endY, width, info.channels, clipLimit);
+        processedTiles++;
       }
     }
+    
+    console.log(`✅ CLAHE Processing Complete:`, {
+      tilesProcessed: processedTiles,
+      outputFile: path.basename(outputPath)
+    });
     
     // Save processed image
     await sharp(processedData, {
@@ -194,8 +230,15 @@ function processTileWithCLAHE(
   
   // Normalize CDF
   const cdfMin = cdf.find(val => val > 0) || 0;
+  const denominator = totalPixels - cdfMin;
+  
+  // Handle edge case where all pixels in tile have the same luminance
+  if (denominator <= 0) {
+    return; // Skip processing this tile
+  }
+  
   for (let i = 0; i < 256; i++) {
-    cdf[i] = Math.round(((cdf[i] - cdfMin) / (totalPixels - cdfMin)) * 255);
+    cdf[i] = Math.round(((cdf[i] - cdfMin) / denominator) * 255);
   }
   
   // Apply transformation to pixels
