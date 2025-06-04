@@ -118,6 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posterizeValue = req.body.posterizeValue || 8;
       const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
       const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
+      const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,
@@ -128,7 +129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "AI Model": aiModel,
         "Posterize": posterizeValue,
         "activar_Posterize": activarPosterize,
-        "Activar Auto Gamma": activarAutoGamma
+        "Activar Auto Gamma": activarAutoGamma,
+        "Auto Exposure Correction": autoExposureCorrection,
+        "CLAHE Clip Limit": 2.0,
+        "CLAHE Tile Grid Size": 8
       });
       
       try {
@@ -142,7 +146,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "checkpoint": aiModel,
           "posterize_level": parseInt(posterizeValue),
           "activate_posterize": activarPosterize,
-          "activate_auto_gamma": activarAutoGamma
+          "activate_auto_gamma": activarAutoGamma,
+          "apply_clahe": autoExposureCorrection,
+          "clahe_clip_limit": 2.0,
+          "clahe_tile_grid_size": 8
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);

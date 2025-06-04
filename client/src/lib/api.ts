@@ -76,6 +76,11 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
       formData.append("activarAutoGamma", params.activarAutoGamma.toString());
     }
     
+    // Agregar parámetro de corrección automática de exposición CLAHE
+    if (params.autoExposureCorrection !== undefined) {
+      formData.append("autoExposureCorrection", params.autoExposureCorrection.toString());
+    }
+    
     // Mostrar en la consola los valores que se están enviando
     console.log("Enviando parámetros a API:", {
       lineColor: params.lineColor,
