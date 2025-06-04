@@ -35,6 +35,9 @@ export function StencilForm({
   const [activarPosterize, setActivarPosterize] = useState(false);          // "activar_Posterize"
   const [activarAutoGamma, setActivarAutoGamma] = useState(false);          // "Activar Auto Gamma"
   const [autoExposureCorrection, setAutoExposureCorrection] = useState(true); // "Auto Exposure Correction"
+  const [claheClipLimit, setClaheClipLimit] = useState(2.0);                  // "CLAHE Clip Limit"
+  const [claheTileSize, setClaheTileSize] = useState(8);                      // "CLAHE Tile Size"
+  const [showClahePreview, setShowClahePreview] = useState(false);            // "Show CLAHE Preview"
   
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -152,7 +155,9 @@ export function StencilForm({
         posterizeValue,
         activarPosterize,
         activarAutoGamma,
-        autoExposureCorrection
+        autoExposureCorrection,
+        claheClipLimit,
+        claheTileSize
       });
       
       // Añadimos manualmente la URL de la imagen original a la respuesta
@@ -560,6 +565,91 @@ export function StencilForm({
                   </div>
                 </div>
                 <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("gamma_description") || "Optimiza el brillo y contraste automáticamente"}</p>
+              </div>
+              
+              {/* CLAHE Parameters */}
+              <div className="space-y-4 mb-4 p-4 bg-opacity-30 bg-blue-900 dark:bg-blue-900 bg-blue-100 rounded-lg border border-blue-600/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Label className="font-medium text-white dark:text-white text-gray-900">Parámetros CLAHE</Label>
+                    <span className="px-1.5 py-0.5 text-xs font-normal bg-blue-600 text-white rounded">avanzado</span>
+                  </div>
+                  <Switch
+                    checked={showClahePreview}
+                    onCheckedChange={setShowClahePreview}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                </div>
+                <p className="text-sm text-gray-300 dark:text-gray-300 text-gray-700">Ajusta los parámetros del algoritmo CLAHE para optimizar el contraste adaptativo</p>
+                
+                {/* CLAHE Clip Limit */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="claheClipLimit" className="font-medium text-sm text-white">Clip Limit</Label>
+                    <span className="text-sm text-blue-400 font-mono">{claheClipLimit}</span>
+                  </div>
+                  <input
+                    id="claheClipLimit"
+                    type="range"
+                    min="1.0"
+                    max="10.0"
+                    step="0.1"
+                    value={claheClipLimit}
+                    onChange={(e) => setClaheClipLimit(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>1.0 (suave)</span>
+                    <span>10.0 (intenso)</span>
+                  </div>
+                  <p className="text-xs text-gray-400">Controla la intensidad del realce de contraste. Valor recomendado: 2.0</p>
+                </div>
+                
+                {/* CLAHE Tile Size */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="claheTileSize" className="font-medium text-sm text-white">Tile Size</Label>
+                    <span className="text-sm text-blue-400 font-mono">{claheTileSize}x{claheTileSize}</span>
+                  </div>
+                  <input
+                    id="claheTileSize"
+                    type="range"
+                    min="4"
+                    max="16"
+                    step="2"
+                    value={claheTileSize}
+                    onChange={(e) => setClaheTileSize(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>4x4 (local)</span>
+                    <span>16x16 (global)</span>
+                  </div>
+                  <p className="text-xs text-gray-400">Tamaño de las regiones para adaptación local. Valor recomendado: 8x8</p>
+                </div>
+                
+                {/* CLAHE Status Indicator */}
+                <div className="flex items-center justify-between p-2 bg-gray-800 rounded">
+                  <span className="text-xs text-gray-300">Estado CLAHE:</span>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${autoExposureCorrection ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                    <span className="text-xs text-gray-300">
+                      {autoExposureCorrection ? `Activo (${claheClipLimit}, ${claheTileSize}x${claheTileSize})` : 'Desactivado'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Reset to Optimal Values */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClaheClipLimit(2.0);
+                    setClaheTileSize(8);
+                  }}
+                  className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Restaurar valores óptimos (2.0, 8x8)
+                </button>
               </div>
             </div>
           )}
