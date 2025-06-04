@@ -106,18 +106,22 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     const dirname = path.dirname(imagePath);
     const outputPath = path.join(dirname, `${basename}_clahe${ext}`);
     
-    const { data, info } = await sharp(imagePath)
+    // Convert to LAB color space first
+    const { data: labData, info } = await sharp(imagePath)
+      .toColourspace('lab')
       .raw()
       .toBuffer({ resolveWithObject: true });
     
     console.log(`📊 Image Analysis:`, {
       dimensions: `${info.width}x${info.height}`,
       channels: info.channels,
+      colorSpace: 'LAB',
       totalPixels: info.width * info.height,
-      dataSize: `${Math.round(data.length / 1024)}KB`
+      dataSize: `${Math.round(labData.length / 1024)}KB`
     });
     
-    const processedData = Buffer.from(data);
+    // Create working copy for L channel processing
+    const processedLab = Buffer.from(labData);
     const width = info.width;
     const height = info.height;
     
@@ -132,38 +136,41 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
       coverage: `${(tileWidth * tileGridSize)}x${(tileHeight * tileGridSize)} of ${width}x${height}`
     });
     
-    let processedTiles = 0;
+    // Create lookup tables for each tile
+    const tileLookupTables: Uint8Array[][] = [];
     
-    // Process each tile with CLAHE
+    // Process each tile with CLAHE to generate lookup tables
     for (let tileY = 0; tileY < tileGridSize; tileY++) {
+      tileLookupTables[tileY] = [];
       for (let tileX = 0; tileX < tileGridSize; tileX++) {
         const startX = tileX * tileWidth;
         const startY = tileY * tileHeight;
         const endX = Math.min(startX + tileWidth, width);
         const endY = Math.min(startY + tileHeight, height);
         
-        // Apply CLAHE to this tile
-        processTileWithCLAHE(data, processedData, startX, startY, endX, endY, width, info.channels, clipLimit);
-        processedTiles++;
+        // Generate CLAHE lookup table for this tile (L channel only)
+        const lut = generateCLAHELookupTableOptimized(labData, startX, startY, endX, endY, width, info.channels, clipLimit);
+        tileLookupTables[tileY][tileX] = lut;
       }
     }
     
-    console.log(`✅ CLAHE Processing Complete:`, {
-      tilesProcessed: processedTiles,
-      outputFile: path.basename(outputPath)
-    });
+    // Apply CLAHE with bilinear interpolation between tiles
+    applyCLAHEWithBilinearInterpolation(labData, processedLab, width, height, info.channels, tileLookupTables, tileGridSize, tileWidth, tileHeight);
     
-    // Save processed image
-    await sharp(processedData, {
+    console.log(`✅ CLAHE Processing Complete with bilinear interpolation`);
+    
+    // Convert back to RGB and save
+    await sharp(processedLab, {
       raw: {
         width: info.width,
         height: info.height,
         channels: info.channels
       }
     })
+    .toColourspace('srgb')
     .toFile(outputPath);
     
-    console.log(`CLAHE aplicado: clip_limit=${clipLimit}, tile_grid_size=${tileGridSize}x${tileGridSize}, LAB color space`);
+    console.log(`CLAHE aplicado: clip_limit=${clipLimit}, tile_grid_size=${tileGridSize}x${tileGridSize}, LAB color space con interpolación`);
     return outputPath;
   } catch (error) {
     console.error('Error applying CLAHE:', error);
@@ -172,43 +179,35 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
 }
 
 /**
- * Process individual tile with CLAHE algorithm (LAB color space, L channel)
+ * Generate CLAHE lookup table for a specific tile (LAB L channel only)
  */
-function processTileWithCLAHE(
-  originalData: Buffer, 
-  processedData: Buffer, 
-  startX: number, 
-  startY: number, 
-  endX: number, 
-  endY: number, 
-  width: number, 
-  channels: number, 
+function generateCLAHELookupTableOptimized(
+  labData: Buffer,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  width: number,
+  channels: number,
   clipLimit: number
-): void {
-  // Build histogram for L channel (luminance) in LAB color space
+): Uint8Array {
+  // Build histogram for L channel only (first channel in LAB)
   const histogram = new Array(256).fill(0);
-  const tilePixels: Array<{index: number, luminance: number}> = [];
+  let totalPixels = 0;
   
   for (let y = startY; y < endY; y++) {
     for (let x = startX; x < endX; x++) {
       const index = (y * width + x) * channels;
-      const r = originalData[index];
-      const g = originalData[index + 1];
-      const b = originalData[index + 2];
-      
-      // Convert RGB to LAB L channel (simplified approximation)
-      const luminance = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-      histogram[luminance]++;
-      tilePixels.push({index, luminance});
+      const lValue = labData[index]; // L channel in LAB color space
+      histogram[lValue]++;
+      totalPixels++;
     }
   }
   
-  // Apply clip limit
-  const totalPixels = tilePixels.length;
+  // Apply clip limit to histogram
   const clipValue = Math.floor((clipLimit * totalPixels) / 256);
-  
-  // Clip histogram and redistribute
   let redistribute = 0;
+  
   for (let i = 0; i < 256; i++) {
     if (histogram[i] > clipValue) {
       redistribute += histogram[i] - clipValue;
@@ -216,6 +215,7 @@ function processTileWithCLAHE(
     }
   }
   
+  // Redistribute excess uniformly
   const redistributePerBin = Math.floor(redistribute / 256);
   for (let i = 0; i < 256; i++) {
     histogram[i] += redistributePerBin;
@@ -228,33 +228,75 @@ function processTileWithCLAHE(
     cdf[i] = cdf[i - 1] + histogram[i];
   }
   
-  // Normalize CDF
+  // Normalize CDF to create lookup table
+  const lut = new Uint8Array(256);
   const cdfMin = cdf.find(val => val > 0) || 0;
   const denominator = totalPixels - cdfMin;
   
-  // Handle edge case where all pixels in tile have the same luminance
   if (denominator <= 0) {
-    return; // Skip processing this tile
+    // Identity mapping if all pixels have same value
+    for (let i = 0; i < 256; i++) {
+      lut[i] = i;
+    }
+  } else {
+    for (let i = 0; i < 256; i++) {
+      lut[i] = Math.round(((cdf[i] - cdfMin) / denominator) * 255);
+    }
   }
   
-  for (let i = 0; i < 256; i++) {
-    cdf[i] = Math.round(((cdf[i] - cdfMin) / denominator) * 255);
-  }
-  
-  // Apply transformation to pixels
-  for (const pixel of tilePixels) {
-    const newLuminance = cdf[pixel.luminance];
-    const factor = newLuminance / Math.max(pixel.luminance, 1);
-    
-    // Adjust RGB values proportionally (LAB L channel processing)
-    const r = originalData[pixel.index];
-    const g = originalData[pixel.index + 1];
-    const b = originalData[pixel.index + 2];
-    
-    processedData[pixel.index] = Math.min(255, Math.round(r * factor));
-    processedData[pixel.index + 1] = Math.min(255, Math.round(g * factor));
-    processedData[pixel.index + 2] = Math.min(255, Math.round(b * factor));
-    if (channels === 4) processedData[pixel.index + 3] = originalData[pixel.index + 3];
+  return lut;
+}
+
+/**
+ * Apply CLAHE with bilinear interpolation between tile lookup tables
+ */
+function applyCLAHEWithBilinearInterpolation(
+  originalLab: Buffer,
+  processedLab: Buffer,
+  width: number,
+  height: number,
+  channels: number,
+  tileLookupTables: Uint8Array[][],
+  tileGridSize: number,
+  tileWidth: number,
+  tileHeight: number
+): void {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * channels;
+      const originalL = originalLab[index];
+      
+      // Calculate tile coordinates (floating point for interpolation)
+      const tileX = Math.min((x / tileWidth), tileGridSize - 1);
+      const tileY = Math.min((y / tileHeight), tileGridSize - 1);
+      
+      // Get integer tile indices
+      const tileX0 = Math.floor(tileX);
+      const tileY0 = Math.floor(tileY);
+      const tileX1 = Math.min(tileX0 + 1, tileGridSize - 1);
+      const tileY1 = Math.min(tileY0 + 1, tileGridSize - 1);
+      
+      // Calculate interpolation weights
+      const wx = tileX - tileX0;
+      const wy = tileY - tileY0;
+      
+      // Get lookup values from four surrounding tiles
+      const lut00 = tileLookupTables[tileY0][tileX0][originalL];
+      const lut01 = tileLookupTables[tileY0][tileX1][originalL];
+      const lut10 = tileLookupTables[tileY1][tileX0][originalL];
+      const lut11 = tileLookupTables[tileY1][tileX1][originalL];
+      
+      // Bilinear interpolation
+      const top = lut00 * (1 - wx) + lut01 * wx;
+      const bottom = lut10 * (1 - wx) + lut11 * wx;
+      const interpolatedL = Math.round(top * (1 - wy) + bottom * wy);
+      
+      // Apply transformation only to L channel, preserve A and B channels
+      processedLab[index] = interpolatedL;
+      processedLab[index + 1] = originalLab[index + 1]; // A channel
+      processedLab[index + 2] = originalLab[index + 2]; // B channel
+      if (channels === 4) processedLab[index + 3] = originalLab[index + 3]; // Alpha
+    }
   }
 }
 
