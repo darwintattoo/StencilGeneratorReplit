@@ -119,15 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posterizeValue = req.body.posterizeValue || 8;
       const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
       const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
-      const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
-      // Usar valores óptimos fijos para CLAHE
-      const claheClipLimit = 2.0;
-      const claheTileSize = 8;
-      
-      console.log("=== DEBUGGING CLAHE ===");
-      console.log("autoExposureCorrection raw value:", req.body.autoExposureCorrection);
-      console.log("autoExposureCorrection parsed:", autoExposureCorrection);
-      console.log("File path:", req.file.path);
+
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,
@@ -138,39 +130,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "AI Model": aiModel,
         "Posterize": posterizeValue,
         "activar_Posterize": activarPosterize,
-        "Activar Auto Gamma": activarAutoGamma,
-        "Auto Exposure Correction": autoExposureCorrection,
-        "CLAHE Clip Limit": claheClipLimit,
-        "CLAHE Tile Grid Size": `${claheTileSize}x${claheTileSize}`,
-        "CLAHE Color Space": "LAB",
-        "YUV Equalization": autoExposureCorrection,
-        "RGB Histogram Analysis": autoExposureCorrection,
-        "Quality Metrics": autoExposureCorrection
+        "Activar Auto Gamma": activarAutoGamma
       });
       
       try {
         let finalImageUrl = fileUrl;
         
-        // Apply CLAHE processing if enabled
-        if (autoExposureCorrection) {
-          console.log(`Aplicando CLAHE con parámetros: clip_limit=${claheClipLimit}, tile_size=${claheTileSize}x${claheTileSize}`);
-          const claheResult = await applyAutoExposureCorrection(req.file.path, claheClipLimit, claheTileSize);
-          
-          if (claheResult.processedImagePath !== req.file.path) {
-            // Generate URL for processed image
-            const processedFileName = path.basename(claheResult.processedImagePath);
-            finalImageUrl = `${baseUrl}/uploads/${processedFileName}`;
-            
-            console.log("CLAHE aplicado exitosamente:", {
-              original: claheResult.originalMetrics,
-              processed: claheResult.processedMetrics,
-              improvement: {
-                brightness: claheResult.processedMetrics.brightness - claheResult.originalMetrics.brightness,
-                contrast: claheResult.processedMetrics.contrast - claheResult.originalMetrics.contrast
-              }
-            });
-          }
-        }
+
         
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {
