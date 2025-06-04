@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+import os
+os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '0'
 import cv2
 import numpy as np
 from PIL import Image
 import sys
 import json
-import os
 
 def apply_clahe_processing(input_path, output_path, clip_limit=2.0, tile_grid_size=8):
     """
