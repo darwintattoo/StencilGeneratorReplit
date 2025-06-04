@@ -11,6 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
+import { generateCLAHEConfig } from "./image-processing";
 
 dotenv.config();
 
@@ -140,6 +141,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       try {
+        // Generate optimized CLAHE configuration
+        const claheConfig = generateCLAHEConfig(autoExposureCorrection);
+        
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {
           "input_image": fileUrl,
@@ -152,26 +156,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "activate_posterize": activarPosterize,
           "activate_auto_gamma": activarAutoGamma,
           
-          // CLAHE - Contrast Limited Adaptive Histogram Equalization
-          "apply_clahe": autoExposureCorrection,
-          "clahe_clip_limit": 2.0,
-          "clahe_tile_grid_size": 8,
-          "clahe_color_space": "LAB",
-          
-          // Ecualización de Histograma Clásica YUV
-          "apply_yuv_equalization": autoExposureCorrection,
-          "yuv_preserve_color": true,
-          "yuv_channel_target": "Y",
-          
-          // Análisis de Histogramas RGB
-          "generate_rgb_histograms": autoExposureCorrection,
-          "histogram_analysis_enabled": autoExposureCorrection,
-          "rgb_channel_separation": autoExposureCorrection,
-          
-          // Métricas de Calidad
-          "calculate_brightness_metrics": autoExposureCorrection,
-          "calculate_contrast_metrics": autoExposureCorrection,
-          "quality_comparison_mode": autoExposureCorrection
+          // Optimized CLAHE Configuration
+          ...claheConfig
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);
