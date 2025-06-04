@@ -11,7 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
-import { generateCLAHEConfig } from "./image-processing";
+import { applyAutoExposureCorrection } from "./image-processing";
 
 dotenv.config();
 
@@ -141,12 +141,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       try {
-        // Generate optimized CLAHE configuration
-        const claheConfig = generateCLAHEConfig(autoExposureCorrection);
+        let finalImageUrl = fileUrl;
+        
+        // Apply CLAHE processing if enabled
+        if (autoExposureCorrection) {
+          console.log("Aplicando corrección automática de exposición CLAHE...");
+          const claheResult = await applyAutoExposureCorrection(req.file.path);
+          
+          if (claheResult.processedImagePath !== req.file.path) {
+            // Generate URL for processed image
+            const processedFileName = path.basename(claheResult.processedImagePath);
+            finalImageUrl = `${baseUrl}/uploads/${processedFileName}`;
+            
+            console.log("CLAHE aplicado exitosamente:", {
+              original: claheResult.originalMetrics,
+              processed: claheResult.processedMetrics,
+              improvement: {
+                brightness: claheResult.processedMetrics.brightness - claheResult.originalMetrics.brightness,
+                contrast: claheResult.processedMetrics.contrast - claheResult.originalMetrics.contrast
+              }
+            });
+          }
+        }
         
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {
-          "input_image": fileUrl,
+          "input_image": finalImageUrl,
           "line_color": lineColor,
           "activate_transparency": parsedTransparency,
           "brighten_shadows": enhanceShadows,
@@ -154,10 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "checkpoint": aiModel,
           "posterize_level": parseInt(posterizeValue),
           "activate_posterize": activarPosterize,
-          "activate_auto_gamma": activarAutoGamma,
-          
-          // Optimized CLAHE Configuration
-          ...claheConfig
+          "activate_auto_gamma": activarAutoGamma
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);

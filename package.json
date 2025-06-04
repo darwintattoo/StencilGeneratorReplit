@@ -61,6 +61,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.2",
     "input-otp": "^1.4.2",
+    "jimp": "^1.6.0",
     "konva": "^9.3.20",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
