@@ -94,6 +94,14 @@ export async function applyHistogramEqualization(imagePath: string): Promise<str
  */
 export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, tileGridSize: number = 8): Promise<string> {
   try {
+    // Parameter validation
+    if (clipLimit <= 0) {
+      throw new Error(`Invalid clipLimit: ${clipLimit}. Must be > 0`);
+    }
+    if (tileGridSize < 1) {
+      throw new Error(`Invalid tileGridSize: ${tileGridSize}. Must be >= 1`);
+    }
+    
     console.log(`CLAHE Processing Started:`, {
       input: path.basename(imagePath),
       clipLimit,
@@ -117,6 +125,17 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     const channels = info.channels; // 3 for LAB
     
     console.log(`Image loaded: ${width}x${height}, channels: ${channels}`);
+    
+    // Handle images smaller than tile size
+    if (width < tileGridSize || height < tileGridSize) {
+      console.log(`Image too small for tiling (${width}x${height} < ${tileGridSize}x${tileGridSize}), applying global histogram equalization`);
+      return applyHistogramEqualization(imagePath);
+    }
+    
+    // Handle grayscale images
+    if (channels === 1) {
+      throw new Error('Grayscale images not supported. Convert to RGB first.');
+    }
     
     // Apply CLAHE to L channel only (equivalent to clahe.apply(lab_image[:, :, 0]))
     const processedData = Buffer.from(data);
@@ -160,10 +179,16 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
           }
         }
         
-        // Redistribute excess uniformly
+        // Redistribute excess uniformly (OpenCV-compatible)
         const redistributePerBin = Math.floor(excess / 256);
+        const remainder = excess % 256;
+        
         for (let i = 0; i < 256; i++) {
           histogram[i] += redistributePerBin;
+          // Add +1 to first bins until remainder is exhausted
+          if (i < remainder) {
+            histogram[i] += 1;
+          }
         }
         
         // Calculate cumulative distribution function
@@ -193,18 +218,37 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
       }
     }
     
-    // Apply lookup tables with bilinear interpolation
+    // Apply lookup tables with bilinear interpolation between tiles
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const idx = (y * width + x) * channels;
         const originalL = data[idx];
         
-        // Calculate tile coordinates
-        const tileY = Math.min(Math.floor(y / tileHeight), tileGridSize - 1);
-        const tileX = Math.min(Math.floor(x / tileWidth), tileGridSize - 1);
+        // Calculate precise tile coordinates with offset centering
+        const ty = (y + 0.5) / tileHeight - 0.5;
+        const tx = (x + 0.5) / tileWidth - 0.5;
+        
+        // Get integer tile indices
+        const yLow = Math.max(Math.floor(ty), 0);
+        const yHigh = Math.min(yLow + 1, tileGridSize - 1);
+        const xLow = Math.max(Math.floor(tx), 0);
+        const xHigh = Math.min(xLow + 1, tileGridSize - 1);
+        
+        // Calculate interpolation weights
+        const wy = ty - yLow;
+        const wx = tx - xLow;
+        
+        // Get lookup values from four surrounding tiles
+        const l00 = lookupTables[yLow][xLow][originalL];
+        const l10 = lookupTables[yLow][xHigh][originalL];
+        const l01 = lookupTables[yHigh][xLow][originalL];
+        const l11 = lookupTables[yHigh][xHigh][originalL];
+        
+        // Bilinear interpolation
+        const newL = (1 - wy) * ((1 - wx) * l00 + wx * l10) + wy * ((1 - wx) * l01 + wx * l11);
         
         // Apply transformation to L channel only
-        processedData[idx] = lookupTables[tileY][tileX][originalL];
+        processedData[idx] = Math.round(newL) & 0xff;
         // Keep A and B channels unchanged
         processedData[idx + 1] = data[idx + 1];
         processedData[idx + 2] = data[idx + 2];

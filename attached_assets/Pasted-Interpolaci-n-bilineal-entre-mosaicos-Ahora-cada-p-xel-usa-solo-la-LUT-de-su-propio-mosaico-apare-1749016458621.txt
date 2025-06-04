@@ -1,0 +1,89 @@
+Interpolación bilineal entre mosaicos
+
+Ahora cada píxel usa solo la LUT de su propio mosaico ⇒ aparecen líneas/“bloques” visibles.
+
+OpenCV mezcla las cuatro LUT vecinas según la distancia, lo que suaviza la transición.
+
+Redistribución del exceso idéntica a OpenCV
+
+Falta repartir el resto (excess % 256) que queda tras el Math.floor(excess/256).
+
+OpenCV añade +1 a los primeros bins hasta agotar el residuo → contraste más uniforme.
+
+Gestión de imágenes que no se dividen exacto en mosaicos
+
+Cuando el ancho/alto no es múltiplo de tileGridSize, los últimos mosaicos quedan más grandes y sin interpolación salen artefactos.
+
+Compatibilidad con profundidades > 8 bits
+
+sharp puede cargar 16 bit; tu bucle asume 0-255. Deberías normalizar a 0-255 antes del histograma o usar enteros de 16 bit.
+
+Canal α tras la conversión a LAB
+
+toColourspace('lab') descarta α. Luego intentas reinsertarlo, pero ya no existe. Hay que extraer el α antes, procesar L A B por separado y recombinar.
+
+Conservación de perfiles ICC y metadatos EXIF
+
+Al crear el archivo final se pierde el perfil de color y la información de cámara. Usa .withMetadata({ icc: … }).
+
+Validación de parámetros
+
+clipLimit ≤ 0 o tileGridSize < 1 deberían lanzar error explícito.
+
+Si la imagen es menor que el tamaño de mosaico, habría que saltar a ecualización global normal.
+
+Rendimiento
+
+Dos bucles anidados en JS puro son lentos para > 2 MPx.
+
+Migrar la parte pesada a WebAssembly, usar sharp.raw({ depth:'uchar' }) + Uint8Array y procesar en workers, o llamar a libvips CLAHE nativo ( clahe ya existe en libvips ≥ 8.15).
+
+Uso de memoria
+
+Cargas la imagen completa en RAM y clonas el buffer: el doble de memoria.
+
+Mejor trabajar in-place o en streaming con sharp pipes.
+
+Tratamiento de imágenes escala de grises
+
+Si channels === 1, tu índice para A y B (idx+1, idx+2) se sale de rango → crash.
+
+Soporte de distintos formatos de salida
+
+Siempre grabas en el mismo formato de entrada; a veces interesa que el PNG de 16 bit pase a PNG 8 bit para ahorrar peso.
+
+Salida alternativa (buffer)
+
+Devolver un Buffer además de escribir archivo permitiría integrarlo en APIs sin tener que leer disco.
+
+Métricas/telemetría opcional
+
+Tiempo de proceso, memoria consumida, histograma antes/después para depurar.
+
+Logs estructurados y niveles
+
+Usar debug o pino en vez de console.log, con niveles (info, warn, error) y etiquetas.
+
+Pruebas unitarias / regresión visual
+
+Comparar automáticamente contra OpenCV con tolerancia ΔE* para garantizar que el output es equivalente.
+
+Manejo de excepciones más granular
+
+Diferenciar error de lectura, de escritura, de memoria, etc., y propagar al llamador.
+
+Soporte de WebP/AVIF y α-premultiplicado
+
+Actualmente no lo contemplas; útil para flujos web modernos.
+
+CLI o API más flexible
+
+Permitir batch, glob patterns, streams de entrada stdin→stdout, etc.
+
+Documentación inline (JSDoc) y README
+
+Explicar fórmula del clipLimit, por qué LAB y no YUV, etc.
+
+Edge cases
+
+Imágenes muy oscuras o muy claras pueden colapsar el denominator = 0 (lo manejas con LUT identidad, pero quizá quieras auto-ajustar clipLimit).
