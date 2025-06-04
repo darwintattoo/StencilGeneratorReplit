@@ -132,7 +132,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Activar Auto Gamma": activarAutoGamma,
         "Auto Exposure Correction": autoExposureCorrection,
         "CLAHE Clip Limit": 2.0,
-        "CLAHE Tile Grid Size": 8
+        "CLAHE Tile Grid Size": 8,
+        "CLAHE Color Space": "LAB",
+        "YUV Equalization": autoExposureCorrection,
+        "RGB Histogram Analysis": autoExposureCorrection,
+        "Quality Metrics": autoExposureCorrection
       });
       
       try {
@@ -147,15 +151,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "posterize_level": parseInt(posterizeValue),
           "activate_posterize": activarPosterize,
           "activate_auto_gamma": activarAutoGamma,
+          
+          // CLAHE - Contrast Limited Adaptive Histogram Equalization
           "apply_clahe": autoExposureCorrection,
           "clahe_clip_limit": 2.0,
           "clahe_tile_grid_size": 8,
           "clahe_color_space": "LAB",
-          "apply_histogram_equalization": autoExposureCorrection,
-          "yuv_equalization": autoExposureCorrection,
-          "preserve_color_info": true,
-          "generate_histogram_analysis": autoExposureCorrection,
-          "calculate_quality_metrics": autoExposureCorrection
+          
+          // Ecualización de Histograma Clásica YUV
+          "apply_yuv_equalization": autoExposureCorrection,
+          "yuv_preserve_color": true,
+          "yuv_channel_target": "Y",
+          
+          // Análisis de Histogramas RGB
+          "generate_rgb_histograms": autoExposureCorrection,
+          "histogram_analysis_enabled": autoExposureCorrection,
+          "rgb_channel_separation": autoExposureCorrection,
+          
+          // Métricas de Calidad
+          "calculate_brightness_metrics": autoExposureCorrection,
+          "calculate_contrast_metrics": autoExposureCorrection,
+          "quality_comparison_mode": autoExposureCorrection
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);
