@@ -252,20 +252,24 @@ export async function calculateQualityMetrics(imagePath: string): Promise<{brigh
  * Main function to apply automatic exposure correction with CLAHE
  * Implements the exact algorithm as specified in the provided code
  */
-export async function applyAutoExposureCorrection(imagePath: string): Promise<{
+export async function applyAutoExposureCorrection(
+  imagePath: string, 
+  clipLimit: number = 2.0, 
+  tileGridSize: number = 8
+): Promise<{
   processedImagePath: string;
   originalMetrics: { brightness: number; contrast: number };
   processedMetrics: { brightness: number; contrast: number };
 }> {
   try {
-    console.log("Iniciando corrección automática de exposición con CLAHE...");
+    console.log(`Iniciando corrección automática de exposición con CLAHE (${clipLimit}, ${tileGridSize}x${tileGridSize})...`);
     
     // Calculate original metrics
     const originalMetrics = await calculateQualityMetrics(imagePath);
     console.log("Métricas originales:", originalMetrics);
     
-    // Apply CLAHE with optimal parameters (clip_limit=2.0, tile_grid_size=8)
-    const processedImagePath = await applyCLAHE(imagePath, 2.0, 8);
+    // Apply CLAHE with custom parameters
+    const processedImagePath = await applyCLAHE(imagePath, clipLimit, tileGridSize);
     
     // Calculate processed metrics
     const processedMetrics = await calculateQualityMetrics(processedImagePath);

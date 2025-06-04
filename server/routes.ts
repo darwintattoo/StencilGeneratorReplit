@@ -147,8 +147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Apply CLAHE processing if enabled
         if (autoExposureCorrection) {
-          console.log("Aplicando corrección automática de exposición CLAHE...");
-          const claheResult = await applyAutoExposureCorrection(req.file.path);
+          console.log(`Aplicando CLAHE con parámetros: clip_limit=${claheClipLimit}, tile_size=${claheTileSize}x${claheTileSize}`);
+          const claheResult = await applyAutoExposureCorrection(req.file.path, claheClipLimit, claheTileSize);
           
           if (claheResult.processedImagePath !== req.file.path) {
             // Generate URL for processed image
