@@ -136,8 +136,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         let finalImageUrl = fileUrl;
         
-
-        
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {
           "input_image": finalImageUrl,
