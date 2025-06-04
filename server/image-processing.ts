@@ -111,7 +111,7 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     
     // Execute Python CLAHE processor
     const pythonProcess = spawn('python3', [
-      path.join(__dirname, 'clahe_processor.py'),
+      path.join(__dirname, 'numpy_clahe.py'),
       imagePath,
       outputPath,
       clipLimit.toString(),
