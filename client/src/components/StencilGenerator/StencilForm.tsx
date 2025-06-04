@@ -34,6 +34,7 @@ export function StencilForm({
   const [posterizeValue, setPosterizeValue] = useState(8);                  // "Posterize"
   const [activarPosterize, setActivarPosterize] = useState(false);          // "activar_Posterize"
   const [activarAutoGamma, setActivarAutoGamma] = useState(false);          // "Activar Auto Gamma"
+  const [autoExposureCorrection, setAutoExposureCorrection] = useState(true); // "Auto Exposure Correction"
   
   const { toast } = useToast();
   const { t, language } = useLanguage();

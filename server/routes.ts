@@ -11,6 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
+import { applyAutoExposureCorrection } from "./image-processing";
 
 dotenv.config();
 
