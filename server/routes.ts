@@ -124,6 +124,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const claheClipLimit = 2.0;
       const claheTileSize = 8;
       
+      console.log("=== DEBUGGING CLAHE ===");
+      console.log("autoExposureCorrection raw value:", req.body.autoExposureCorrection);
+      console.log("autoExposureCorrection parsed:", autoExposureCorrection);
+      console.log("File path:", req.file.path);
+      console.log("File exists:", require('fs').existsSync(req.file.path));
+      
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,
         "line_color": lineColor,
