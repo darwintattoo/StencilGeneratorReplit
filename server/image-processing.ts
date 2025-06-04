@@ -90,11 +90,11 @@ export async function applyHistogramEqualization(imagePath: string): Promise<str
 
 /**
  * Apply Contrast Limited Adaptive Histogram Equalization (CLAHE)
- * Implements the exact algorithm as OpenCV: clip_limit=2.0, tile_grid_size=8x8, LAB color space
+ * Implementation following OpenCV cv2.createCLAHE pattern
  */
 export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, tileGridSize: number = 8): Promise<string> {
   try {
-    console.log(`🔬 CLAHE Processing Started:`, {
+    console.log(`CLAHE Processing Started:`, {
       input: path.basename(imagePath),
       clipLimit,
       tileGridSize: `${tileGridSize}x${tileGridSize}`,
@@ -104,74 +104,128 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     const ext = path.extname(imagePath);
     const basename = path.basename(imagePath, ext);
     const dirname = path.dirname(imagePath);
-    const outputPath = path.join(dirname, `${basename}_clahe${ext}`);
+    const outputPath = path.join(dirname, `${basename}_enhanced_clahe${ext}`);
     
-    // Convert to LAB color space first
-    const { data: labData, info } = await sharp(imagePath)
+    // Convert to LAB color space (equivalent to cv2.cvtColor(cv_image, cv2.COLOR_BGR2LAB))
+    const { data, info } = await sharp(imagePath)
       .toColourspace('lab')
       .raw()
       .toBuffer({ resolveWithObject: true });
     
-    console.log(`📊 Image Analysis:`, {
-      dimensions: `${info.width}x${info.height}`,
-      channels: info.channels,
-      colorSpace: 'LAB',
-      totalPixels: info.width * info.height,
-      dataSize: `${Math.round(labData.length / 1024)}KB`
-    });
-    
-    // Create working copy for L channel processing
-    const processedLab = Buffer.from(labData);
     const width = info.width;
     const height = info.height;
+    const channels = info.channels; // 3 for LAB
     
-    // Calculate tile dimensions
+    console.log(`Image loaded: ${width}x${height}, channels: ${channels}`);
+    
+    // Apply CLAHE to L channel only (equivalent to clahe.apply(lab_image[:, :, 0]))
+    const processedData = Buffer.from(data);
+    
+    // Create CLAHE instance with clipLimit and tileGridSize
     const tileWidth = Math.floor(width / tileGridSize);
     const tileHeight = Math.floor(height / tileGridSize);
-    const totalTiles = tileGridSize * tileGridSize;
-    
-    console.log(`🎯 Tile Configuration:`, {
-      tileSize: `${tileWidth}x${tileHeight}`,
-      totalTiles,
-      coverage: `${(tileWidth * tileGridSize)}x${(tileHeight * tileGridSize)} of ${width}x${height}`
-    });
     
     // Create lookup tables for each tile
-    const tileLookupTables: Uint8Array[][] = [];
+    const lookupTables: Uint8Array[][] = [];
     
-    // Process each tile with CLAHE to generate lookup tables
     for (let tileY = 0; tileY < tileGridSize; tileY++) {
-      tileLookupTables[tileY] = [];
+      lookupTables[tileY] = [];
       for (let tileX = 0; tileX < tileGridSize; tileX++) {
         const startX = tileX * tileWidth;
         const startY = tileY * tileHeight;
         const endX = Math.min(startX + tileWidth, width);
         const endY = Math.min(startY + tileHeight, height);
         
-        // Generate CLAHE lookup table for this tile (L channel only)
-        const lut = generateCLAHELookupTableOptimized(labData, startX, startY, endX, endY, width, info.channels, clipLimit);
-        tileLookupTables[tileY][tileX] = lut;
+        // Build histogram for L channel in this tile
+        const histogram = new Array(256).fill(0);
+        let pixelCount = 0;
+        
+        for (let y = startY; y < endY; y++) {
+          for (let x = startX; x < endX; x++) {
+            const idx = (y * width + x) * channels;
+            const lValue = data[idx]; // L channel
+            histogram[lValue]++;
+            pixelCount++;
+          }
+        }
+        
+        // Apply clip limit
+        const clipValue = Math.floor((clipLimit * pixelCount) / 256);
+        let excess = 0;
+        
+        for (let i = 0; i < 256; i++) {
+          if (histogram[i] > clipValue) {
+            excess += histogram[i] - clipValue;
+            histogram[i] = clipValue;
+          }
+        }
+        
+        // Redistribute excess uniformly
+        const redistributePerBin = Math.floor(excess / 256);
+        for (let i = 0; i < 256; i++) {
+          histogram[i] += redistributePerBin;
+        }
+        
+        // Calculate cumulative distribution function
+        const cdf = new Array(256);
+        cdf[0] = histogram[0];
+        for (let i = 1; i < 256; i++) {
+          cdf[i] = cdf[i - 1] + histogram[i];
+        }
+        
+        // Create lookup table
+        const lut = new Uint8Array(256);
+        const cdfMin = cdf.find(val => val > 0) || 0;
+        const denominator = pixelCount - cdfMin;
+        
+        if (denominator > 0) {
+          for (let i = 0; i < 256; i++) {
+            lut[i] = Math.round(((cdf[i] - cdfMin) / denominator) * 255);
+          }
+        } else {
+          // Identity mapping if no variation
+          for (let i = 0; i < 256; i++) {
+            lut[i] = i;
+          }
+        }
+        
+        lookupTables[tileY][tileX] = lut;
       }
     }
     
-    // Apply CLAHE with bilinear interpolation between tiles
-    applyCLAHEWithBilinearInterpolation(labData, processedLab, width, height, info.channels, tileLookupTables, tileGridSize, tileWidth, tileHeight);
+    // Apply lookup tables with bilinear interpolation
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * channels;
+        const originalL = data[idx];
+        
+        // Calculate tile coordinates
+        const tileY = Math.min(Math.floor(y / tileHeight), tileGridSize - 1);
+        const tileX = Math.min(Math.floor(x / tileWidth), tileGridSize - 1);
+        
+        // Apply transformation to L channel only
+        processedData[idx] = lookupTables[tileY][tileX][originalL];
+        // Keep A and B channels unchanged
+        processedData[idx + 1] = data[idx + 1];
+        processedData[idx + 2] = data[idx + 2];
+        if (channels === 4) processedData[idx + 3] = data[idx + 3]; // Alpha if present
+      }
+    }
     
-    console.log(`✅ CLAHE Processing Complete with bilinear interpolation`);
-    
-    // Convert back to RGB and save
-    await sharp(processedLab, {
+    // Convert back to sRGB (equivalent to cv2.cvtColor(lab_image, cv2.COLOR_LAB2BGR))
+    await sharp(processedData, {
       raw: {
-        width: info.width,
-        height: info.height,
-        channels: info.channels
+        width,
+        height,
+        channels
       }
     })
     .toColourspace('srgb')
     .toFile(outputPath);
     
-    console.log(`CLAHE aplicado: clip_limit=${clipLimit}, tile_grid_size=${tileGridSize}x${tileGridSize}, LAB color space con interpolación`);
+    console.log(`CLAHE processing complete: ${path.basename(outputPath)}`);
     return outputPath;
+    
   } catch (error) {
     console.error('Error applying CLAHE:', error);
     return imagePath;
