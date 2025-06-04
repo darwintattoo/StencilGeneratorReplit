@@ -120,8 +120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
       const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
       const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
-      const claheClipLimit = parseFloat(req.body.claheClipLimit) || 2.0;
-      const claheTileSize = parseInt(req.body.claheTileSize) || 8;
+      // Usar valores óptimos fijos para CLAHE
+      const claheClipLimit = 2.0;
+      const claheTileSize = 8;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,

@@ -248,10 +248,10 @@ function generateCLAHELookupTableOptimized(
 }
 
 /**
- * Apply CLAHE with bilinear interpolation between tile lookup tables
+ * Apply CLAHE with improved bilinear interpolation between tile lookup tables
  */
 function applyCLAHEWithBilinearInterpolation(
-  originalLab: Buffer,
+  labData: Buffer,
   processedLab: Buffer,
   width: number,
   height: number,
@@ -261,41 +261,38 @@ function applyCLAHEWithBilinearInterpolation(
   tileWidth: number,
   tileHeight: number
 ): void {
+  // Process pixel by pixel with improved interpolation formula
   for (let y = 0; y < height; y++) {
+    // Calculate tile Y coordinate with offset centering
+    const ty = (y + 0.5) / tileHeight - 0.5;
+    const yLow = Math.max(Math.floor(ty), 0);
+    const yHigh = Math.min(yLow + 1, tileGridSize - 1);
+    const wy = ty - yLow;
+
     for (let x = 0; x < width; x++) {
-      const index = (y * width + x) * channels;
-      const originalL = originalLab[index];
-      
-      // Calculate tile coordinates (floating point for interpolation)
-      const tileX = Math.min((x / tileWidth), tileGridSize - 1);
-      const tileY = Math.min((y / tileHeight), tileGridSize - 1);
-      
-      // Get integer tile indices
-      const tileX0 = Math.floor(tileX);
-      const tileY0 = Math.floor(tileY);
-      const tileX1 = Math.min(tileX0 + 1, tileGridSize - 1);
-      const tileY1 = Math.min(tileY0 + 1, tileGridSize - 1);
-      
-      // Calculate interpolation weights
-      const wx = tileX - tileX0;
-      const wy = tileY - tileY0;
-      
+      // Calculate tile X coordinate with offset centering  
+      const tx = (x + 0.5) / tileWidth - 0.5;
+      const xLow = Math.max(Math.floor(tx), 0);
+      const xHigh = Math.min(xLow + 1, tileGridSize - 1);
+      const wx = tx - xLow;
+
+      const idx = (y * width + x) * channels;
+      const val = labData[idx]; // L channel value
+
       // Get lookup values from four surrounding tiles
-      const lut00 = tileLookupTables[tileY0][tileX0][originalL];
-      const lut01 = tileLookupTables[tileY0][tileX1][originalL];
-      const lut10 = tileLookupTables[tileY1][tileX0][originalL];
-      const lut11 = tileLookupTables[tileY1][tileX1][originalL];
-      
-      // Bilinear interpolation
-      const top = lut00 * (1 - wx) + lut01 * wx;
-      const bottom = lut10 * (1 - wx) + lut11 * wx;
-      const interpolatedL = Math.round(top * (1 - wy) + bottom * wy);
+      const l00 = tileLookupTables[yLow][xLow][val];
+      const l10 = tileLookupTables[yLow][xHigh][val];
+      const l01 = tileLookupTables[yHigh][xLow][val];
+      const l11 = tileLookupTables[yHigh][xHigh][val];
+
+      // Improved bilinear interpolation formula
+      const newL = (1 - wy) * ((1 - wx) * l00 + wx * l10) + wy * ((1 - wx) * l01 + wx * l11);
       
       // Apply transformation only to L channel, preserve A and B channels
-      processedLab[index] = interpolatedL;
-      processedLab[index + 1] = originalLab[index + 1]; // A channel
-      processedLab[index + 2] = originalLab[index + 2]; // B channel
-      if (channels === 4) processedLab[index + 3] = originalLab[index + 3]; // Alpha
+      processedLab[idx] = newL & 0xff; // Ensure 8-bit value
+      processedLab[idx + 1] = labData[idx + 1]; // A channel unchanged
+      processedLab[idx + 2] = labData[idx + 2]; // B channel unchanged
+      if (channels === 4) processedLab[idx + 3] = labData[idx + 3]; // Alpha unchanged
     }
   }
 }
