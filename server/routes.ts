@@ -149,7 +149,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "activate_auto_gamma": activarAutoGamma,
           "apply_clahe": autoExposureCorrection,
           "clahe_clip_limit": 2.0,
-          "clahe_tile_grid_size": 8
+          "clahe_tile_grid_size": 8,
+          "clahe_color_space": "LAB",
+          "apply_histogram_equalization": autoExposureCorrection,
+          "yuv_equalization": autoExposureCorrection,
+          "preserve_color_info": true,
+          "generate_histogram_analysis": autoExposureCorrection,
+          "calculate_quality_metrics": autoExposureCorrection
         };
         
         console.log("Enviando solicitud a /api/queue con inputs:", inputs);
