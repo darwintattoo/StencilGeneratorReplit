@@ -151,7 +151,8 @@ export function StencilForm({
         presetLora: selectedPreset,
         posterizeValue,
         activarPosterize,
-        activarAutoGamma
+        activarAutoGamma,
+        autoExposureCorrection
       });
       
       // Añadimos manualmente la URL de la imagen original a la respuesta

@@ -17,6 +17,7 @@ interface UploadStencilParams {
   posterizeValue?: number;
   activarPosterize?: boolean;
   activarAutoGamma?: boolean;
+  autoExposureCorrection?: boolean;
 }
 
 export async function generateStencil(params: StencilParams): Promise<StencilResponse> {
