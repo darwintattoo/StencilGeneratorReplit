@@ -109,9 +109,9 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     const dirname = path.dirname(imagePath);
     const outputPath = path.join(dirname, `${basename}_enhanced_clahe${ext}`);
     
-    // Execute Python CLAHE processor
+    // Execute Python CLAHE processor using exact working code
     const pythonProcess = spawn('python3', [
-      path.join(__dirname, 'clahe_opencv_headless.py'),
+      path.join(__dirname, 'clahe_exact.py'),
       imagePath,
       outputPath,
       clipLimit.toString(),
