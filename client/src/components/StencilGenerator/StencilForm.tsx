@@ -198,13 +198,31 @@ export function StencilForm({
           >
             <div className="flex flex-col items-center justify-center space-y-2">
               {imagePreview ? (
-                // Image preview
+                // Image preview with exposure correction toggle
                 <div className="relative w-full">
                   <img 
                     src={imagePreview} 
                     alt="Preview" 
                     className="max-h-48 max-w-full mx-auto rounded-md object-contain" 
+                    style={{
+                      filter: autoExposureCorrection ? 'contrast(1.2) brightness(1.1)' : 'none'
+                    }}
                   />
+                  
+                  {/* Auto Exposure Correction Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setAutoExposureCorrection(!autoExposureCorrection)}
+                    className={`absolute top-2 left-2 px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                      autoExposureCorrection 
+                        ? 'bg-blue-600 text-white shadow-lg' 
+                        : 'bg-gray-800 text-gray-300 border border-gray-600'
+                    }`}
+                  >
+                    {autoExposureCorrection ? '✓ Auto Exposure' : 'Auto Exposure'}
+                  </button>
+                  
+                  {/* Remove image button */}
                   <button
                     type="button"
                     onClick={() => {
@@ -363,22 +381,7 @@ export function StencilForm({
             <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("enhance_shadows_help") || "Mejora la definición de sombras en la imagen"}</p>
           </div>
 
-          {/* Auto Exposure Correction */}
-          <div className="space-y-1 mb-4 p-3 bg-opacity-30 bg-gray-800 dark:bg-gray-800 bg-gray-100 rounded-lg">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="autoExposure" className="font-medium text-white dark:text-white text-gray-900">Auto Exposure Correction</Label>
-              <div className="flex items-center">
-                <span className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mr-2">Activar</span>
-                <Switch
-                  id="autoExposure"
-                  checked={autoExposureCorrection}
-                  onCheckedChange={setAutoExposureCorrection}
-                  className="data-[state=checked]:bg-blue-600"
-                />
-              </div>
-            </div>
-            <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">Corrige automáticamente problemas de exposición y mejora el contraste</p>
-          </div>
+
         </div>
         
         {/* SECCIÓN: OPCIONES AVANZADAS (Desplegable) */}
