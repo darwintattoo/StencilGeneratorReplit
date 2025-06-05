@@ -78,10 +78,7 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
       formData.append("activarAutoGamma", params.activarAutoGamma.toString());
     }
     
-    // Agregar parámetro de corrección automática de exposición CLAHE
-    if (params.autoExposureCorrection !== undefined) {
-      formData.append("autoExposureCorrection", params.autoExposureCorrection.toString());
-    }
+
     
     // Agregar parámetros CLAHE específicos
     if (params.claheClipLimit !== undefined) {

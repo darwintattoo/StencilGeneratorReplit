@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posterizeValue = req.body.posterizeValue || 8;
       const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
       const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
-      const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
+
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "input_image": fileUrl,
