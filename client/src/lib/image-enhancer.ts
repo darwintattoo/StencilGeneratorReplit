@@ -4,7 +4,7 @@
 
 export interface EnhanceImageResponse {
   success: boolean;
-  enhanced_image_url?: string;
+  enhanced_image?: string; // base64 string
   error?: string;
 }
 
@@ -13,7 +13,7 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     console.log('Enviando imagen a mejorar:', imageFile.name, imageFile.size);
     
     const formData = new FormData();
-    formData.append('image', imageFile);
+    formData.append('file', imageFile);
 
     const response = await fetch('https://auto-image-enhancer-darwintattoo1.replit.app/enhance', {
       method: 'POST',
@@ -52,18 +52,24 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
   }
 }
 
-export async function downloadEnhancedImage(imageUrl: string): Promise<File | null> {
+export function base64ToFile(base64String: string, filename: string = `enhanced_${Date.now()}.png`): File | null {
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.status}`);
+    // Remove data URL prefix if present
+    const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
+    
+    // Convert base64 to binary
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
     
-    const blob = await response.blob();
-    const filename = `enhanced_${Date.now()}.png`;
-    return new File([blob], filename, { type: blob.type });
+    // Create blob and file
+    const blob = new Blob([bytes], { type: 'image/png' });
+    return new File([blob], filename, { type: 'image/png' });
   } catch (error) {
-    console.error('Error downloading enhanced image:', error);
+    console.error('Error converting base64 to file:', error);
     return null;
   }
 }

@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { uploadImageForStencil } from "@/lib/api";
-import { enhanceImageExposure, downloadEnhancedImage } from "@/lib/image-enhancer";
+import { enhanceImageExposure, base64ToFile } from "@/lib/image-enhancer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -127,9 +127,9 @@ export function StencilForm({
     try {
       const result = await enhanceImageExposure(selectedFile);
       
-      if (result.success && result.enhanced_image_url) {
-        // Descargar la imagen mejorada
-        const enhancedFile = await downloadEnhancedImage(result.enhanced_image_url);
+      if (result.success && result.enhanced_image) {
+        // Convertir base64 a File
+        const enhancedFile = base64ToFile(result.enhanced_image);
         
         if (enhancedFile) {
           setSelectedFile(enhancedFile);
@@ -142,7 +142,7 @@ export function StencilForm({
             variant: "default"
           });
         } else {
-          throw new Error("No se pudo descargar la imagen mejorada");
+          throw new Error("No se pudo convertir la imagen mejorada");
         }
       } else {
         throw new Error(result.error || "Error al mejorar la imagen");
