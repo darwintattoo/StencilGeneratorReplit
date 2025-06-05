@@ -219,7 +219,7 @@ export function StencilForm({
                         : 'bg-gray-800 text-gray-300 border border-gray-600'
                     }`}
                   >
-                    {autoExposureCorrection ? '✓ Auto Exposure' : 'Auto Exposure'}
+                    {autoExposureCorrection ? t("auto_exposure_enabled") : t("auto_exposure")}
                   </button>
                   
                   {/* Remove image button */}
