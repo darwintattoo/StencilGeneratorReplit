@@ -1,6 +1,9 @@
 // server/image-processing.ts
-import cv from 'opencv4nodejs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import path from 'path';
+
+const execAsync = promisify(exec);
 
 export async function applyCLAHE(
   imagePath: string,
@@ -11,23 +14,16 @@ export async function applyCLAHE(
   const basename = path.basename(imagePath, ext);
   const outputPath = path.join(path.dirname(imagePath), `${basename}_clahe${ext}`);
 
-  // Leer imagen en BGR
-  const img = await cv.imreadAsync(imagePath);
-
-  // Convertir a LAB y separar canales
-  const lab = img.cvtColor(cv.COLOR_BGR2Lab);
-  const [l, a, b] = lab.split();
-
-  // Crear CLAHE y aplicarlo sobre L
-  const clahe = new cv.CLAHE(clipLimit, new cv.Size(tileGridSize, tileGridSize));
-  const lEqualized = clahe.apply(l);
-
-  // Unir canales y volver a RGB
-  const labMerged = new cv.Mat([lEqualized, a, b]).merge();
-  const resultBGR = labMerged.cvtColor(cv.COLOR_Lab2BGR);
-
-  await cv.imwriteAsync(outputPath, resultBGR);
-  return outputPath;
+  // Ejecutar el script Python con OpenCV real
+  const command = `python3 server/autoenhancer_clahe.py "${imagePath}" "${outputPath}" ${clipLimit} ${tileGridSize}`;
+  
+  try {
+    await execAsync(command);
+    return outputPath;
+  } catch (error) {
+    console.error('Error applying CLAHE:', error);
+    throw new Error(`Failed to apply CLAHE: ${error}`);
+  }
 }
 
 export async function applyAutoExposureCorrection(
