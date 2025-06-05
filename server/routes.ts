@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posterizeValue = req.body.posterizeValue || 8;
       const activarPosterize = req.body.activarPosterize === 'true' || req.body.activarPosterize === true ? true : false;
       const activarAutoGamma = req.body.activarAutoGamma === 'true' || req.body.activarAutoGamma === true ? true : false;
-
+      const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
         "Darwin Enriquez": fileUrl,
@@ -130,11 +130,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "AI Model": aiModel,
         "Posterize": posterizeValue,
         "activar_Posterize": activarPosterize,
-        "Activar Auto Gamma": activarAutoGamma
+        "Activar Auto Gamma": activarAutoGamma,
+        "Auto Exposure Correction": autoExposureCorrection
       });
       
       try {
         let finalImageUrl = fileUrl;
+        
+        // Apply CLAHE processing if enabled
+        if (autoExposureCorrection) {
+          const claheResult = await applyAutoExposureCorrection(req.file.path);
+          
+          if (claheResult.processedImagePath !== req.file.path) {
+            // Generate URL for processed image
+            const processedFileName = path.basename(claheResult.processedImagePath);
+            finalImageUrl = `${baseUrl}/uploads/${processedFileName}`;
+            
+            console.log("CLAHE aplicado exitosamente:", {
+              original: claheResult.originalMetrics,
+              processed: claheResult.processedMetrics,
+              improvement: {
+                brightness: claheResult.processedMetrics.brightness - claheResult.originalMetrics.brightness,
+                contrast: claheResult.processedMetrics.contrast - claheResult.originalMetrics.contrast
+              }
+            });
+          }
+        }
         
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {

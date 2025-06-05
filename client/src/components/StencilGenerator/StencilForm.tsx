@@ -34,7 +34,7 @@ export function StencilForm({
   const [posterizeValue, setPosterizeValue] = useState(8);                  // "Posterize"
   const [activarPosterize, setActivarPosterize] = useState(false);          // "activar_Posterize"
   const [activarAutoGamma, setActivarAutoGamma] = useState(false);          // "Activar Auto Gamma"
-
+  const [autoExposureCorrection, setAutoExposureCorrection] = useState(true); // "Auto Exposure Correction"
   
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -151,7 +151,8 @@ export function StencilForm({
         presetLora: selectedPreset,
         posterizeValue,
         activarPosterize,
-        activarAutoGamma
+        activarAutoGamma,
+        autoExposureCorrection
       });
       
       // Añadimos manualmente la URL de la imagen original a la respuesta
@@ -204,11 +205,22 @@ export function StencilForm({
                     alt="Preview" 
                     className="max-h-48 max-w-full mx-auto rounded-md object-contain" 
                     style={{
-                      filter: 'none'
+                      filter: autoExposureCorrection ? 'contrast(1.2) brightness(1.1) saturate(1.1)' : 'none'
                     }}
                   />
                   
-
+                  {/* Auto Exposure Correction Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setAutoExposureCorrection(!autoExposureCorrection)}
+                    className={`absolute top-2 left-2 px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                      autoExposureCorrection 
+                        ? 'bg-blue-600 text-white shadow-lg' 
+                        : 'bg-gray-800 text-gray-300 border border-gray-600'
+                    }`}
+                  >
+                    {autoExposureCorrection ? '✓ Auto Exposure' : 'Auto Exposure'}
+                  </button>
                   
                   {/* Remove image button */}
                   <button
