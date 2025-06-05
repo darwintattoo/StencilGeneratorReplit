@@ -131,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Posterize": posterizeValue,
         "activar_Posterize": activarPosterize,
         "Activar Auto Gamma": activarAutoGamma,
-        "Auto Exposure Correction": autoExposureCorrection
+
       });
       
       try {
