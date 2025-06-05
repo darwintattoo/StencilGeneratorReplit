@@ -15,10 +15,16 @@ export async function applyCLAHE(
   const outputPath = path.join(path.dirname(imagePath), `${basename}_clahe${ext}`);
 
   // Ejecutar el script Python con OpenCV real
-  const command = `python3 server/autoenhancer_clahe.py "${imagePath}" "${outputPath}" ${clipLimit} ${tileGridSize}`;
+  const command = `python3 server/autoenhancer_clahe.py "${imagePath}" "${outputPath}"`;
   
   try {
-    await execAsync(command);
+    const { stdout, stderr } = await execAsync(command);
+    const result = JSON.parse(stdout);
+    
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    
     return outputPath;
   } catch (error) {
     console.error('Error applying CLAHE:', error);
