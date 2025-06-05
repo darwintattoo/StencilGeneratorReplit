@@ -11,6 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
+import FormData from 'form-data';
 
 dotenv.config();
 
@@ -211,7 +212,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Crear FormData para enviar a tu aplicación
-      const FormData = require('form-data');
       const formData = new FormData();
       formData.append('file', req.file.buffer, {
         filename: req.file.originalname,
