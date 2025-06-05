@@ -11,7 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
-import { applyAutoExposureCorrection } from "./image-processing";
+
 
 dotenv.config();
 
@@ -137,21 +137,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         let finalImageUrl = fileUrl;
         
-        // Apply CLAHE processing if enabled
-        if (autoExposureCorrection) {
-          const processedImagePath = await applyAutoExposureCorrection(req.file.path, 2.0, 8);
-          
-          if (processedImagePath !== req.file.path) {
-            // Generate URL for processed image
-            const processedFileName = path.basename(processedImagePath);
-            finalImageUrl = `${baseUrl}/uploads/${processedFileName}`;
-            
-            console.log("CLAHE aplicado exitosamente:", {
-              processedPath: processedImagePath,
-              finalUrl: finalImageUrl
-            });
-          }
-        }
+        // No processing needed, use original image
+        finalImageUrl = fileUrl;
         
         // Usar nuestro nuevo sistema de API para generar el stencil
         const inputs = {
