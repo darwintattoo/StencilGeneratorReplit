@@ -1,0 +1,51 @@
+Para obtener un CLAHE fiel al de OpenCV debes reemplazar la implementación manual de server/image-processing.ts por llamadas directas a OpenCV y aplicar el algoritmo sobre el canal L del espacio de color LAB. A continuación se describe un ejemplo de código y los pasos recomendados.
+
+1. Instala OpenCV para Node.js
+En package.json agrega la dependencia:
+
+npm install opencv4nodejs
+(Es necesario tener las bibliotecas de OpenCV instaladas en el sistema; consulta la documentación de opencv4nodejs para la configuración).
+
+2. Implementa applyCLAHE usando OpenCV
+// server/image-processing.ts
+import cv from 'opencv4nodejs';
+import path from 'path';
+
+export async function applyCLAHE(
+  imagePath: string,
+  clipLimit = 2.0,
+  tileGridSize = 8
+): Promise<string> {
+  const ext = path.extname(imagePath);
+  const basename = path.basename(imagePath, ext);
+  const dirname = path.dirname(imagePath);
+  const outputPath = path.join(dirname, `${basename}_clahe${ext}`);
+
+  // Cargar imagen y convertir a espacio LAB
+  const img = await cv.imreadAsync(imagePath);
+  const lab = img.cvtColor(cv.COLOR_BGR2Lab);
+
+  // Dividir canales
+  const [l, a, b] = lab.split();
+
+  // Crear y aplicar CLAHE en el canal L
+  const clahe = new cv.CLAHE(clipLimit, new cv.Size(tileGridSize, tileGridSize));
+  const lEqualized = clahe.apply(l);
+
+  // Combinar canales y volver a RGB
+  const labEqualized = new cv.Mat([lEqualized, a, b]);
+  const bgr = labEqualized.merge().cvtColor(cv.COLOR_Lab2BGR);
+
+  await cv.imwriteAsync(outputPath, bgr);
+  return outputPath;
+}
+3. Usa la función en el flujo actual
+applyAutoExposureCorrection ya llama a applyCLAHE, por lo que no necesitas modificar la lógica general. Solo asegúrate de capturar correctamente la ruta de la imagen procesada:
+
+const processedImagePath = await applyCLAHE(imagePath, 2.0, 8);
+y luego envía processedImagePath como input_image a la API de ComfyDeploy.
+
+4. Verifica la instalación
+Comprueba que OpenCV se instaló correctamente ejecutando un pequeño script de prueba o revisando que applyCLAHE no arroje errores al cargar imágenes.
+
+Con esta implementación, la corrección automática de exposición se realiza tal como lo hace OpenCV: en el espacio LAB real, con un clipLimit configurable y con interpolación apropiada entre los tiles. Así la imagen que se envíe a ComfyDeploy tendrá la corrección de exposición precisa que buscas.
