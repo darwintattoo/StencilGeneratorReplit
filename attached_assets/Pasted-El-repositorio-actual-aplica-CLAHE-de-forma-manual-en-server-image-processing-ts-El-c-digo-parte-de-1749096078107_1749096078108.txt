@@ -1,0 +1,46 @@
+El repositorio actual aplica CLAHE de forma manual en server/image-processing.ts. El código parte de la línea 88 define applyCLAHE y procesa la imagen dividiéndola en tiles y calculando la luminancia con una fórmula RGB simple.
+Además, en server/routes.ts y server/comfy.ts aparece un campo de depuración llamado "Darwin Enriquez" que se envía como clave hacia la API.
+
+Para que el CLAHE sea idéntico al de OpenCV y se use correctamente en la API, puedes darle al agente de Replit instrucciones como las siguientes (en español):
+
+Instalar la dependencia de OpenCV
+
+Abre package.json y agrega opencv4nodejs en la sección de dependencias.
+
+Ejecuta npm install para descargarla. (El agente debe tener configurado OpenCV en el sistema).
+
+Reescribir applyCLAHE con OpenCV
+
+En server/image-processing.ts, elimina la función actual que calcula los tiles manualmente y crea una nueva implementación usando la librería opencv4nodejs.
+
+El nuevo flujo debe:
+
+Leer la imagen con cv.imreadAsync.
+
+Convertirla a espacio LAB (cv.COLOR_BGR2Lab).
+
+Separar el canal L, aplicarle cv.CLAHE con clipLimit=2.0 y tileGridSize=8.
+
+Combinar los canales y guardar la imagen de salida.
+
+Devuelve la ruta del archivo procesado.
+
+Mantener la imagen procesada en la llamada a la API
+
+server/routes.ts ya genera finalImageUrl tras aplicar applyAutoExposureCorrection.
+
+Verifica que finalImageUrl sea el que se envía como "input_image" en el objeto inputs.
+
+Eliminar o cambiar las claves de depuración
+
+Reemplaza las entradas "Darwin Enriquez" por un nombre descriptivo como "input_image" tanto en server/routes.ts como en server/comfy.ts y en server/lib/comfy.ts si corresponde.
+
+Añadir salto de línea al final de server/image-processing.ts
+
+Actualmente el archivo termina sin línea en blanco. Añade un \n al final para evitar advertencias.
+
+(Opcional) Limpiar archivos grandes
+
+Las carpetas uploads/ y attached_assets/ contienen muchos binarios; considera moverlos fuera del control de versiones o usar .gitignore.
+
+Siguiendo estos pasos el agente de Replit implementará correctamente el algoritmo de CLAHE usando OpenCV y enviará la imagen procesada a ComfyDeploy.

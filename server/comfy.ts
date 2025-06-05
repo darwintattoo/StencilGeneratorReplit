@@ -16,7 +16,7 @@ export async function queueRun(inputs: Record<string, any>) {
     
     // Transformar los inputs internos al formato que espera ComfyDeploy
     const comfyInputs = {
-      "Darwin Enriquez": inputs.input_image, // Nombre del parámetro para la imagen
+      "input_image": inputs.input_image, // Nombre del parámetro para la imagen
       "line_color": inputs.line_color, 
       "activar_transparencia": inputs.activate_transparency === 'true' || inputs.activate_transparency === true ? true : false,
       "iluminar sombras": inputs.brighten_shadows === 'true' || inputs.brighten_shadows === true ? true : false,

@@ -30,7 +30,7 @@ export async function queueStencilGeneration(
   const payload = {
     deployment_id: DEPLOYMENT_ID,
     inputs: {
-      "Darwin Enriquez": imageUrl,
+      "input_image": imageUrl,
       "line_color": lineColor,
       "activar_transparencia": options.transparentBackground,
       "iluminar sombras": options.enhanceShadows || false,

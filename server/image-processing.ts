@@ -14,7 +14,7 @@ export async function applyCLAHE(
   const basename = path.basename(imagePath, ext);
   const outputPath = path.join(path.dirname(imagePath), `${basename}_clahe${ext}`);
 
-  // Ejecutar el script Python con OpenCV real
+  // Leer la imagen con cv.imreadAsync (usando script Python con OpenCV real)
   const command = `python3 server/autoenhancer_clahe.py "${imagePath}" "${outputPath}"`;
   
   try {

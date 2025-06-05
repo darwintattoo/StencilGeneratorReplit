@@ -122,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const autoExposureCorrection = req.body.autoExposureCorrection === 'true' || req.body.autoExposureCorrection === true ? true : false;
       
       console.log("Parámetros API enviados a ComfyDeploy:", {
-        "Darwin Enriquez": fileUrl,
+        "input_image": fileUrl,
         "line_color": lineColor,
         "activar_transparencia": parsedTransparency,
         "iluminar sombras": enhanceShadows,
