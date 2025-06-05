@@ -36,17 +36,20 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     return result;
   } catch (error) {
     console.error('Error enhancing image:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error details:', error);
+    
+    let errorMessage = 'Error desconocido al mejorar la imagen';
     
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      return {
-        success: false,
-        error: 'No se puede conectar con el servicio de mejora de imágenes.'
-      };
+      errorMessage = 'No se puede conectar con el servicio de corrección de exposición. Verifica que la aplicación esté funcionando correctamente.';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
     }
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido al mejorar la imagen'
+      error: errorMessage
     };
   }
 }
