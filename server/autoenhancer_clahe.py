@@ -49,15 +49,15 @@ def calculate_metrics(image):
     # Ensure gray is a numpy array
     gray = np.asarray(gray, dtype=np.float64)
     
-    # Calculate brightness (mean pixel value)
-    brightness = float(np.mean(gray))
+    # Calculate brightness (mean)
+    brightness = np.mean(gray)
     
     # Calculate contrast (standard deviation)
-    contrast = float(np.std(gray))
+    contrast = np.std(gray)
     
     return {
-        'brightness': brightness,
-        'contrast': contrast
+        'brightness': float(brightness),
+        'contrast': float(contrast)
     }
 
 def apply_clahe_processing(input_path, output_path, clip_limit=2.0, tile_grid_size=8):
@@ -67,6 +67,8 @@ def apply_clahe_processing(input_path, output_path, clip_limit=2.0, tile_grid_si
     try:
         # Load image
         image = Image.open(input_path)
+        
+        # Convert to RGB if necessary
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
