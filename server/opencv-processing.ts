@@ -2,28 +2,72 @@ import { spawn } from 'child_process';
 import path from 'path';
 
 /**
- * Apply real OpenCV CLAHE exactly as specified in your research
- * Uses cv2.createCLAHE() on LAB L channel with proper interpolation
+ * Apply CLAHE using direct Python OpenCV implementation
+ * Following your specification: LAB color space, L channel only, proper interpolation
  */
 export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, tileGridSize: number = 8): Promise<string> {
   try {
-    console.log(`OpenCV CLAHE Processing - clipLimit: ${clipLimit}, tileGridSize: ${tileGridSize}x${tileGridSize}`);
-    
     const ext = path.extname(imagePath);
     const basename = path.basename(imagePath, ext);
     const dirname = path.dirname(imagePath);
     const outputPath = path.join(dirname, `${basename}_clahe${ext}`);
     
-    // Use Python script that implements EXACTLY your specification:
-    // 1. Load image and convert to LAB color space
-    // 2. Split channels
-    // 3. Create and apply CLAHE on L channel only
-    // 4. Combine channels and convert back to RGB
-    const pythonProcess = spawn('python3', [
-      path.join(__dirname, 'autoenhancer_clahe.py'),
-      imagePath,
-      outputPath
-    ]);
+    // Create inline Python script that implements your exact specification
+    const pythonScript = `
+import cv2
+import numpy as np
+import sys
+import json
+
+def apply_clahe_correct(image_path, output_path, clip_limit=2.0, tile_grid_size=8):
+    """Apply CLAHE exactly as specified in research"""
+    try:
+        # Load image and convert to LAB color space
+        img = cv2.imread(image_path)
+        if img is None:
+            return {"success": False, "error": "Could not load image"}
+        
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        
+        # Split channels
+        l, a, b = cv2.split(lab)
+        
+        # Create and apply CLAHE on L channel
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_size, tile_grid_size))
+        l_equalized = clahe.apply(l)
+        
+        # Combine channels and convert back to BGR
+        lab_equalized = cv2.merge([l_equalized, a, b])
+        bgr = cv2.cvtColor(lab_equalized, cv2.COLOR_LAB2BGR)
+        
+        # Save result
+        cv2.imwrite(output_path, bgr)
+        
+        # Calculate metrics
+        gray_orig = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray_proc = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+        
+        return {
+            "success": True,
+            "output_path": output_path,
+            "original_metrics": {
+                "brightness": float(np.mean(gray_orig)),
+                "contrast": float(np.std(gray_orig))
+            },
+            "processed_metrics": {
+                "brightness": float(np.mean(gray_proc)),
+                "contrast": float(np.std(gray_proc))
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+if __name__ == "__main__":
+    result = apply_clahe_correct("${imagePath}", "${outputPath}", ${clipLimit}, ${tileGridSize})
+    print(json.dumps(result, indent=2))
+`;
+    
+    const pythonProcess = spawn('python3', ['-c', pythonScript]);
     
     let stdout = '';
     let stderr = '';
@@ -39,7 +83,6 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     return new Promise((resolve, reject) => {
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
-          console.error('OpenCV CLAHE error:', stderr);
           reject(new Error(`CLAHE processing failed: ${stderr}`));
           return;
         }
@@ -47,23 +90,18 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
         try {
           const result = JSON.parse(stdout);
           if (result.success) {
-            console.log('OpenCV CLAHE complete:', {
-              originalBrightness: result.original_metrics.brightness.toFixed(2),
-              processedBrightness: result.processed_metrics.brightness.toFixed(2),
-              outputPath: result.output_path
-            });
+            console.log(`CLAHE applied: ${result.original_metrics.brightness.toFixed(1)} → ${result.processed_metrics.brightness.toFixed(1)}`);
             resolve(result.output_path);
           } else {
             reject(new Error(result.error));
           }
         } catch (parseError) {
-          console.error('Failed to parse CLAHE output:', stdout);
-          reject(new Error('Failed to parse CLAHE processor output'));
+          reject(new Error('Failed to parse CLAHE output'));
         }
       });
     });
   } catch (error) {
-    console.error('Error applying OpenCV CLAHE:', error);
+    console.error('Error applying CLAHE:', error);
     return imagePath;
   }
 }
