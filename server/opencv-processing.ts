@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import sharp from 'sharp';
 
 /**
  * Apply CLAHE using direct Python OpenCV implementation
