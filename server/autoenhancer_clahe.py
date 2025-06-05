@@ -14,7 +14,7 @@ from PIL import Image
 def apply_clahe(image, clip_limit=2.0, tile_grid_size=8):
     """
     Apply Contrast Limited Adaptive Histogram Equalization (CLAHE)
-    Implementación exacta del repositorio AutoImageEnhancer
+    COPIA EXACTA del código funcionando en clahe_app.py
     """
     # Convert PIL image to OpenCV format
     cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -22,7 +22,7 @@ def apply_clahe(image, clip_limit=2.0, tile_grid_size=8):
     # Convert to LAB color space
     lab_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2LAB)
     
-    # Apply CLAHE to L channel - EXACTLY like AutoImageEnhancer
+    # Apply CLAHE to L channel
     clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_size, tile_grid_size))
     lab_image[:, :, 0] = clahe.apply(lab_image[:, :, 0])
     
