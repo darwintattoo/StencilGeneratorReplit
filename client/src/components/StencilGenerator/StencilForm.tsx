@@ -2,10 +2,11 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { uploadImageForStencil } from "@/lib/api";
+import { enhanceImageExposure, downloadEnhancedImage } from "@/lib/image-enhancer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Wand2 } from "lucide-react";
 import { StencilResponse, StencilError } from "@/types";
 
 interface StencilFormProps {
@@ -28,6 +29,7 @@ export function StencilForm({
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isAdvancedOptionsOpen, setIsAdvancedOptionsOpen] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [aiModel, setAiModel] = useState("SDXL-Flash.safetensors");         // "AI Model"
   const [enhanceShadows, setEnhanceShadows] = useState(false);              // "iluminar sombras"
   const [selectedPreset, setSelectedPreset] = useState("LoraLineart/Darwinstencil3-000007.safetensors"); // "estilo de linea"
@@ -108,6 +110,52 @@ export function StencilForm({
     // Create a preview URL for the image
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
+  };
+
+  const handleEnhanceImage = async () => {
+    if (!selectedFile) {
+      toast({
+        title: t("error"),
+        description: t("error_no_file"),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsEnhancing(true);
+    
+    try {
+      const result = await enhanceImageExposure(selectedFile);
+      
+      if (result.success && result.enhanced_image_url) {
+        // Descargar la imagen mejorada
+        const enhancedFile = await downloadEnhancedImage(result.enhanced_image_url);
+        
+        if (enhancedFile) {
+          setSelectedFile(enhancedFile);
+          const previewUrl = URL.createObjectURL(enhancedFile);
+          setImagePreview(previewUrl);
+          
+          toast({
+            title: "Imagen mejorada",
+            description: "La exposición de tu imagen ha sido corregida automáticamente",
+            variant: "default"
+          });
+        } else {
+          throw new Error("No se pudo descargar la imagen mejorada");
+        }
+      } else {
+        throw new Error(result.error || "Error al mejorar la imagen");
+      }
+    } catch (err) {
+      toast({
+        title: "Error al mejorar imagen",
+        description: (err as Error).message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,6 +265,30 @@ export function StencilForm({
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                   </button>
+                  
+                  {/* Botón de mejora automática de exposición */}
+                  <div className="mt-3 flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEnhanceImage}
+                      disabled={isEnhancing || isLoading}
+                      className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                    >
+                      {isEnhancing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Mejorando...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="mr-2 h-4 w-4" />
+                          Auto-corregir exposición
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 // Upload prompt
