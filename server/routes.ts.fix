@@ -9,8 +9,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import queueRouter from "./routes/queue";
-import { checkRunStatus } from "./comfy";
+import { queueStencilGeneration, checkJobStatus } from "./lib/comfy";
 
 dotenv.config();
 
@@ -64,9 +63,6 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configuración de autenticación
   const requireAuth = setupAuth(app);
-  
-  // Montar la ruta de queue para ComfyDeploy
-  app.use("/api/queue", queueRouter);
   
   // API endpoint para subir una imagen
   app.post("/api/upload-image", upload.single("image"), async (req, res) => {
@@ -132,39 +128,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       try {
-        // Usar nuestro nuevo sistema de API para generar el stencil
-        const inputs = {
-          "input_image": fileUrl,
-          "line_color": lineColor,
-          "activate_transparency": parsedTransparency,
-          "brighten_shadows": enhanceShadows,
-          "line_style": presetLora,
-          "checkpoint": aiModel,
-          "posterize_level": parseInt(posterizeValue),
-          "activate_posterize": activarPosterize,
-          "activate_auto_gamma": activarAutoGamma
-        };
-        
-        console.log("Enviando solicitud a /api/queue con inputs:", inputs);
-        console.log("JSON enviado:", JSON.stringify({ inputs }, null, 2));
-        
-        // Comprobaciones de validación
-        if (!inputs.input_image) {
-          throw new Error("La URL de la imagen es obligatoria");
-        }
-        
-        const queueResponse = await axios.post(
-          `${baseUrl}/api/queue`,
-          { inputs },
+        // Usar el módulo centralizado para generar el stencil
+        const response = await queueStencilGeneration(
+          fileUrl, 
+          lineColor, 
           {
-            headers: {
-              "Content-Type": "application/json"
-            },
-            timeout: 60000 // Aumentado a 60 segundos para imágenes grandes
+            transparentBackground: parsedTransparency,
+            enhanceShadows: enhanceShadows,
+            presetLora: presetLora,
+            aiModel: aiModel,
+            posterizeValue: posterizeValue,
+            activarPosterize: activarPosterize,
+            activarAutoGamma: activarAutoGamma
           }
         );
-        
-        const response = queueResponse.data;
         
         // Devolver la respuesta al cliente
         return res.status(200).json(response);
@@ -215,17 +192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Usar nuestra nueva ruta centralizada para comprobar el estado
+      // Usar el módulo centralizado para comprobar el estado
       try {
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const baseUrl = `${protocol}://${host}`;
-        
-        const response = await axios.get(`${baseUrl}/api/queue/${runId}`, {
-          timeout: 30000
-        });
-        
-        const jobStatus = response.data;
+        const jobStatus = await checkJobStatus(runId);
         
         // Verificar si hay problemas con la API y el estado
         if (jobStatus.status === "not-started" && jobStatus.queue_position === null) {
@@ -286,35 +255,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Usar el módulo centralizado para generar el stencil
       try {
-        // Usar nuestra nueva ruta centralizada para generar el stencil
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const baseUrl = `${protocol}://${host}`;
-        
-        const inputs = {
-          "input_image": imageUrl,
-          "line_color": lineColor,
-          "activate_transparency": parsedTransparency,
-          "brighten_shadows": false,
-          "line_style": "LoraLineart/Darwinstencil3-000007.safetensors",
-          "checkpoint": "SDXL-Flash.safetensors",
-          "posterize_level": 8,
-          "activate_posterize": false,
-          "activate_auto_gamma": false
-        };
-        
-        const queueResponse = await axios.post(
-          `${baseUrl}/api/queue`,
-          { inputs },
-          {
-            headers: {
-              "Content-Type": "application/json"
-            },
-            timeout: 30000
+        const response = await queueStencilGeneration(
+          imageUrl, 
+          lineColor, 
+          { 
+            transparentBackground: parsedTransparency 
           }
         );
-        
-        const response = queueResponse.data;
         
         // Devolver la respuesta al cliente
         return res.status(200).json(response);
@@ -367,7 +314,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
         imageUrl,
         lineColor,
-        transparentBackground: transparentBackground === true || transparentBackground === 'true'
+        transparentBackground: transparentBackground === true || transparentBackground === 'true',
+        createdAt: new Date()
       };
       
       const stencil = await appStorage.saveStencil(stencilData);

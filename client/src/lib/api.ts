@@ -17,9 +17,6 @@ interface UploadStencilParams {
   posterizeValue?: number;
   activarPosterize?: boolean;
   activarAutoGamma?: boolean;
-  autoExposureCorrection?: boolean;
-  claheClipLimit?: number;
-  claheTileSize?: number;
 }
 
 export async function generateStencil(params: StencilParams): Promise<StencilResponse> {
@@ -76,17 +73,6 @@ export async function uploadImageForStencil(params: UploadStencilParams): Promis
     
     if (params.activarAutoGamma !== undefined) {
       formData.append("activarAutoGamma", params.activarAutoGamma.toString());
-    }
-    
-
-    
-    // Agregar parámetros CLAHE específicos
-    if (params.claheClipLimit !== undefined) {
-      formData.append("claheClipLimit", params.claheClipLimit.toString());
-    }
-    
-    if (params.claheTileSize !== undefined) {
-      formData.append("claheTileSize", params.claheTileSize.toString());
     }
     
     // Mostrar en la consola los valores que se están enviando

@@ -34,7 +34,6 @@ export function StencilForm({
   const [posterizeValue, setPosterizeValue] = useState(8);                  // "Posterize"
   const [activarPosterize, setActivarPosterize] = useState(false);          // "activar_Posterize"
   const [activarAutoGamma, setActivarAutoGamma] = useState(false);          // "Activar Auto Gamma"
-
   
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -151,8 +150,7 @@ export function StencilForm({
         presetLora: selectedPreset,
         posterizeValue,
         activarPosterize,
-        activarAutoGamma,
-
+        activarAutoGamma
       });
       
       // Añadimos manualmente la URL de la imagen original a la respuesta
@@ -198,18 +196,13 @@ export function StencilForm({
           >
             <div className="flex flex-col items-center justify-center space-y-2">
               {imagePreview ? (
-                // Image preview with exposure correction toggle
+                // Image preview
                 <div className="relative w-full">
                   <img 
                     src={imagePreview} 
                     alt="Preview" 
                     className="max-h-48 max-w-full mx-auto rounded-md object-contain" 
-
                   />
-                  
-
-                  
-                  {/* Remove image button */}
                   <button
                     type="button"
                     onClick={() => {
@@ -367,8 +360,6 @@ export function StencilForm({
             </div>
             <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("enhance_shadows_help") || "Mejora la definición de sombras en la imagen"}</p>
           </div>
-
-
         </div>
         
         {/* SECCIÓN: OPCIONES AVANZADAS (Desplegable) */}
@@ -548,8 +539,6 @@ export function StencilForm({
                 </div>
                 <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{t("gamma_description") || "Optimiza el brillo y contraste automáticamente"}</p>
               </div>
-              
-
             </div>
           )}
         </div>

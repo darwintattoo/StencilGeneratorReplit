@@ -43,33 +43,11 @@ const enTranslations: Record<string, string> = {
   "posterize_description": "Reduces tones to improve contrast",
   "gamma_description": "Automatically optimizes brightness and contrast",
   
-  // Auto Exposure
-  "auto_exposure": "Auto Exposure",
-  "auto_exposure_enabled": "✓ Auto Exposure",
-  
   // Form errors
-  "form.error": "Error",
-  "form.error_file_type": "Please upload an image file (JPEG, PNG, etc.)",
-  "form.error_file_size": "Image file size must be less than 15MB",
-  "form.error_no_file": "Please upload an image file",
   "error": "Error",
   "error_file_type": "Please upload an image file (JPEG, PNG, etc.)",
   "error_file_size": "Image file size must be less than 15MB",
   "error_no_file": "Please upload an image file",
-  
-  // Stencil operations
-  "stencil.uploadImage": "Upload Image",
-  "stencil.download": "Download",
-  "stencil.edit": "Edit",
-  "slide_to_compare": "Slide to compare",
-  
-  // Editor tools
-  "brush": "Brush",
-  "eraser": "Eraser",
-  "save": "Save",
-  "clear": "Clear",
-  "undo": "Undo",
-  "redo": "Redo",
   "error_generate": "Failed to generate stencil",
   
   // Auth page
@@ -132,34 +110,12 @@ const esTranslations: Record<string, string> = {
   "gamma_help": "Aplicar corrección automática de gamma",
   "param_gamma": "Activar",
   
-  // Auto Exposure
-  "auto_exposure": "Auto Exposición",
-  "auto_exposure_enabled": "✓ Auto Exposición",
-  
   // Form errors
-  "form.error": "Error",
-  "form.error_file_type": "Por favor sube un archivo de imagen (JPEG, PNG, etc.)",
-  "form.error_file_size": "El tamaño de la imagen debe ser menor a 15MB",
-  "form.error_no_file": "Por favor sube un archivo de imagen",
   "error": "Error",
   "error_file_type": "Por favor sube un archivo de imagen (JPEG, PNG, etc.)",
   "error_file_size": "El tamaño de la imagen debe ser menor a 15MB",
   "error_no_file": "Por favor sube un archivo de imagen",
   "error_generate": "Error al generar el stencil",
-  
-  // Stencil operations
-  "stencil.uploadImage": "Subir Imagen",
-  "stencil.download": "Descargar",
-  "stencil.edit": "Editar",
-  "slide_to_compare": "Desliza para comparar",
-  
-  // Editor tools
-  "brush": "Pincel",
-  "eraser": "Borrador",
-  "save": "Guardar",
-  "clear": "Limpiar",
-  "undo": "Deshacer",
-  "redo": "Rehacer",
   
   // Auth page
   "auth.login": "Iniciar sesión",
