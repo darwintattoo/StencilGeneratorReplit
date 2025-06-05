@@ -17,9 +17,13 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
 
     console.log('Conectando directamente con tu aplicación de corrección de exposición');
     
+    // Intentar conectar con la aplicación de corrección de exposición
     const response = await fetch('https://auto-image-enhancer-darwintattoo1.replit.app/enhance', {
       method: 'POST',
-      body: formData
+      body: formData,
+      headers: {
+        // Asegurar que no haya conflictos de headers
+      }
     });
 
     console.log('Respuesta del servidor:', response.status, response.statusText);

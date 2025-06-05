@@ -150,7 +150,7 @@ export function StencilForm({
     } catch (err) {
       toast({
         title: "Error al mejorar imagen",
-        description: (err as Error).message,
+        description: "El servicio de corrección de exposición no está disponible en este momento. Puedes generar el stencil sin esta función.",
         variant: "destructive"
       });
     } finally {
