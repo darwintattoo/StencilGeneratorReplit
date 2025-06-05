@@ -15,13 +15,11 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    const response = await fetch('https://auto-image-enhancer-darwintattoo1.replit.app/enhance', {
+    console.log('Usando endpoint proxy del backend para corrección de exposición');
+    
+    const response = await fetch('/api/enhance-exposure', {
       method: 'POST',
-      body: formData,
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json',
-      }
+      body: formData
     });
 
     console.log('Respuesta del servidor:', response.status, response.statusText);
@@ -41,7 +39,7 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return {
         success: false,
-        error: 'No se puede conectar con el servicio de mejora de imágenes. Verifica que la aplicación esté funcionando.'
+        error: 'No se puede conectar con el servicio de mejora de imágenes.'
       };
     }
     
