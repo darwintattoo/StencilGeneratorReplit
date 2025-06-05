@@ -19,8 +19,7 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     
     const response = await fetch('https://auto-image-enhancer-darwintattoo1.replit.app/enhance', {
       method: 'POST',
-      body: formData,
-      mode: 'cors'
+      body: formData
     });
 
     console.log('Respuesta del servidor:', response.status, response.statusText);
