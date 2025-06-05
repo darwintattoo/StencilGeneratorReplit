@@ -11,7 +11,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
-import { applyAutoExposureCorrection } from "./opencv-processing";
+import { applyCLAHE } from "./clahe-opencv";
 
 dotenv.config();
 
@@ -139,20 +139,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Apply CLAHE processing if enabled
         if (autoExposureCorrection) {
-          const claheResult = await applyAutoExposureCorrection(req.file.path);
+          const processedImagePath = await applyCLAHE(req.file.path, 2.0, 8);
           
-          if (claheResult.processedImagePath !== req.file.path) {
+          if (processedImagePath !== req.file.path) {
             // Generate URL for processed image
-            const processedFileName = path.basename(claheResult.processedImagePath);
+            const processedFileName = path.basename(processedImagePath);
             finalImageUrl = `${baseUrl}/uploads/${processedFileName}`;
             
             console.log("CLAHE aplicado exitosamente:", {
-              original: claheResult.originalMetrics,
-              processed: claheResult.processedMetrics,
-              improvement: {
-                brightness: claheResult.processedMetrics.brightness - claheResult.originalMetrics.brightness,
-                contrast: claheResult.processedMetrics.contrast - claheResult.originalMetrics.contrast
-              }
+              processedPath: processedImagePath,
+              finalUrl: finalImageUrl
             });
           }
         }
