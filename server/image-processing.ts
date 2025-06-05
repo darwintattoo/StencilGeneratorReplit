@@ -181,13 +181,11 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
     const dirname = path.dirname(imagePath);
     const outputPath = path.join(dirname, `${basename}_enhanced_clahe${ext}`);
     
-    // Execute Python CLAHE processor using exact working code
+    // Execute AutoImageEnhancer CLAHE processor using cv2.createCLAHE()
     const pythonProcess = spawn('python3', [
-      path.join(__dirname, 'clahe_exact.py'),
+      path.join(__dirname, 'autoenhancer_clahe.py'),
       imagePath,
-      outputPath,
-      clipLimit.toString(),
-      tileGridSize.toString()
+      outputPath
     ]);
     
     let stdout = '';
@@ -212,10 +210,14 @@ export async function applyCLAHE(imagePath: string, clipLimit: number = 2.0, til
         try {
           const result = JSON.parse(stdout);
           if (result.success) {
-            console.log('CLAHE processing complete:', result);
+            console.log('AutoImageEnhancer CLAHE processing complete:', {
+              originalMetrics: result.original_metrics,
+              processedMetrics: result.processed_metrics,
+              outputPath: result.output_path
+            });
             resolve(result.output_path);
           } else {
-            console.error('CLAHE processing failed:', result.error);
+            console.error('AutoImageEnhancer CLAHE processing failed:', result.error);
             reject(new Error(result.error));
           }
         } catch (parseError) {
