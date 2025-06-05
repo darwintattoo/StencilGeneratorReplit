@@ -15,11 +15,12 @@ export async function enhanceImageExposure(imageFile: File): Promise<EnhanceImag
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    console.log('Usando endpoint proxy del backend para corrección de exposición');
+    console.log('Conectando directamente con tu aplicación de corrección de exposición');
     
-    const response = await fetch('/api/enhance-exposure', {
+    const response = await fetch('https://auto-image-enhancer-darwintattoo1.replit.app/enhance', {
       method: 'POST',
-      body: formData
+      body: formData,
+      mode: 'cors'
     });
 
     console.log('Respuesta del servidor:', response.status, response.statusText);
