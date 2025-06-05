@@ -88,77 +88,7 @@ export async function applyHistogramEqualization(imagePath: string): Promise<str
   }
 }
 
-/**
- * Convert RGB to LAB color space
- */
-function rgbToLab(r: number, g: number, b: number): [number, number, number] {
-  // Normalize RGB values to 0-1
-  let rNorm = r / 255.0;
-  let gNorm = g / 255.0;
-  let bNorm = b / 255.0;
-
-  // Apply gamma correction
-  rNorm = rNorm > 0.04045 ? Math.pow((rNorm + 0.055) / 1.055, 2.4) : rNorm / 12.92;
-  gNorm = gNorm > 0.04045 ? Math.pow((gNorm + 0.055) / 1.055, 2.4) : gNorm / 12.92;
-  bNorm = bNorm > 0.04045 ? Math.pow((bNorm + 0.055) / 1.055, 2.4) : bNorm / 12.92;
-
-  // Convert to XYZ using sRGB matrix
-  const x = rNorm * 0.4124564 + gNorm * 0.3575761 + bNorm * 0.1804375;
-  const y = rNorm * 0.2126729 + gNorm * 0.7151522 + bNorm * 0.0721750;
-  const z = rNorm * 0.0193339 + gNorm * 0.1191920 + bNorm * 0.9503041;
-
-  // Normalize by D65 illuminant
-  const xn = x / 0.95047;
-  const yn = y / 1.00000;
-  const zn = z / 1.08883;
-
-  // Apply LAB transformation
-  const fx = xn > 0.008856 ? Math.pow(xn, 1/3) : (7.787 * xn + 16/116);
-  const fy = yn > 0.008856 ? Math.pow(yn, 1/3) : (7.787 * yn + 16/116);
-  const fz = zn > 0.008856 ? Math.pow(zn, 1/3) : (7.787 * zn + 16/116);
-
-  const L = 116 * fy - 16;
-  const a = 500 * (fx - fy);
-  const b_lab = 200 * (fy - fz);
-
-  return [L, a, b_lab];
-}
-
-/**
- * Convert LAB to RGB color space
- */
-function labToRgb(L: number, a: number, b: number): [number, number, number] {
-  // LAB to XYZ
-  const fy = (L + 16) / 116;
-  const fx = fy + (a / 500);
-  const fz = fy - (b / 200);
-
-  const xn = fx > 0.206893 ? Math.pow(fx, 3) : (fx - 16/116) / 7.787;
-  const yn = fy > 0.206893 ? Math.pow(fy, 3) : (fy - 16/116) / 7.787;
-  const zn = fz > 0.206893 ? Math.pow(fz, 3) : (fz - 16/116) / 7.787;
-
-  // Denormalize by D65 illuminant
-  const x = xn * 0.95047;
-  const y = yn * 1.00000;
-  const z = zn * 1.08883;
-
-  // XYZ to RGB using sRGB matrix
-  let r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
-  let g = x * -0.9692660 + y * 1.8760108 + z * 0.0415560;
-  let b_rgb = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
-
-  // Apply inverse gamma correction
-  r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
-  g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
-  b_rgb = b_rgb > 0.0031308 ? 1.055 * Math.pow(b_rgb, 1/2.4) - 0.055 : 12.92 * b_rgb;
-
-  // Convert back to 0-255 range and clamp
-  r = Math.max(0, Math.min(255, Math.round(r * 255)));
-  g = Math.max(0, Math.min(255, Math.round(g * 255)));
-  b_rgb = Math.max(0, Math.min(255, Math.round(b_rgb * 255)));
-
-  return [r, g, b_rgb];
-}
+// Manual LAB conversion removed - using OpenCV real implementation
 
 /**
  * Apply Contrast Limited Adaptive Histogram Equalization (CLAHE)
