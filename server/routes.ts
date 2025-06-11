@@ -11,7 +11,6 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import queueRouter from "./routes/queue";
 import { checkRunStatus } from "./comfy";
-import FormData from 'form-data';
 
 dotenv.config();
 
@@ -201,64 +200,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API endpoint para corrección de exposición (proxy hacia tu app)
-  app.post("/api/enhance-exposure", upload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ 
-          success: false,
-          error: "No se proporcionó archivo"
-        });
-      }
-
-      // Crear FormData para enviar a tu aplicación
-      const formData = new FormData();
-      formData.append('file', req.file.buffer, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype
-      });
-
-      console.log('Enviando imagen a mejorar exposición:', req.file.originalname);
-
-      // Enviar solicitud a tu aplicación de corrección
-      const response = await axios.post(
-        'https://auto-image-enhancer-darwintattoo1.replit.app/enhance',
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            'Accept': 'application/json'
-          },
-          timeout: 60000 // 1 minuto de timeout
-        }
-      );
-
-      console.log('Respuesta de corrección de exposición:', response.status);
-
-      // Retornar la respuesta de tu aplicación
-      res.json({
-        success: true,
-        enhanced_image: response.data.enhanced_image
-      });
-
-    } catch (error: any) {
-      console.error('Error en corrección de exposición:', error.message);
-      
-      let errorMessage = 'Error al conectar con el servicio de corrección de exposición';
-      
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        errorMessage = 'El servicio de corrección de exposición no está disponible';
-      } else if (error.response) {
-        errorMessage = `Error del servicio: ${error.response.status}`;
-      }
-
-      res.status(500).json({
-        success: false,
-        error: errorMessage
-      });
-    }
-  });
-
   // API endpoint para acceder a los archivos subidos
   app.use('/uploads', express.static(uploadsDir));
   
