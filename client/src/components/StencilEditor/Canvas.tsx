@@ -1,36 +1,48 @@
 import React from 'react';
 import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
 import { Slider } from '@/components/ui/slider';
+import type {
+  DrawingLine,
+  ViewTransform,
+  LayersState,
+  Tool,
+  NativeSize,
+  KonvaMouseEvent,
+  KonvaTouchEvent,
+  KonvaWheelEvent,
+  StageRef,
+  LineRef
+} from './types';
 
 interface CanvasProps {
-  stageRef: React.RefObject<any>;
+  stageRef: React.RefObject<StageRef>;
   isLayersOpen: boolean;
-  viewTransform: { x: number; y: number; scale: number };
-  handleMouseDown: (e: any) => void;
-  handleMouseMove: (e: any) => void;
+  viewTransform: ViewTransform;
+  handleMouseDown: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
+  handleMouseMove: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
   handleMouseUp: () => void;
-  handleWheel: (e: any) => void;
-  handleTouchStart: (e: any) => void;
-  handleTouchMove: (e: any) => void;
-  handleTouchEnd: (e: any) => void;
+  handleWheel: (e: KonvaWheelEvent) => void;
+  handleTouchStart: (e: KonvaTouchEvent) => void;
+  handleTouchMove: (e: KonvaTouchEvent) => void;
+  handleTouchEnd: (e: KonvaTouchEvent) => void;
   handleDoubleTap: () => void;
-  layers: any;
+  layers: LayersState;
   originalImg: HTMLImageElement | null;
   stencilImg: HTMLImageElement | null;
   filteredStencilImg: HTMLImageElement | null;
-  drawingLines: any[];
-  stencilLines: any[];
-  currentLineRef: React.RefObject<any>;
+  drawingLines: DrawingLine[];
+  stencilLines: DrawingLine[];
+  currentLineRef: React.RefObject<DrawingLine | null>;
   drawingPointsRef: React.RefObject<number[]>;
-  tempLineRef: React.RefObject<any>;
+  tempLineRef: React.RefObject<LineRef>;
   isErasingStencil: boolean;
   brushColor: string;
-  tool: 'brush' | 'eraser' | 'move';
+  tool: Tool;
   brushSize: number;
   setBrushSize: (size: number) => void;
   eraserSize: number;
   setEraserSize: (size: number) => void;
-  nativeSize: { width: number; height: number };
+  nativeSize: NativeSize;
 }
 
 export default function Canvas({
