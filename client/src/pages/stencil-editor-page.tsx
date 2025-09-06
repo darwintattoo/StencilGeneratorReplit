@@ -143,7 +143,7 @@ export default function StencilEditorPage() {
       <div className="min-h-screen" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="container mx-auto py-8">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-white">{t("stencil_editor") || "Editor de Stencil"}</h1>
+            <h1 className="text-2xl font-bold text-white">Editor de Stencil</h1>
             <Button variant="outline" onClick={() => setLocation('/')} className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t("back") || "Volver"}
