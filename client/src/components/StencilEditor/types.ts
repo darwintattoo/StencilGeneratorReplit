@@ -53,9 +53,9 @@ export type KonvaTouchEvent = KonvaEventObject<TouchEvent>;
 export type KonvaWheelEvent = KonvaEventObject<WheelEvent>;
 
 // Konva element refs
-export type StageRef = Stage | null;
-export type LayerRef = Layer | null;
-export type LineRef = Line | null;
+export type StageRef = Stage;
+export type LayerRef = Layer;
+export type LineRef = Line;
 
 // Gesture data interfaces
 export interface PanGestureData {

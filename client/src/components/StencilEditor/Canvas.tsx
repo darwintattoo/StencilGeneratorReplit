@@ -43,6 +43,7 @@ interface CanvasProps {
   eraserSize: number;
   setEraserSize: (size: number) => void;
   nativeSize: NativeSize;
+  canvasSize: NativeSize;
 }
 
 export default function Canvas({
@@ -73,13 +74,14 @@ export default function Canvas({
   setBrushSize,
   eraserSize,
   setEraserSize,
-  nativeSize
+  nativeSize,
+  canvasSize
 }: CanvasProps) {
   return (
     <>
       <Stage
-        width={window.innerWidth - (isLayersOpen ? 320 : 0)}
-        height={window.innerHeight}
+        width={canvasSize.width - (isLayersOpen ? 320 : 0)}
+        height={canvasSize.height}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

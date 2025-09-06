@@ -143,6 +143,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+  const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
+    width: window.innerWidth, 
+    height: window.innerHeight 
+  });
 
   const {
     tool,
@@ -164,6 +168,24 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     handleGesture,
     resetView
   } = useStencilCanvas();
+
+  // Manejar redimensionamiento de ventana para hacer el canvas responsivo
+  useEffect(() => {
+    const handleResize = (): void => {
+      setCanvasSize({ 
+        width: window.innerWidth, 
+        height: window.innerHeight 
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   // Cargar imágenes en resolución nativa
   useEffect(() => {
@@ -298,6 +320,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         : '#ffffff';
       currentLineRef.current = {
         tool,
+        points: [],
         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
         layer: activeLayer,
@@ -550,6 +573,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           eraserSize={eraserSize}
           setEraserSize={setEraserSize}
           nativeSize={nativeSize}
+          canvasSize={canvasSize}
         />
 
         <Toolbar
