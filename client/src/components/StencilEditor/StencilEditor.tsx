@@ -41,6 +41,7 @@ function useStencilCanvas() {
   const [stencilSaturation, setStencilSaturation] = useState<number>(100); // Control de saturación para stencil
   const [drawingHue, setDrawingHue] = useState<number>(0); // Control de tono para drawing
   const [drawingSaturation, setDrawingSaturation] = useState<number>(100); // Control de saturación para drawing
+  const [isColorLinked, setIsColorLinked] = useState<boolean>(false); // Control para enlazar colores
   const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -127,6 +128,8 @@ function useStencilCanvas() {
     setDrawingHue,
     drawingSaturation,
     setDrawingSaturation,
+    isColorLinked,
+    setIsColorLinked,
     layers,
     toggleLayer,
     setOpacity,
@@ -196,6 +199,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setDrawingHue,
     drawingSaturation,
     setDrawingSaturation,
+    isColorLinked,
+    setIsColorLinked,
     layers,
     toggleLayer,
     setOpacity,
@@ -699,6 +704,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setDrawingHue={setDrawingHue}
         drawingSaturation={drawingSaturation}
         setDrawingSaturation={setDrawingSaturation}
+        isColorLinked={isColorLinked}
+        setIsColorLinked={setIsColorLinked}
         onClose={() => setIsLayersOpen(false)}
       />
     </div>

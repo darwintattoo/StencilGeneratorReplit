@@ -22,6 +22,8 @@ interface LayerPanelProps {
   setDrawingHue: (hue: number) => void;
   drawingSaturation: number;
   setDrawingSaturation: (saturation: number) => void;
+  isColorLinked: boolean;
+  setIsColorLinked: (linked: boolean) => void;
   onClose: () => void;
 }
 
@@ -40,6 +42,8 @@ export default function LayerPanel({
   setDrawingHue,
   drawingSaturation,
   setDrawingSaturation,
+  isColorLinked,
+  setIsColorLinked,
   onClose
 }: LayerPanelProps) {
   if (!isOpen) return null;
