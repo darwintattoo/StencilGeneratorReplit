@@ -46,6 +46,8 @@ interface CanvasProps {
   setEraserSize: (size: number) => void;
   drawingHue: number;
   drawingSaturation: number;
+  stencilHue: number;
+  stencilSaturation: number;
   nativeSize: NativeSize;
   canvasSize: NativeSize;
 }
@@ -81,6 +83,8 @@ export default function Canvas({
   setEraserSize,
   drawingHue,
   drawingSaturation,
+  stencilHue,
+  stencilSaturation,
   nativeSize,
   canvasSize
 }: CanvasProps) {
@@ -215,7 +219,7 @@ export default function Canvas({
           <Layer opacity={layers.stencil.opacity / 100}>
             {stencilImg && (
               <KonvaImage
-                image={stencilImg}
+                image={filteredStencilImg || stencilImg}
                 width={nativeSize.width}
                 height={nativeSize.height}
               />
