@@ -283,11 +283,15 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   };
 
   // Manejo de gestos táctiles y mouse
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
     const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
+    if (!stage) return;
     
-    if (tool === 'move' || e.evt.button === 1 || e.evt.button === 2) { // Move tool, middle click or right click for panning
+    const pos = stage.getPointerPosition();
+    if (!pos) return;
+    
+    const mouseEvent = e.evt as MouseEvent;
+    if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
       e.evt.preventDefault();
       setIsPanning(true);
       setLastPointerPosition(pos);
@@ -347,9 +351,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
     const stage = e.target.getStage();
+    if (!stage) return;
+    
     const pos = stage.getPointerPosition();
+    if (!pos) return;
 
     if (isPanning) {
       const deltaX = pos.x - lastPointerPosition.x;
@@ -449,12 +456,15 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   };
 
-  const handleWheel = (e: any) => {
+  const handleWheel = (e: KonvaWheelEvent) => {
     e.evt.preventDefault();
     const scaleBy = 1.1;
     const stage = e.target.getStage();
+    if (!stage) return;
+    
     const oldScale = viewTransform.scale;
     const pointer = stage.getPointerPosition();
+    if (!pointer) return;
 
     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     handleGesture('pinch', {
@@ -465,20 +475,20 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   };
 
   // Funciones para gestos táctiles
-  const getDistance = (touch1: Touch, touch2: Touch) => {
+  const getDistance = (touch1: Touch, touch2: Touch): number => {
     const dx = touch1.clientX - touch2.clientX;
     const dy = touch1.clientY - touch2.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const getCenter = (touch1: Touch, touch2: Touch) => {
+  const getCenter = (touch1: Touch, touch2: Touch): TouchCenter => {
     return {
       x: (touch1.clientX + touch2.clientX) / 2,
       y: (touch1.clientY + touch2.clientY) / 2
     };
   };
 
-  const handleTouchStart = (e: any) => {
+  const handleTouchStart = (e: KonvaTouchEvent) => {
     const touchList = Array.from(e.evt.touches) as Touch[];
     setTouches(touchList);
 
@@ -496,7 +506,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   };
 
-  const handleTouchMove = (e: any) => {
+  const handleTouchMove = (e: KonvaTouchEvent) => {
     e.evt.preventDefault();
     const touchList = Array.from(e.evt.touches) as Touch[];
 
@@ -531,7 +541,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   };
 
-  const handleTouchEnd = (e: any) => {
+  const handleTouchEnd = (e: KonvaTouchEvent) => {
     const touchList = Array.from(e.evt.touches) as Touch[];
     setTouches(touchList);
 
