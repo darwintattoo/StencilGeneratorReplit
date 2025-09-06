@@ -26,7 +26,6 @@ export const stencils = pgTable("stencils", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   imageUrl: text("image_url").notNull(),
-  originalImageUrl: text("original_image_url"),
   lineColor: text("line_color").default("red").notNull(),
   transparentBackground: boolean("transparent_background").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -35,7 +34,6 @@ export const stencils = pgTable("stencils", {
 export const insertStencilSchema = createInsertSchema(stencils).pick({
   userId: true,
   imageUrl: true,
-  originalImageUrl: true,
   lineColor: true,
   transparentBackground: true,
 });

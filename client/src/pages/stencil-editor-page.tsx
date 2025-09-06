@@ -39,9 +39,18 @@ export default function StencilEditorPage() {
         console.log('URL Imagen original:', originalUrl);
         console.log('URL Imagen stencil:', stencilUrl);
         
-        // No decodificamos las URLs ya que pueden contener caracteres especiales válidos
-        setOriginalImage(originalUrl);
-        setStencilImage(stencilUrl);
+        // Convertir rutas @assets a URLs reales
+        const convertAssetPath = (path: string) => {
+          if (path.startsWith('@assets/')) {
+            // Remover @assets/ y crear la URL correcta
+            const assetPath = path.replace('@assets/', '');
+            return new URL(`../assets/${assetPath}`, import.meta.url).href;
+          }
+          return path;
+        };
+        
+        setOriginalImage(convertAssetPath(originalUrl));
+        setStencilImage(convertAssetPath(stencilUrl));
         setIsLoading(false);
       } else {
         console.error('Parámetros faltantes:', { originalUrl, stencilUrl });

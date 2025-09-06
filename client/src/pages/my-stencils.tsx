@@ -46,21 +46,6 @@ function StencilCard({ stencil }: { stencil: Stencil }) {
           <Button variant="outline" className="flex-1" asChild>
             <a href={stencil.imageUrl} download={`stencil-${stencil.id}.png`}>Descargar</a>
           </Button>
-          {stencil.originalImageUrl && (
-            <Button 
-              variant="default" 
-              className="flex-1"
-              onClick={() => {
-                const params = new URLSearchParams();
-                params.set('original', stencil.originalImageUrl!);
-                params.set('stencil', stencil.imageUrl);
-                setLocation(`/editor?${params.toString()}`);
-              }}
-            >
-              <Edit3 className="h-4 w-4 mr-1" />
-              Editar
-            </Button>
-          )}
         </div>
       </CardFooter>
     </Card>
