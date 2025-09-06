@@ -130,10 +130,9 @@ function useStencilCanvas() {
 interface StencilEditorProps {
   originalImage?: string;
   stencilImage?: string;
-  onSave?: (editedImageUrl: string) => Promise<void>;
 }
 
-export default function StencilEditor({ originalImage, stencilImage, onSave }: StencilEditorProps) {
+export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
   const [location, setLocation] = useLocation();
   const stageRef = useRef<StageRef>(null);
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
