@@ -632,9 +632,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
           {/* Herramientas derecha */}
           <div className="flex items-center gap-4">
-            {/* Colores y tamaño de pincel */}
+            {/* Controles de pincel */}
             {tool === 'brush' && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 bg-gray-800/90 px-4 py-2 rounded-lg">
                 <div className="flex gap-2">
                   {['#000000', '#ef4444', '#3b82f6'].map((color) => (
                     <button
@@ -647,15 +647,59 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                     />
                   ))}
                 </div>
-                <div className="text-xs text-gray-400">
-                  {brushSize}px
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Tamaño:</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    value={brushSize}
+                    onChange={(e) => setBrushSize(Number(e.target.value))}
+                    className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-300 w-8">{brushSize}px</span>
                 </div>
               </div>
             )}
-            {/* Tamaño de borrador */}
+            
+            {/* Controles de borrador */}
             {tool === 'eraser' && (
-              <div className="text-xs text-gray-400">
-                {eraserSize}px
+              <div className="flex items-center gap-4 bg-gray-800/90 px-4 py-2 rounded-lg">
+                {/* Selector de capa */}
+                <div className="flex gap-1 bg-gray-700 rounded-md p-1">
+                  <button
+                    onClick={() => setActiveLayer('drawing')}
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
+                      activeLayer === 'drawing' 
+                        ? 'bg-red-500 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    Dibujo
+                  </button>
+                  <button
+                    onClick={() => setActiveLayer('stencil')}
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
+                      activeLayer === 'stencil' 
+                        ? 'bg-red-500 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    Stencil
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Tamaño:</span>
+                  <input
+                    type="range"
+                    min="5"
+                    max="100"
+                    value={eraserSize}
+                    onChange={(e) => setEraserSize(Number(e.target.value))}
+                    className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-300 w-8">{eraserSize}px</span>
+                </div>
               </div>
             )}
             <button
@@ -669,8 +713,22 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </button>
+            {/* Control de opacidad original */}
+            <div className="flex items-center gap-2 bg-gray-800/90 px-3 py-2 rounded-lg">
+              <span className="text-xs text-gray-400">Original:</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={layers.original.opacity}
+                onChange={(e) => setOpacity('original', Number(e.target.value))}
+                className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-xs text-gray-300 w-8">{layers.original.opacity}%</span>
+            </div>
+            
             {/* Zoom indicator */}
-            <div className="text-sm text-gray-400 bg-gray-800 px-2 py-1 rounded">
+            <div className="text-sm text-gray-400 bg-gray-800/90 px-2 py-1 rounded">
               {Math.round(viewTransform.scale * 100)}%
             </div>
           </div>
