@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Stage, Layer, Image as KonvaImage, Line, Rect } from 'react-konva';
 import { Slider } from '@/components/ui/slider';
+import Konva from 'konva';
 import type {
   DrawingLine,
   ViewTransform,
@@ -83,69 +84,6 @@ export default function Canvas({
   nativeSize,
   canvasSize
 }: CanvasProps) {
-  
-  // Helper function to adjust color based on hue and saturation
-  const adjustColor = (color: string, hue: number, saturation: number): string => {
-    if (hue === 0 && saturation === 100) return color;
-    
-    // Convert hex to RGB
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16) / 255;
-    const g = parseInt(hex.substr(2, 2), 16) / 255;
-    const b = parseInt(hex.substr(4, 2), 16) / 255;
-    
-    // Convert RGB to HSL
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-    
-    if (max === min) {
-      h = s = 0; // achromatic
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-        default: h = 0;
-      }
-      h /= 6;
-    }
-    
-    // Apply hue and saturation adjustments
-    h = (h + hue / 360) % 1;
-    s = Math.min(1, Math.max(0, s * (saturation / 100)));
-    
-    // Convert HSL back to RGB
-    const hue2rgb = (p: number, q: number, t: number): number => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-      return p;
-    };
-    
-    let newR, newG, newB;
-    if (s === 0) {
-      newR = newG = newB = l; // achromatic
-    } else {
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-      newR = hue2rgb(p, q, h + 1/3);
-      newG = hue2rgb(p, q, h);
-      newB = hue2rgb(p, q, h - 1/3);
-    }
-    
-    // Convert back to hex
-    const toHex = (c: number) => {
-      const hex = Math.round(c * 255).toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    };
-    
-    return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
-  };
   return (
     <>
       <Stage
@@ -210,12 +148,17 @@ export default function Canvas({
         )}
 
         {layers.drawing.visible && (
-          <Layer opacity={layers.drawing.opacity / 100}>
+          <Layer 
+            opacity={layers.drawing.opacity / 100}
+            filters={drawingHue !== 0 || drawingSaturation !== 100 ? ['Hue', 'Saturation'] : []}
+            hue={drawingHue}
+            saturation={drawingSaturation / 100 - 1}
+          >
             {drawingLines.map((line, i) => (
               <Line
                 key={i}
                 points={line.points}
-                stroke={adjustColor(line.color, drawingHue, drawingSaturation)}
+                stroke={line.color}
                 strokeWidth={line.strokeWidth}
                 tension={0.5}
                 lineCap="round"
@@ -229,7 +172,7 @@ export default function Canvas({
               <Line
                 ref={tempLineRef}
                 points={drawingPointsRef.current || []}
-                stroke={adjustColor(currentLineRef.current?.color || '#000000', drawingHue, drawingSaturation)}
+                stroke={currentLineRef.current?.color}
                 strokeWidth={currentLineRef.current?.strokeWidth}
                 tension={0.5}
                 lineCap="round"
