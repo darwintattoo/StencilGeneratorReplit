@@ -18,7 +18,12 @@ interface CanvasProps {
   originalImg: HTMLImageElement | null;
   stencilImg: HTMLImageElement | null;
   filteredStencilImg: HTMLImageElement | null;
-  lines: any[];
+  drawingLines: any[];
+  stencilLines: any[];
+  currentLineRef: React.RefObject<any>;
+  drawingPointsRef: React.RefObject<number[]>;
+  tempLineRef: React.RefObject<any>;
+  isErasingStencil: boolean;
   brushColor: string;
   tool: 'brush' | 'eraser' | 'move';
   brushSize: number;
@@ -44,7 +49,12 @@ export default function Canvas({
   originalImg,
   stencilImg,
   filteredStencilImg,
-  lines,
+  drawingLines,
+  stencilLines,
+  currentLineRef,
+  drawingPointsRef,
+  tempLineRef,
+  isErasingStencil,
   brushColor,
   tool,
   brushSize,
@@ -104,22 +114,34 @@ export default function Canvas({
 
         {layers.drawing.visible && (
           <Layer opacity={layers.drawing.opacity / 100}>
-            {lines
-              .filter((line) => line.layer === 'drawing')
-              .map((line, i) => (
-                <Line
-                  key={i}
-                  points={line.points}
-                  stroke={line.tool === 'brush' ? line.color || brushColor : '#ffffff'}
-                  strokeWidth={line.strokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation={line.globalCompositeOperation}
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                />
-              ))}
+            {drawingLines.map((line, i) => (
+              <Line
+                key={i}
+                points={line.points}
+                stroke={line.color}
+                strokeWidth={line.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={line.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            ))}
+            {currentLineRef.current?.layer === 'drawing' && !isErasingStencil && (
+              <Line
+                ref={tempLineRef}
+                points={drawingPointsRef.current || []}
+                stroke={currentLineRef.current?.color}
+                strokeWidth={currentLineRef.current?.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            )}
           </Layer>
         )}
 
@@ -132,22 +154,34 @@ export default function Canvas({
                 height={nativeSize.height}
               />
             )}
-            {lines
-              .filter((line) => line.layer === 'stencil')
-              .map((line, i) => (
-                <Line
-                  key={`stencil-${i}`}
-                  points={line.points}
-                  stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
-                  strokeWidth={line.strokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation={line.globalCompositeOperation}
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                />
-              ))}
+            {stencilLines.map((line, i) => (
+              <Line
+                key={`stencil-${i}`}
+                points={line.points}
+                stroke={line.color}
+                strokeWidth={line.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={line.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            ))}
+            {currentLineRef.current?.layer === 'stencil' && !isErasingStencil && (
+              <Line
+                ref={tempLineRef}
+                points={drawingPointsRef.current || []}
+                stroke={currentLineRef.current?.color}
+                strokeWidth={currentLineRef.current?.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            )}
           </Layer>
         )}
       </Stage>
