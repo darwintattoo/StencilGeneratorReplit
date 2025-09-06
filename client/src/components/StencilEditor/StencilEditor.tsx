@@ -41,7 +41,7 @@ function useStencilCanvas() {
   const [stencilSaturation, setStencilSaturation] = useState<number>(100); // Control de saturación para stencil
   const [drawingHue, setDrawingHue] = useState<number>(0); // Control de tono para drawing
   const [drawingSaturation, setDrawingSaturation] = useState<number>(100); // Control de saturación para drawing
-  const [isColorLinked, setIsColorLinked] = useState<boolean>(false); // Control para enlazar colores
+  const [isColorLinked, setIsColorLinked] = useState<boolean>(true); // Control para enlazar colores
   const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
