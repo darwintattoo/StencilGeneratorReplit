@@ -182,7 +182,7 @@ export default function Canvas({
   return (
     <>
       <Stage
-        width={canvasSize.width - (isLayersOpen ? (canvasSize.width < 640 ? Math.min(canvasSize.width * 0.85, 320) : 320) : 0)}
+        width={canvasSize.width < 640 ? canvasSize.width : (canvasSize.width - (isLayersOpen ? 320 : 0))}
         height={canvasSize.height}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -316,7 +316,7 @@ export default function Canvas({
         )}
       </Stage>
 
-      {tool === 'brush' && (
+      {tool === 'brush' && !isLayersOpen && (
         <div className="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 z-30">
           <div className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
             <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">
@@ -336,7 +336,7 @@ export default function Canvas({
         </div>
       )}
 
-      {tool === 'eraser' && (
+      {tool === 'eraser' && !isLayersOpen && (
         <div className="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 z-30">
           <div className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
             <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">

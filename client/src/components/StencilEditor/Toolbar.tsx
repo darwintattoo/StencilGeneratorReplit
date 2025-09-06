@@ -43,13 +43,13 @@ export default function Toolbar({
   return (
     <div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 flex items-center justify-between z-40">
       {/* IZQUIERDA: Gallery + Herramientas principales */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={onBack}
           style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }} 
-          className="hover:text-white shadow-sm text-gray-300 border-gray-600" 
+          className="hover:text-white shadow-sm text-gray-300 border-gray-600 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm" 
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 35, 35, 0.95)'} 
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 45, 45, 0.95)'}
         >
@@ -61,10 +61,10 @@ export default function Toolbar({
           variant={tool === 'brush' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setTool('brush')}
-          className={tool === 'brush' 
+          className={`h-8 sm:h-9 px-2 sm:px-3 ${tool === 'brush' 
             ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm border-blue-500" 
             : "shadow-sm text-gray-300 border-gray-600"
-          }
+          }`}
         >
           <PenTool className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
@@ -73,10 +73,10 @@ export default function Toolbar({
           variant={tool === 'eraser' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setTool('eraser')}
-          className={tool === 'eraser' 
+          className={`h-8 sm:h-9 px-2 sm:px-3 ${tool === 'eraser' 
             ? "bg-red-500 hover:bg-red-600 text-white shadow-sm border-red-500" 
             : "shadow-sm text-gray-300 border-gray-600"
-          }
+          }`}
         >
           <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
@@ -85,10 +85,10 @@ export default function Toolbar({
           variant={tool === 'move' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setTool('move')}
-          className={tool === 'move' 
+          className={`h-8 sm:h-9 px-2 sm:px-3 ${tool === 'move' 
             ? "bg-green-500 hover:bg-green-600 text-white shadow-sm border-green-500" 
             : "shadow-sm text-gray-300 border-gray-600"
-          }
+          }`}
         >
           <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
@@ -100,14 +100,14 @@ export default function Toolbar({
       </div>
 
       {/* DERECHA: Layers + Controles + Colores */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {(tool === 'brush' || tool === 'eyedropper') && (
-          <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <div className="flex items-center gap-1 sm:gap-2 rounded-md px-2 sm:px-3 py-1 sm:py-2 shadow-sm border border-gray-600 h-8 sm:h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
             {COLORS.map((color, index) => (
               <button
                 key={color}
                 onClick={() => setBrushColor(color)}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
                   brushColor === color 
                     ? 'border-gray-800 ring-2 ring-blue-400 scale-105' 
                     : 'border-gray-400 hover:border-gray-600'
@@ -123,7 +123,7 @@ export default function Toolbar({
               variant={tool === 'eyedropper' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTool('eyedropper')}
-              className={`h-7 px-2 ${tool === 'eyedropper' 
+              className={`h-6 sm:h-7 px-1 sm:px-2 ${tool === 'eyedropper' 
                 ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm border-orange-500" 
                 : "shadow-sm text-gray-300 border-gray-600"
               }`}
@@ -166,7 +166,7 @@ export default function Toolbar({
           variant={isLayersOpen ? 'default' : 'outline'}
           size="sm"
           onClick={() => setIsLayersOpen(!isLayersOpen)}
-          className={`h-10 px-3 ${isLayersOpen
+          className={`h-8 sm:h-10 px-2 sm:px-3 ${isLayersOpen
             ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm border-purple-500"
             : "shadow-sm text-gray-300 border-gray-600"
           }`}
@@ -174,7 +174,7 @@ export default function Toolbar({
           <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
-        <div className="flex items-center gap-3 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+        <div className="hidden sm:flex items-center gap-3 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
           <span className="text-sm text-gray-300 font-medium">Original</span>
           <div className="w-20">
             <Slider
@@ -189,7 +189,7 @@ export default function Toolbar({
           <span className="text-sm text-gray-300 font-mono">{layers.original.opacity}%</span>
         </div>
 
-        <div className="text-sm text-gray-300 px-3 py-2 rounded-md shadow-sm border border-gray-600 h-10 flex items-center font-mono justify-center" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+        <div className="hidden sm:flex text-sm text-gray-300 px-3 py-2 rounded-md shadow-sm border border-gray-600 h-10 items-center font-mono justify-center" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
           {Math.round(viewTransform.scale * 100)}%
         </div>
       </div>
