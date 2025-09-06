@@ -66,7 +66,21 @@ export default function LayerPanel({
       <div className="space-y-4">
         <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
-            <GripVertical className="w-4 h-4 text-gray-300" />
+            <div className="flex flex-col items-center gap-1">
+              <GripVertical className="w-4 h-4 text-gray-300" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsColorLinked(!isColorLinked)}
+                className={`w-4 h-4 p-0 ${
+                  isColorLinked 
+                    ? 'text-blue-400 hover:text-blue-300' 
+                    : 'text-gray-500 hover:text-gray-400'
+                }`}
+              >
+                {isColorLinked ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
+              </Button>
+            </div>
             <Switch
               checked={layers.drawing.visible}
               onCheckedChange={(checked) => toggleLayer('drawing', checked)}
@@ -82,18 +96,6 @@ export default function LayerPanel({
           <div className="ml-7 space-y-3">
             <div>
               <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsColorLinked(!isColorLinked)}
-                  className={`w-6 h-6 p-0 ${
-                    isColorLinked 
-                      ? 'text-blue-400 hover:text-blue-300' 
-                      : 'text-gray-500 hover:text-gray-400'
-                  }`}
-                >
-                  {isColorLinked ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
-                </Button>
                 <span>Hue:</span>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
               </div>
