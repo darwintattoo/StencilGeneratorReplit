@@ -37,17 +37,21 @@ export default function Toolbar({
 }: ToolbarProps) {
   return (
     <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-40">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onBack}
-        style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }} className="hover:text-white shadow-sm text-gray-300 border-gray-600" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 35, 35, 0.95)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 45, 45, 0.95)'}
-      >
-        <ArrowLeft className="w-4 h-4 mr-2 text-gray-400" />
-        Galería
-      </Button>
+      {/* IZQUIERDA: Gallery + Herramientas principales */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }} 
+          className="hover:text-white shadow-sm text-gray-300 border-gray-600" 
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 35, 35, 0.95)'} 
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 45, 45, 0.95)'}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 text-gray-400" />
+          Gallery
+        </Button>
 
-      <div className="flex gap-2">
         <Button
           variant={tool === 'brush' ? 'default' : 'outline'}
           size="sm"
@@ -71,6 +75,44 @@ export default function Toolbar({
         >
           <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
+
+        <Button
+          variant={tool === 'move' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setTool('move')}
+          className={tool === 'move' 
+            ? "bg-green-500 hover:bg-green-600 text-white shadow-sm border-green-500" 
+            : "shadow-sm text-gray-300 border-gray-600"
+          }
+        >
+          <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
+        </Button>
+      </div>
+
+      {/* CENTRO: Menú simple */}
+      <div className="flex items-center">
+        <div className="text-gray-400 text-lg font-bold px-2">•••</div>
+      </div>
+
+      {/* DERECHA: Layers + Controles + Colores */}
+      <div className="flex items-center gap-2">
+        {tool === 'brush' && (
+          <div className="flex gap-2 rounded-md p-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+            {COLORS.map((color, index) => (
+              <button
+                key={color}
+                onClick={() => setBrushColor(color)}
+                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                  brushColor === color 
+                    ? 'border-gray-800 ring-2 ring-blue-400 scale-110' 
+                    : 'border-gray-400 hover:border-gray-600'
+                }`}
+                style={{ backgroundColor: color }}
+                title={['Negro', 'Rojo', 'Azul'][index]}
+              />
+            ))}
+          </div>
+        )}
 
         {tool === 'eraser' && (
           <div className="flex gap-1 rounded-md p-1 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
@@ -101,36 +143,6 @@ export default function Toolbar({
           </div>
         )}
 
-        {tool === 'brush' && (
-          <div className="flex gap-2 rounded-md p-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
-            {COLORS.map((color, index) => (
-              <button
-                key={color}
-                onClick={() => setBrushColor(color)}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                  brushColor === color 
-                    ? 'border-gray-800 ring-2 ring-blue-400 scale-110' 
-                    : 'border-gray-400 hover:border-gray-600'
-                }`}
-                style={{ backgroundColor: color }}
-                title={['Negro', 'Rojo', 'Azul'][index]}
-              />
-            ))}
-          </div>
-        )}
-
-        <Button
-          variant={tool === 'move' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setTool('move')}
-          className={tool === 'move' 
-            ? "bg-green-500 hover:bg-green-600 text-white shadow-sm border-green-500" 
-            : "shadow-sm text-gray-300 border-gray-600"
-          }
-        >
-          <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
-        </Button>
-
         <Button
           variant={isLayersOpen ? 'default' : 'outline'}
           size="sm"
@@ -142,25 +154,25 @@ export default function Toolbar({
         >
           <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
-      </div>
 
-      <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
-        <span className="text-xs text-gray-300 font-medium">Original</span>
-        <div className="w-20">
-          <Slider
-            value={[layers.original.opacity]}
-            onValueChange={([value]) => setOpacity('original', value)}
-            max={100}
-            min={0}
-            step={1}
-            className="w-20"
-          />
+        <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <span className="text-xs text-gray-300 font-medium">Original</span>
+          <div className="w-20">
+            <Slider
+              value={[layers.original.opacity]}
+              onValueChange={([value]) => setOpacity('original', value)}
+              max={100}
+              min={0}
+              step={1}
+              className="w-20"
+            />
+          </div>
+          <span className="text-xs text-gray-300 min-w-[30px]">{layers.original.opacity}%</span>
         </div>
-        <span className="text-xs text-gray-300 min-w-[30px]">{layers.original.opacity}%</span>
-      </div>
 
-      <div className="text-sm text-gray-300 px-2 py-1 rounded-md shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
-        {Math.round(viewTransform.scale * 100)}%
+        <div className="text-sm text-gray-300 px-2 py-1 rounded-md shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          {Math.round(viewTransform.scale * 100)}%
+        </div>
       </div>
     </div>
   );
