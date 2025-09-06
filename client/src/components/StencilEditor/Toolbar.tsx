@@ -1,7 +1,22 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PenTool, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
+import { PenTool, ArrowLeft, Move, Pipette } from 'lucide-react';
+
+// Iconos personalizados
+const CustomEraser = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <rect x="4" y="8" width="16" height="8" rx="2" ry="2" fill="currentColor" />
+    <rect x="7" y="5" width="10" height="3" rx="1" ry="1" fill="currentColor" opacity="0.7" />
+  </svg>
+);
+
+const CustomLayers = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <rect x="4" y="4" width="12" height="12" rx="2" ry="2" fill="currentColor" opacity="0.6" />
+    <rect x="8" y="8" width="12" height="12" rx="2" ry="2" fill="currentColor" />
+  </svg>
+);
 import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
 
 const COLORS = [
@@ -78,7 +93,7 @@ export default function Toolbar({
             : "shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
+          <CustomEraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <Button
@@ -171,7 +186,7 @@ export default function Toolbar({
             : "shadow-sm text-gray-300 border-gray-600"
           }`}
         >
-          <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
+          <CustomLayers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <div className="flex items-center gap-3 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
