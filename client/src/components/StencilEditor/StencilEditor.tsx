@@ -323,29 +323,46 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     // Herramienta gotero para copiar colores
     if (tool === 'eyedropper') {
-      // Obtener coordenadas relativas al stage
-      const stageBox = stage.container().getBoundingClientRect();
-      const stageX = pos.x;
-      const stageY = pos.y;
+      e.evt.preventDefault();
       
-      // Crear un canvas temporal para capturar el contenido del stage
-      stage.toCanvas({
-        callback: (canvas: HTMLCanvasElement) => {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
+      try {
+        // Capturar el stage completo con todas las transformaciones aplicadas
+        stage.toCanvas({
+          callback: (canvas: HTMLCanvasElement) => {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              console.error('No se pudo obtener el contexto del canvas');
+              return;
+            }
+
             try {
-              // Obtener el pixel en las coordenadas del click
-              const imageData = ctx.getImageData(stageX, stageY, 1, 1);
+              // Aplicar las transformaciones de escala al canvas para obtener las coordenadas correctas
+              const scale = stage.scaleX();
+              const stagePos = stage.position();
+              
+              // Calcular las coordenadas ajustadas en el canvas renderizado
+              const canvasX = Math.floor((pos.x - stagePos.x) / scale);
+              const canvasY = Math.floor((pos.y - stagePos.y) / scale);
+              
+              // Verificar que las coordenadas estén dentro del canvas
+              if (canvasX < 0 || canvasY < 0 || canvasX >= canvas.width || canvasY >= canvas.height) {
+                console.log('Coordenadas fuera del canvas, manteniendo color actual');
+                setTool('brush');
+                return;
+              }
+
+              // Obtener el pixel en las coordenadas calculadas
+              const imageData = ctx.getImageData(canvasX, canvasY, 1, 1);
               const data = imageData.data;
               const r = data[0];
               const g = data[1];
               const b = data[2];
               const a = data[3];
               
-              console.log('Pixel data:', { r, g, b, a, x: stageX, y: stageY });
+              console.log('Pixel data:', { r, g, b, a, x: canvasX, y: canvasY, originalPos: pos });
               
-              // Solo cambiar color si el pixel no es transparente
-              if (a > 0) {
+              // Solo cambiar color si el pixel no es completamente transparente
+              if (a > 20) { // Umbral más bajo para capturar colores semitransparentes
                 // Convertir RGB a formato hex
                 const hex = "#" + [r, g, b].map(x => {
                   const h = x.toString(16);
@@ -354,24 +371,46 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
                 
                 console.log('Color seleccionado:', hex);
                 setBrushColor(hex);
+                
+                // Mostrar feedback visual temporal
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                  position: fixed;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  background: ${hex};
+                  color: ${r + g + b > 382 ? '#000' : '#fff'};
+                  padding: 10px 20px;
+                  border-radius: 8px;
+                  border: 2px solid #fff;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                  z-index: 10000;
+                  font-family: monospace;
+                  font-weight: bold;
+                `;
+                toast.textContent = `Color: ${hex}`;
+                document.body.appendChild(toast);
+                setTimeout(() => document.body.removeChild(toast), 1500);
               } else {
-                console.log('Pixel transparente, manteniendo color actual');
+                console.log('Pixel transparente o área vacía, manteniendo color actual');
               }
               
-              // Cambiar automáticamente a la herramienta brush
+              // Cambiar automáticamente a la herramienta brush después de seleccionar color
               setTool('brush');
             } catch (error) {
-              console.error('Error al obtener color:', error);
-              // Si hay error, usar color por defecto
-              setBrushColor('#ef4444');
+              console.error('Error al procesar el pixel:', error);
               setTool('brush');
             }
-          }
-        },
-        width: canvasSize.width,
-        height: canvasSize.height,
-        pixelRatio: 1
-      });
+          },
+          pixelRatio: 1,
+          width: nativeSize.width,
+          height: nativeSize.height
+        });
+      } catch (error) {
+        console.error('Error al capturar el canvas:', error);
+        setTool('brush');
+      }
       return;
     }
 
