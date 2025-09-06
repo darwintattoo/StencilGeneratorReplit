@@ -83,18 +83,6 @@ export default function LayerPanel({
             <div>
               <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
                 <span>Hue:</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsColorLinked(!isColorLinked)}
-                  className={`w-6 h-6 p-0 ${
-                    isColorLinked 
-                      ? 'text-blue-400 hover:text-blue-300' 
-                      : 'text-gray-500 hover:text-gray-400'
-                  }`}
-                >
-                  {isColorLinked ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
-                </Button>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
               </div>
               <div className="relative mb-4">
@@ -116,6 +104,18 @@ export default function LayerPanel({
                 />
               </div>
               <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsColorLinked(!isColorLinked)}
+                  className={`w-6 h-6 p-0 ${
+                    isColorLinked 
+                      ? 'text-blue-400 hover:text-blue-300' 
+                      : 'text-gray-500 hover:text-gray-400'
+                  }`}
+                >
+                  {isColorLinked ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
+                </Button>
                 <span>Saturation:</span>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingSaturation)}</span>
               </div>
