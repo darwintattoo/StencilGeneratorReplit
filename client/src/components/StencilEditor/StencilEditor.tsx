@@ -280,12 +280,24 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   }, [stencilImg, stencilHue]);
 
+  // Función para corregir coordenadas con rotación
+  const getRotatedPosition = (adjX: number, adjY: number) => {
+    const centerX = nativeSize.width / 2;
+    const centerY = nativeSize.height / 2;
+    const rad = -viewTransform.rotation * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const dx = adjX - centerX;
+    const dy = adjY - centerY;
+    return {
+      x: centerX + dx * cos - dy * sin,
+      y: centerY + dx * sin + dy * cos,
+    };
+  };
+
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
-    const stage = e.target.getStage();
-    if (!stage) return;
-    
-    const pos = stage.getPointerPosition();
+    const pos = stageRef.current?.getPointerPosition();
     if (!pos) return;
     
     const mouseEvent = e.evt as MouseEvent;
@@ -298,10 +310,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (tool === 'brush' || tool === 'eraser') {
       setIsDrawing(true);
-      const adjustedPos = {
-        x: (pos.x - viewTransform.x) / viewTransform.scale,
-        y: (pos.y - viewTransform.y) / viewTransform.scale
-      };
+      const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
+      const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
+      const { x, y } = getRotatedPosition(adjX, adjY);
 
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
@@ -326,7 +337,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
             ctx.save();
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+            ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
             ctx.fill();
             ctx.restore();
           }
@@ -345,16 +356,13 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         layer: activeLayer,
         color
       };
-      drawingPointsRef.current = [adjustedPos.x, adjustedPos.y];
+      drawingPointsRef.current = [x, y];
       frameRef.current = requestAnimationFrame(updateTempLine);
     }
   };
 
   const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
-    const stage = e.target.getStage();
-    if (!stage) return;
-    
-    const pos = stage.getPointerPosition();
+    const pos = stageRef.current?.getPointerPosition();
     if (!pos) return;
 
     if (isPanning) {
@@ -367,10 +375,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (!isDrawing) return;
     
-    const adjustedPos = {
-      x: (pos.x - viewTransform.x) / viewTransform.scale,
-      y: (pos.y - viewTransform.y) / viewTransform.scale
-    };
+    const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
+    const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
+    const { x, y } = getRotatedPosition(adjX, adjY);
 
     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
@@ -383,7 +390,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         
         // Borrado instantáneo con mínimo procesamiento
         ctx.beginPath();
-        ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+        ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
         ctx.fill();
         
         // Sin restaurar contexto durante movimiento para máxima velocidad
@@ -391,7 +398,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
     
-    drawingPointsRef.current.push(adjustedPos.x, adjustedPos.y);
+    drawingPointsRef.current.push(x, y);
   };
 
   const handleMouseUp = () => {

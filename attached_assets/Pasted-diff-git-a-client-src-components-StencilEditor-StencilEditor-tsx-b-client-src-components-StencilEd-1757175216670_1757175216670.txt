@@ -1,0 +1,344 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..964e682c765f6353bbc1db9ded572724cd17f902 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -17,88 +17,89 @@ import {
+ import { useLocation } from 'wouter';
+ 
+ // Colores disponibles para el dibujo - solo negro, rojo y azul
+ const DRAWING_COLORS = [
+   '#000000', // Negro
+   '#ef4444', // Rojo
+   '#3b82f6', // Azul
+ ];
+ 
+ // Hook personalizado para manejar la lógica del canvas
+ function useStencilCanvas() {
+   const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
+   const [brushSize, setBrushSize] = useState(4);
+   const [eraserSize, setEraserSize] = useState(10);
+   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
+   const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
+   const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
+   const [layers, setLayers] = useState({
+     drawing: { visible: true, opacity: 100 },
+     stencil: { visible: true, opacity: 100 },
+     original: { visible: true, opacity: 20 }
+   });
+   const [viewTransform, setViewTransform] = useState({
+     x: 0,
+     y: 0,
+-    scale: 1
++    scale: 1,
++    rotation: 0,
+   });
+ 
+ 
+   const toggleLayer = (key: string, visible: boolean) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], visible }
+     }));
+   };
+ 
+   const setOpacity = (key: string, opacity: number) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], opacity }
+     }));
+   };
+ 
+   const handleGesture = (type: 'pan' | 'pinch', data: any) => {
+     if (type === 'pan') {
+       setViewTransform(prev => ({
+         ...prev,
+         x: prev.x + data.deltaX,
+         y: prev.y + data.deltaY
+       }));
+     } else if (type === 'pinch') {
+       const newScale = Math.max(0.1, Math.min(5, data.scale));
+       setViewTransform(prev => ({
+         ...prev,
+         scale: newScale,
+         x: data.centerX - (data.centerX - prev.x) * (newScale / prev.scale),
+         y: data.centerY - (data.centerY - prev.y) * (newScale / prev.scale)
+       }));
+     }
+   };
+ 
+   const resetView = () => {
+-    setViewTransform({ x: 0, y: 0, scale: 1 });
++    setViewTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
+   };
+ 
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..964e682c765f6353bbc1db9ded572724cd17f902 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -241,153 +242,165 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     return [h, s, l];
+   };
+ 
+   const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
+     let r, g, b;
+     if (s === 0) {
+       r = g = b = l;
+     } else {
+       const hue2rgb = (p: number, q: number, t: number) => {
+         if (t < 0) t += 1;
+         if (t > 1) t -= 1;
+         if (t < 1/6) return p + (q - p) * 6 * t;
+         if (t < 1/2) return q;
+         if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+         return p;
+       };
+       const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+       const p = 2 * l - q;
+       r = hue2rgb(p, q, h + 1/3);
+       g = hue2rgb(p, q, h);
+       b = hue2rgb(p, q, h - 1/3);
+     }
+     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+   };
+ 
++  const getRotatedPosition = (adjX: number, adjY: number) => {
++    const centerX = nativeSize.width / 2;
++    const centerY = nativeSize.height / 2;
++    const rad = -viewTransform.rotation * Math.PI / 180;
++    const cos = Math.cos(rad);
++    const sin = Math.sin(rad);
++    const dx = adjX - centerX;
++    const dy = adjY - centerY;
++    return {
++      x: centerX + dx * cos - dy * sin,
++      y: centerY + dx * sin + dy * cos,
++    };
++  };
++
+   // Manejo de gestos táctiles y mouse
+   const handleMouseDown = (e: any) => {
+-    const stage = e.target.getStage();
+-    const pos = stage.getPointerPosition();
+-    
++    const pos = stageRef.current?.getPointerPosition();
++    if (!pos) return;
++
+     if (tool === 'move' || e.evt.button === 1 || e.evt.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+       setIsDrawing(true);
+-      const adjustedPos = {
+-        x: (pos.x - viewTransform.x) / viewTransform.scale,
+-        y: (pos.y - viewTransform.y) / viewTransform.scale
+-      };
++      const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
++      const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
++      const { x, y } = getRotatedPosition(adjX, adjY);
+ 
+       // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+         
+         // Crear canvas de trabajo si no existe
+         if (!stencilCanvas) {
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
+         
+         // Aplicar borrado inicial
+         if (stencilCanvas) {
+           const ctx = stencilCanvas.getContext('2d');
+           if (ctx) {
+             ctx.save();
+             ctx.globalCompositeOperation = 'destination-out';
+             ctx.beginPath();
+-            ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
++            ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+             ctx.fill();
+             ctx.restore();
+           }
+         }
+         return;
+       }
+-      
++
+       const newLine = {
+         tool,
+-        points: [adjustedPos.x, adjustedPos.y],
++        points: [x, y],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+         color: tool === 'brush' ? brushColor : '#ffffff'
+       };
+       setLines([...lines, newLine]);
+     }
+   };
+ 
+   const handleMouseMove = (e: any) => {
+-    const stage = e.target.getStage();
+-    const pos = stage.getPointerPosition();
++    const pos = stageRef.current?.getPointerPosition();
++    if (!pos) return;
+ 
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+     
+-    const adjustedPos = {
+-      x: (pos.x - viewTransform.x) / viewTransform.scale,
+-      y: (pos.y - viewTransform.y) / viewTransform.scale
+-    };
++    const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
++    const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
++    const { x, y } = getRotatedPosition(adjX, adjY);
+ 
+     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
+     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
+       const ctx = stencilCanvas.getContext('2d');
+-      
++
+       if (ctx) {
+         // Borrado inmediato sin operaciones bloqueantes
+         ctx.globalCompositeOperation = 'destination-out';
+         ctx.fillStyle = '#000';
+-        
++
+         // Borrado instantáneo con mínimo procesamiento
+         ctx.beginPath();
+-        ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
++        ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+         ctx.fill();
+-        
++
+         // Sin restaurar contexto durante movimiento para máxima velocidad
+       }
+       return;
+     }
+-    
++
+     const newLines = [...lines];
+     const lastLine = newLines[newLines.length - 1];
+-    lastLine.points = lastLine.points.concat([adjustedPos.x, adjustedPos.y]);
++    lastLine.points = lastLine.points.concat([x, y]);
+     setLines(newLines);
+   };
+ 
+   const handleMouseUp = () => {
+     setIsDrawing(false);
+     setIsPanning(false);
+ 
+     
+     // Finalizar borrado de stencil con restauración del contexto
+     if (isErasingStencil && stencilCanvas) {
+       // Restaurar contexto una sola vez al final
+       const ctx = stencilCanvas.getContext('2d');
+       if (ctx) {
+         ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
+       }
+       
+       // Actualización diferida para no bloquear
+       setTimeout(() => {
+         const newImg = new Image();
+         newImg.onload = () => {
+           setStencilImg(newImg);
+           if (stencilHue !== 0) {
+             setFilteredStencilImg(null);
+           }
+         };
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..964e682c765f6353bbc1db9ded572724cd17f902 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -515,50 +528,51 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+   };
+ 
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen bg-gray-100 relative flex">
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Stage
+           width={window.innerWidth - (isLayersOpen ? 320 : 0)}
+           height={window.innerHeight}
+           onMouseDown={handleMouseDown}
+           onMousemove={handleMouseMove}
+           onMouseup={handleMouseUp}
+           onWheel={handleWheel}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
+           onTouchEnd={handleTouchEnd}
+           onDblTap={handleDoubleTap}
+           ref={stageRef}
+           scaleX={viewTransform.scale}
+           scaleY={viewTransform.scale}
++          rotation={viewTransform.rotation}
+           x={viewTransform.x}
+           y={viewTransform.y}
+         >
+           {/* Layer Original */}
+           {layers.original.visible && (
+             <Layer opacity={layers.original.opacity / 100}>
+               {originalImg && (
+                 <KonvaImage
+                   image={originalImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+             </Layer>
+           )}
+ 
+           {/* Layer Stencil - Solo imagen de fondo */}
+           {layers.stencil.visible && (
+             <Layer opacity={layers.stencil.opacity / 100}>
+               {filteredStencilImg ? (
+                 <KonvaImage
+                   image={filteredStencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
