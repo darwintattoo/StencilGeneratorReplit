@@ -1,23 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PenTool, ArrowLeft, Move, Pipette } from 'lucide-react';
-
-// Iconos personalizados
-const CustomEraser = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none">
-    <rect x="4" y="8" width="16" height="8" rx="2" ry="2" fill="currentColor" />
-    <rect x="7" y="5" width="10" height="3" rx="1" ry="1" fill="currentColor" opacity="0.7" />
-  </svg>
-);
-
-const CustomLayers = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none">
-    <rect x="4" y="4" width="12" height="12" rx="2" ry="2" fill="currentColor" opacity="0.6" />
-    <rect x="8" y="8" width="12" height="12" rx="2" ry="2" fill="currentColor" />
-  </svg>
-);
-
+import { PenTool, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
 import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
 
 const COLORS = [
@@ -94,7 +78,7 @@ export default function Toolbar({
             : "shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <CustomEraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
+          <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <Button
@@ -144,61 +128,69 @@ export default function Toolbar({
                 : "shadow-sm text-gray-300 border-gray-600"
               }`}
             >
-              <Pipette className={`w-3 h-3 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
+              <Pipette className={`w-4 h-4 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
             </Button>
           </div>
         )}
 
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant={activeLayer === 'drawing' ? 'default' : 'outline'}
-            onClick={() => setActiveLayer('drawing')}
-            className={`px-3 py-2 ${
-              activeLayer === 'drawing' 
-                ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' 
-                : 'shadow-sm text-gray-300 border-gray-600'
-            }`}
-          >
-            Draw
-          </Button>
-          
-          <Button
-            size="sm"
-            variant={activeLayer === 'stencil' ? 'default' : 'outline'}
-            onClick={() => setActiveLayer('stencil')}
-            className={`px-3 py-2 ${
-              activeLayer === 'stencil' 
-                ? 'bg-purple-500 hover:bg-purple-600 text-white border-purple-500' 
-                : 'shadow-sm text-gray-300 border-gray-600'
-            }`}
-          >
-            Edit
-          </Button>
-        </div>
+        {tool === 'eraser' && (
+          <div className="flex gap-1 rounded-md p-1 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+            <Button
+              variant={activeLayer === 'drawing' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveLayer('drawing')}
+              className={`text-xs px-2 py-1 h-auto ${
+                activeLayer === 'drawing' 
+                  ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                  : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
+              }`}
+            >
+              Dibujo
+            </Button>
+            <Button
+              variant={activeLayer === 'stencil' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveLayer('stencil')}
+              className={`text-xs px-2 py-1 h-auto ${
+                activeLayer === 'stencil' 
+                  ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                  : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
+              }`}
+            >
+              Stencil
+            </Button>
+          </div>
+        )}
 
         <Button
           variant={isLayersOpen ? 'default' : 'outline'}
           size="sm"
           onClick={() => setIsLayersOpen(!isLayersOpen)}
           className={`h-10 px-3 ${isLayersOpen
-            ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300'
-            : 'shadow-sm text-gray-300 border-gray-600'
+            ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm border-purple-500"
+            : "shadow-sm text-gray-300 border-gray-600"
           }`}
         >
-          <CustomLayers className={`w-4 h-4 ${isLayersOpen ? 'text-gray-900' : 'text-gray-400'}`} />
+          <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
-        <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
-          <Slider
-            value={[layers.original.opacity]}
-            onValueChange={([value]) => setOpacity('original', value)}
-            max={100}
-            min={0}
-            step={1}
-            className="w-16 h-4"
-          />
+        <div className="flex items-center gap-3 rounded-md px-3 py-2 shadow-sm border border-gray-600 h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <span className="text-sm text-gray-300 font-medium">Original</span>
+          <div className="w-20">
+            <Slider
+              value={[layers.original.opacity]}
+              onValueChange={([value]) => setOpacity('original', value)}
+              max={100}
+              min={0}
+              step={1}
+              className="w-20"
+            />
+          </div>
           <span className="text-sm text-gray-300 font-mono">{layers.original.opacity}%</span>
+        </div>
+
+        <div className="text-sm text-gray-300 px-3 py-2 rounded-md shadow-sm border border-gray-600 h-10 flex items-center font-mono justify-center" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          {Math.round(viewTransform.scale * 100)}%
         </div>
       </div>
     </div>
