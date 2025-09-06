@@ -41,7 +41,7 @@ export default function Toolbar({
         variant="outline"
         size="sm"
         onClick={onBack}
-        className="bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 hover:text-white border-gray-600"
+        style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }} className="hover:text-white shadow-sm text-gray-300 border-gray-600" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 35, 35, 0.95)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 45, 45, 0.95)'}
       >
         <ArrowLeft className="w-4 h-4 mr-2 text-gray-400" />
         Galería
@@ -54,7 +54,7 @@ export default function Toolbar({
           onClick={() => setTool('brush')}
           className={tool === 'brush' 
             ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm border-blue-500" 
-            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
+            : "shadow-sm text-gray-300 border-gray-600"
           }
         >
           <PenTool className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
@@ -66,14 +66,14 @@ export default function Toolbar({
           onClick={() => setTool('eraser')}
           className={tool === 'eraser' 
             ? "bg-red-500 hover:bg-red-600 text-white shadow-sm border-red-500" 
-            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
+            : "shadow-sm text-gray-300 border-gray-600"
           }
         >
           <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         {tool === 'eraser' && (
-          <div className="flex gap-1 bg-gray-800/95 rounded-md p-1 shadow-sm border border-gray-600">
+          <div className="flex gap-1 rounded-md p-1 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
             <Button
               variant={activeLayer === 'drawing' ? 'default' : 'outline'}
               size="sm"
@@ -102,7 +102,7 @@ export default function Toolbar({
         )}
 
         {tool === 'brush' && (
-          <div className="flex gap-2 bg-gray-800/95 rounded-md p-2 shadow-sm border border-gray-600">
+          <div className="flex gap-2 rounded-md p-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
             {COLORS.map((color, index) => (
               <button
                 key={color}
@@ -125,7 +125,7 @@ export default function Toolbar({
           onClick={() => setTool('move')}
           className={tool === 'move' 
             ? "bg-green-500 hover:bg-green-600 text-white shadow-sm border-green-500" 
-            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
+            : "shadow-sm text-gray-300 border-gray-600"
           }
         >
           <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
@@ -137,14 +137,14 @@ export default function Toolbar({
           onClick={() => setIsLayersOpen(!isLayersOpen)}
           className={isLayersOpen
             ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm border-purple-500"
-            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
+            : "shadow-sm text-gray-300 border-gray-600"
           }
         >
           <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 bg-gray-800/95 rounded-md px-3 py-2 shadow-sm border border-gray-600">
+      <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
         <span className="text-xs text-gray-300 font-medium">Original</span>
         <div className="w-20">
           <Slider
@@ -159,7 +159,7 @@ export default function Toolbar({
         <span className="text-xs text-gray-300 min-w-[30px]">{layers.original.opacity}%</span>
       </div>
 
-      <div className="text-sm text-gray-300 bg-gray-800/95 px-2 py-1 rounded-md shadow-sm border border-gray-600">
+      <div className="text-sm text-gray-300 px-2 py-1 rounded-md shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
         {Math.round(viewTransform.scale * 100)}%
       </div>
     </div>

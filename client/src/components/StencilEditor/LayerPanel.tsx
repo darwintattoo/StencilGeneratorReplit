@@ -33,8 +33,8 @@ export default function LayerPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 top-0 h-full w-80 bg-gray-900 border-l border-gray-700 p-4 overflow-y-auto z-50">
-      <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-900 pb-2 z-50">
+    <div className="absolute right-0 top-0 h-full w-80 border-l border-gray-600 p-4 overflow-y-auto z-50" style={{ backgroundColor: '#1a1a1a' }}>
+      <div className="flex items-center justify-between mb-4 sticky top-0 pb-2 z-50" style={{ backgroundColor: '#1a1a1a' }}>
         <h3 className="text-white font-medium">Capas</h3>
         <Button
           variant="ghost"
@@ -47,7 +47,7 @@ export default function LayerPanel({
       </div>
 
       <div className="space-y-4">
-        <div className="bg-gray-800 rounded-lg p-3">
+        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
@@ -81,7 +81,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-3">
+        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
@@ -127,7 +127,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-3">
+        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-400" />
             <Switch
@@ -154,7 +154,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-3">
+        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch

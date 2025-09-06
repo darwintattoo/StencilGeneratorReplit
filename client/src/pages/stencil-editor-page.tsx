@@ -140,7 +140,7 @@ export default function StencilEditorPage() {
   // Si tenemos las imágenes, mostrar el editor
   if (originalImage && stencilImage) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="container mx-auto py-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-white">{t("stencil_editor") || "Editor de Stencil"}</h1>
