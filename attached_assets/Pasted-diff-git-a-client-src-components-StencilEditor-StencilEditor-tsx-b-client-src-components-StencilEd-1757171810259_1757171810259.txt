@@ -1,0 +1,57 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..963be1362cbe551cd0c06512cf39dbaa55480af4 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -505,51 +505,51 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     const touchList = Array.from(e.evt.touches) as Touch[];
+     setTouches(touchList);
+ 
+     if (touchList.length < 2) {
+       setLastPinchDistance(0);
+     }
+ 
+     if (touchList.length === 0) {
+       handleMouseUp();
+     }
+   };
+ 
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen bg-gray-100 relative flex">
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Stage
+           width={window.innerWidth - (isLayersOpen ? 320 : 0)}
+           height={window.innerHeight}
+           onMouseDown={handleMouseDown}
+-          onMousemove={handleMouseMove}
++          onMouseMove={handleMouseMove}
+           onMouseup={handleMouseUp}
+           onWheel={handleWheel}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
+           onTouchEnd={handleTouchEnd}
+           onDblTap={handleDoubleTap}
+           ref={stageRef}
+           scaleX={viewTransform.scale}
+           scaleY={viewTransform.scale}
+           x={viewTransform.x}
+           y={viewTransform.y}
+         >
+           {/* Layer Original */}
+           {layers.original.visible && (
+             <Layer opacity={layers.original.opacity / 100}>
+               {originalImg && (
+                 <KonvaImage
+                   image={originalImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+             </Layer>
+           )}
+ 

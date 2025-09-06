@@ -527,7 +527,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           width={window.innerWidth - (isLayersOpen ? 320 : 0)}
           height={window.innerHeight}
           onMouseDown={handleMouseDown}
-          onMousemove={handleMouseMove}
+          onMouseMove={handleMouseMove}
           onMouseup={handleMouseUp}
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
