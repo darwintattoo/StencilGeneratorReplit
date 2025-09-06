@@ -1,20 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-import { 
-  PenTool, 
-  Eraser, 
-  Layers, 
-  GripVertical,
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  Move
-} from 'lucide-react';
 import { useLocation } from 'wouter';
+import Canvas from './Canvas';
+import LayerPanel from './LayerPanel';
+import Toolbar from './Toolbar';
 
 // Colores disponibles para el dibujo - solo negro, rojo y azul
 const DRAWING_COLORS = [
@@ -41,7 +29,6 @@ function useStencilCanvas() {
     y: 0,
     scale: 1
   });
-
 
   const toggleLayer = (key: string, visible: boolean) => {
     setLayers(prev => ({
@@ -523,396 +510,59 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     <div className="h-screen bg-gray-100 relative flex">
       {/* Canvas principal */}
       <div className="flex-1 relative">
-        <Stage
-          width={window.innerWidth - (isLayersOpen ? 320 : 0)}
-          height={window.innerHeight}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseup={handleMouseUp}
-          onWheel={handleWheel}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onDblTap={handleDoubleTap}
-          ref={stageRef}
-          scaleX={viewTransform.scale}
-          scaleY={viewTransform.scale}
-          x={viewTransform.x}
-          y={viewTransform.y}
-        >
-          {/* Layer Original */}
-          {layers.original.visible && (
-            <Layer opacity={layers.original.opacity / 100}>
-              {originalImg && (
-                <KonvaImage
-                  image={originalImg}
-                  width={nativeSize.width}
-                  height={nativeSize.height}
-                />
-              )}
-            </Layer>
-          )}
+        <Canvas
+          stageRef={stageRef}
+          isLayersOpen={isLayersOpen}
+          viewTransform={viewTransform}
+          handleMouseDown={handleMouseDown}
+          handleMouseMove={handleMouseMove}
+          handleMouseUp={handleMouseUp}
+          handleWheel={handleWheel}
+          handleTouchStart={handleTouchStart}
+          handleTouchMove={handleTouchMove}
+          handleTouchEnd={handleTouchEnd}
+          handleDoubleTap={handleDoubleTap}
+          layers={layers}
+          originalImg={originalImg}
+          stencilImg={stencilImg}
+          filteredStencilImg={filteredStencilImg}
+          lines={lines}
+          brushColor={brushColor}
+          tool={tool}
+          brushSize={brushSize}
+          setBrushSize={setBrushSize}
+          eraserSize={eraserSize}
+          setEraserSize={setEraserSize}
+          nativeSize={nativeSize}
+        />
 
-          {/* Layer Stencil - Solo imagen de fondo */}
-          {layers.stencil.visible && (
-            <Layer opacity={layers.stencil.opacity / 100}>
-              {filteredStencilImg ? (
-                <KonvaImage
-                  image={filteredStencilImg}
-                  width={nativeSize.width}
-                  height={nativeSize.height}
-                />
-              ) : stencilImg ? (
-                <KonvaImage
-                  image={stencilImg}
-                  width={nativeSize.width}
-                  height={nativeSize.height}
-                />
-              ) : null}
-            </Layer>
-          )}
-
-          {/* Layer Drawing */}
-          {layers.drawing.visible && (
-            <Layer opacity={layers.drawing.opacity / 100}>
-              {lines.filter(line => line.layer === 'drawing').map((line, i) => (
-                <Line
-                  key={i}
-                  points={line.points}
-                  stroke={line.tool === 'brush' ? (line.color || brushColor) : '#ffffff'}
-                  strokeWidth={line.strokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation={line.globalCompositeOperation}
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                />
-              ))}
-            </Layer>
-          )}
-
-          {/* Layer Stencil Editable */}
-          {layers.stencil.visible && (
-            <Layer opacity={layers.stencil.opacity / 100}>
-              {stencilImg && (
-                <KonvaImage
-                  image={stencilImg}
-                  width={nativeSize.width}
-                  height={nativeSize.height}
-                />
-              )}
-              {lines.filter(line => line.layer === 'stencil').map((line, i) => (
-                <Line
-                  key={`stencil-${i}`}
-                  points={line.points}
-                  stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
-                  strokeWidth={line.strokeWidth}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  globalCompositeOperation={line.globalCompositeOperation}
-                  perfectDrawEnabled={true}
-                  shadowForStrokeEnabled={false}
-                />
-              ))}
-            </Layer>
-          )}
-        </Stage>
-
-        {/* Toolbar superior - estilo Procreate */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-40">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation('/')}
-            className="bg-white/90 hover:bg-white shadow-sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Galería
-          </Button>
-
-          {/* Herramientas principales */}
-          <div className="flex gap-2">
-            <Button
-              variant={tool === 'brush' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setTool('brush')}
-              className="bg-white/90 hover:bg-white shadow-sm"
-            >
-              <PenTool className="w-4 h-4" />
-            </Button>
-            
-            <Button
-              variant={tool === 'eraser' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setTool('eraser')}
-              className="bg-white/90 hover:bg-white shadow-sm"
-            >
-              <Eraser className="w-4 h-4" />
-            </Button>
-
-            {/* Selector de capa activa - solo visible cuando está el borrador */}
-            {tool === 'eraser' && (
-              <div className="flex gap-1 bg-white/90 rounded-md p-1 shadow-sm">
-                <Button
-                  variant={activeLayer === 'drawing' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveLayer('drawing')}
-                  className="text-xs px-2 py-1 h-auto"
-                >
-                  Dibujo
-                </Button>
-                <Button
-                  variant={activeLayer === 'stencil' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveLayer('stencil')}
-                  className="text-xs px-2 py-1 h-auto"
-                >
-                  Stencil
-                </Button>
-              </div>
-            )}
-
-            {/* Selector de color simplificado - visible cuando está el pincel */}
-            {tool === 'brush' && (
-              <div className="flex gap-2 bg-white/90 rounded-md p-2 shadow-sm">
-                {['#000000', '#ef4444', '#3b82f6'].map((color, index) => (
-                  <button
-                    key={color}
-                    onClick={() => setBrushColor(color)}
-                    className={`w-7 h-7 rounded-full border-2 ${
-                      brushColor === color ? 'border-gray-700 ring-2 ring-blue-400' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={['Negro', 'Rojo', 'Azul'][index]}
-                  />
-                ))}
-              </div>
-            )}
-
-            <Button
-              variant={tool === 'move' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setTool('move')}
-              className="bg-white/90 hover:bg-white shadow-sm"
-            >
-              <Move className="w-4 h-4" />
-            </Button>
-
-            <Button
-              variant={isLayersOpen ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setIsLayersOpen(!isLayersOpen)}
-              className="bg-white/90 hover:bg-white shadow-sm"
-            >
-              <Layers className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Control de opacidad de la imagen original */}
-          <div className="flex items-center gap-2 bg-white/90 rounded-md px-3 py-2 shadow-sm">
-            <span className="text-xs text-gray-600 font-medium">Original</span>
-            <div className="w-20">
-              <Slider
-                value={[layers.original.opacity]}
-                onValueChange={([value]) => setOpacity('original', value)}
-                max={100}
-                min={0}
-                step={1}
-                className="w-20"
-              />
-            </div>
-            <span className="text-xs text-gray-600 min-w-[30px]">{layers.original.opacity}%</span>
-          </div>
-
-          <div className="text-sm text-gray-600">
-            {Math.round(viewTransform.scale * 100)}%
-          </div>
-        </div>
-
-        {/* Brush size slider (izquierda) */}
-        {tool === 'brush' && (
-          <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-4 h-44 w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
-              <div className="transform -rotate-90 w-28 flex flex-col items-center">
-                <Slider
-                  value={[brushSize]}
-                  onValueChange={([value]) => setBrushSize(value)}
-                  max={30}
-                  min={1}
-                  step={1}
-                  className="w-28 mb-2"
-                />
-                <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
-                  {brushSize}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Eraser size slider (derecha) */}
-        {tool === 'eraser' && (
-          <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-30">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-4 h-44 w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
-              <div className="transform -rotate-90 w-28 flex flex-col items-center">
-                <Slider
-                  value={[eraserSize]}
-                  onValueChange={([value]) => setEraserSize(value)}
-                  max={100}
-                  min={1}
-                  step={1}
-                  className="w-28 mb-2"
-                />
-                <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
-                  {eraserSize}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <Toolbar
+          tool={tool}
+          setTool={setTool}
+          activeLayer={activeLayer}
+          setActiveLayer={setActiveLayer}
+          brushColor={brushColor}
+          setBrushColor={setBrushColor}
+          layers={layers}
+          setOpacity={setOpacity}
+          viewTransform={viewTransform}
+          isLayersOpen={isLayersOpen}
+          setIsLayersOpen={setIsLayersOpen}
+          onBack={() => setLocation('/')}
+        />
       </div>
 
-      {/* Panel de capas - estilo Procreate */}
-      {isLayersOpen && (
-        <div className="w-80 bg-gray-800 border-l border-gray-600 p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-800 pb-2 z-50">
-            <h3 className="text-white font-medium">Capas</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsLayersOpen(false)}
-              className="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 min-w-[32px] h-8"
-            >
-              ×
-            </Button>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Drawing Layer */}
-            <div className="bg-blue-600 rounded-lg p-3">
-              <div className="flex items-center gap-3 mb-2">
-                <GripVertical className="w-4 h-4 text-blue-200" />
-                <Switch
-                  checked={layers.drawing.visible}
-                  onCheckedChange={(checked) => toggleLayer('drawing', checked)}
-                />
-                <span className="text-white text-sm font-medium flex-1">Drawing</span>
-                <span className="text-blue-200 text-xs">N</span>
-                {layers.drawing.visible ? (
-                  <Eye className="w-4 h-4 text-blue-200" />
-                ) : (
-                  <EyeOff className="w-4 h-4 text-blue-200" />
-                )}
-              </div>
-              <div className="ml-7 space-y-3">
-                {/* Color Picker */}
-                <div>
-                  <div className="text-xs text-blue-200 mb-2">Color</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {DRAWING_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setBrushColor(color)}
-                        className={`w-6 h-6 rounded-full border-2 ${
-                          brushColor === color ? 'border-white' : 'border-blue-300'
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Stencil Layer */}
-            <div className="bg-red-600 rounded-lg p-3">
-              <div className="flex items-center gap-3 mb-2">
-                <GripVertical className="w-4 h-4 text-red-200" />
-                <Switch
-                  checked={layers.stencil.visible}
-                  onCheckedChange={(checked) => toggleLayer('stencil', checked)}
-                />
-                <span className="text-white text-sm font-medium flex-1">Stencil</span>
-                <span className="text-red-200 text-xs">N</span>
-                {layers.stencil.visible ? (
-                  <Eye className="w-4 h-4 text-red-200" />
-                ) : (
-                  <EyeOff className="w-4 h-4 text-red-200" />
-                )}
-              </div>
-              <div className="ml-7 mt-2">
-                <div className="text-xs text-red-200 mb-2">Color</div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setStencilHue(200)} // Valor más fuerte para negro
-                    className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 200 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
-                    }`}
-                    style={{ backgroundColor: '#000000' }}
-                    title="Negro"
-                  />
-                  <button
-                    onClick={() => setStencilHue(0)} // Rojo original
-                    className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 0 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
-                    }`}
-                    style={{ backgroundColor: '#ef4444' }}
-                    title="Rojo"
-                  />
-                  <button
-                    onClick={() => setStencilHue(220)} // Valor más fuerte para azul intenso
-                    className={`w-7 h-7 rounded-full border-2 ${
-                      stencilHue === 220 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
-                    }`}
-                    style={{ backgroundColor: '#3b82f6' }}
-                    title="Azul"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Original Layer */}
-            <div className="bg-gray-600 rounded-lg p-3">
-              <div className="flex items-center gap-3 mb-2">
-                <GripVertical className="w-4 h-4 text-gray-400" />
-                <Switch
-                  checked={layers.original.visible}
-                  onCheckedChange={(checked) => toggleLayer('original', checked)}
-                />
-                <span className="text-white text-sm font-medium flex-1">Original</span>
-                <span className="text-gray-400 text-xs">N</span>
-                {layers.original.visible ? (
-                  <Eye className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <EyeOff className="w-4 h-4 text-gray-400" />
-                )}
-              </div>
-              <div className="ml-7 mt-2">
-                <Slider
-                  value={[layers.original.opacity]}
-                  onValueChange={([value]) => setOpacity('original', value)}
-                  max={100}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* Color de fondo */}
-            <div className="bg-white rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4"></div>
-                <Switch checked={true} disabled />
-                <span className="text-gray-800 text-sm font-medium flex-1">Color de fondo</span>
-                <Eye className="w-4 h-4 text-gray-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <LayerPanel
+        isOpen={isLayersOpen}
+        layers={layers}
+        toggleLayer={toggleLayer}
+        setOpacity={setOpacity}
+        brushColor={brushColor}
+        setBrushColor={setBrushColor}
+        stencilHue={stencilHue}
+        setStencilHue={setStencilHue}
+        onClose={() => setIsLayersOpen(false)}
+      />
     </div>
   );
 }

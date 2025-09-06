@@ -60,7 +60,7 @@ export default function Canvas({
         height={window.innerHeight}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseup={handleMouseUp}
+        onMouseUp={handleMouseUp}
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
