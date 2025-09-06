@@ -37,6 +37,7 @@ interface CanvasProps {
   tempLineRef: React.RefObject<LineRef>;
   isErasingStencil: boolean;
   brushColor: string;
+  setBrushColor: (color: string) => void;
   tool: Tool;
   brushSize: number;
   setBrushSize: (size: number) => void;
@@ -69,6 +70,7 @@ export default function Canvas({
   tempLineRef,
   isErasingStencil,
   brushColor,
+  setBrushColor,
   tool,
   brushSize,
   setBrushSize,

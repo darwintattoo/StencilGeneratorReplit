@@ -296,6 +296,31 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
 
+    // Herramienta gotero para copiar colores
+    if (tool === 'eyedropper') {
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
+      
+      // Obtener el color del pixel en la posición del click
+      const canvas = stage.toCanvas();
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const imageData = ctx.getImageData(x * viewTransform.scale, y * viewTransform.scale, 1, 1);
+        const data = imageData.data;
+        const r = data[0];
+        const g = data[1];
+        const b = data[2];
+        
+        // Convertir RGB a formato hex
+        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        setBrushColor(hex);
+        
+        // Cambiar automáticamente a la herramienta brush
+        setTool('brush');
+      }
+      return;
+    }
+
     if (tool === 'brush' || tool === 'eraser') {
       // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
       const pointerEvent = e.evt as any;
@@ -617,6 +642,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           tempLineRef={tempLineRef}
           isErasingStencil={isErasingStencil}
           brushColor={brushColor}
+          setBrushColor={setBrushColor}
           tool={tool}
           brushSize={brushSize}
           setBrushSize={setBrushSize}
