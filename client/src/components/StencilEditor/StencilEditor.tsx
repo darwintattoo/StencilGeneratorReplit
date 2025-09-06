@@ -325,120 +325,53 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     if (tool === 'eyedropper') {
       e.evt.preventDefault();
       
-      try {
-        // Obtener el contenedor del stage para calcular coordenadas relativas
-        const stageContainer = stage.container();
-        const rect = stageContainer.getBoundingClientRect();
-        
-        // Capturar el stage completo
-        stage.toCanvas({
-          callback: (canvas: HTMLCanvasElement) => {
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              console.error('No se pudo obtener el contexto del canvas');
-              setTool('brush');
-              return;
-            }
+      // Capturar el stage completo para obtener todos los colores visibles
+      stage.toCanvas({
+        callback: (canvas: HTMLCanvasElement) => {
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setTool('brush');
+            return;
+          }
 
-            try {
-              // Coordenadas del mouse relativas al canvas
-              const x = Math.floor(pos.x);
-              const y = Math.floor(pos.y);
+          try {
+            // Obtener coordenadas exactas del click ajustadas al transform del stage
+            const transform = stage.getAbsoluteTransform().copy().invert();
+            const localPos = transform.point(pos);
+            
+            const x = Math.round(localPos.x);
+            const y = Math.round(localPos.y);
+            
+            // Verificar que estamos dentro de los límites
+            if (x >= 0 && y >= 0 && x < canvas.width && y < canvas.height) {
+              // Obtener el pixel exacto
+              const imageData = ctx.getImageData(x, y, 1, 1);
+              const data = imageData.data;
+              const r = data[0];
+              const g = data[1];
+              const b = data[2];
+              const a = data[3];
               
-              console.log('Sampling at coordinates:', { x, y, canvasSize: { width: canvas.width, height: canvas.height } });
-              
-              // Verificar límites del canvas
-              if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
-                console.log('Coordenadas fuera del canvas');
-                setTool('brush');
-                return;
-              }
-
-              // Muestrear un área de 3x3 píxeles para mejor detección
-              const sampleSize = 3;
-              const halfSample = Math.floor(sampleSize / 2);
-              
-              let totalR = 0, totalG = 0, totalB = 0, totalA = 0;
-              let validPixels = 0;
-              
-              for (let dy = -halfSample; dy <= halfSample; dy++) {
-                for (let dx = -halfSample; dx <= halfSample; dx++) {
-                  const sampleX = Math.max(0, Math.min(canvas.width - 1, x + dx));
-                  const sampleY = Math.max(0, Math.min(canvas.height - 1, y + dy));
-                  
-                  const imageData = ctx.getImageData(sampleX, sampleY, 1, 1);
-                  const data = imageData.data;
-                  
-                  if (data[3] > 10) { // Si el pixel no es completamente transparente
-                    totalR += data[0];
-                    totalG += data[1];
-                    totalB += data[2];
-                    totalA += data[3];
-                    validPixels++;
-                  }
-                }
-              }
-              
-              console.log('Valid pixels found:', validPixels);
-              
-              if (validPixels > 0) {
-                // Promediar los colores de los píxeles válidos
-                const r = Math.round(totalR / validPixels);
-                const g = Math.round(totalG / validPixels);
-                const b = Math.round(totalB / validPixels);
-                
-                // Convertir RGB a formato hex
+              // Si hay contenido visible, cambiar el color
+              if (a > 10) {
                 const hex = "#" + [r, g, b].map(x => {
                   const h = x.toString(16);
                   return h.length === 1 ? "0" + h : h;
                 }).join("");
                 
-                console.log('Color seleccionado:', hex, { r, g, b });
                 setBrushColor(hex);
-                
-                // Mostrar feedback visual
-                const toast = document.createElement('div');
-                toast.style.cssText = `
-                  position: fixed;
-                  top: 20%;
-                  left: 50%;
-                  transform: translate(-50%, -50%);
-                  background: ${hex};
-                  color: ${r + g + b > 382 ? '#000' : '#fff'};
-                  padding: 12px 24px;
-                  border-radius: 12px;
-                  border: 3px solid #fff;
-                  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-                  z-index: 10000;
-                  font-family: monospace;
-                  font-weight: bold;
-                  font-size: 16px;
-                `;
-                toast.textContent = `✓ ${hex}`;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                  if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                  }
-                }, 2000);
-              } else {
-                console.log('No se encontraron píxeles válidos');
               }
-              
-              // SIEMPRE volver a brush automáticamente
-              setTimeout(() => setTool('brush'), 100);
-              
-            } catch (error) {
-              console.error('Error al procesar el pixel:', error);
-              setTool('brush');
             }
-          },
-          pixelRatio: 1
-        });
-      } catch (error) {
-        console.error('Error al capturar el canvas:', error);
-        setTool('brush');
-      }
+            
+            // Cambiar automáticamente a brush
+            setTool('brush');
+            
+          } catch (error) {
+            setTool('brush');
+          }
+        },
+        pixelRatio: 1
+      });
       return;
     }
 
