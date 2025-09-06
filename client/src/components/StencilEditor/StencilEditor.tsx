@@ -583,9 +583,91 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   };
 
   return (
-    <div className="h-screen bg-gray-100 relative flex">
+    <div className="h-screen bg-gray-900 relative" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+      {/* Barra superior estilo Procreate */}
+      <div className="absolute top-0 left-0 right-0 z-50 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Herramientas izquierda */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLocation('/')}
+              className="text-gray-300 hover:text-white text-sm font-medium"
+            >
+              Galería
+            </button>
+            <button
+              onClick={() => setTool('brush')}
+              className={`p-2 rounded-lg transition-colors ${
+                tool === 'brush' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+              title="Pincel"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setTool('eraser')}
+              className={`p-2 rounded-lg transition-colors ${
+                tool === 'eraser' ? 'bg-red-500 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+              title="Borrador"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setTool('move')}
+              className={`p-2 rounded-lg transition-colors ${
+                tool === 'move' ? 'bg-green-500 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+              title="Mover"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Herramientas derecha */}
+          <div className="flex items-center gap-4">
+            {/* Colores de pincel */}
+            {tool === 'brush' && (
+              <div className="flex gap-2">
+                {['#000000', '#ef4444', '#3b82f6'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setBrushColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      brushColor === color ? 'border-white scale-110' : 'border-gray-600'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setIsLayersOpen(true)}
+              className={`p-2 rounded-lg transition-colors ${
+                isLayersOpen ? 'bg-purple-500 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+              title="Capas"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </button>
+            {/* Zoom indicator */}
+            <div className="text-sm text-gray-400 bg-gray-800 px-2 py-1 rounded">
+              {Math.round(viewTransform.scale * 100)}%
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* Canvas principal */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative pt-16">
         <Canvas
           stageRef={stageRef}
           isLayersOpen={isLayersOpen}
@@ -618,20 +700,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           canvasSize={canvasSize}
         />
 
-        <Toolbar
-          tool={tool}
-          setTool={setTool}
-          activeLayer={activeLayer}
-          setActiveLayer={setActiveLayer}
-          brushColor={brushColor}
-          setBrushColor={setBrushColor}
-          layers={layers}
-          setOpacity={setOpacity}
-          viewTransform={viewTransform}
-          isLayersOpen={isLayersOpen}
-          setIsLayersOpen={setIsLayersOpen}
-          onBack={() => setLocation('/')}
-        />
+        {/* Toolbar ahora integrado en la barra superior */}
       </div>
 
       <LayerPanel
