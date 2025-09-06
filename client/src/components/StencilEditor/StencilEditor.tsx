@@ -99,7 +99,20 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [lines, setLines] = useState<any[]>([]);
+  const [drawingLines, setDrawingLines] = useState<any[]>([]);
+  const [stencilLines, setStencilLines] = useState<any[]>([]);
+  const drawingPointsRef = useRef<number[]>([]);
+  const currentLineRef = useRef<any>(null);
+  const frameRef = useRef<number>(0);
+  const tempLineRef = useRef<any>(null);
+
+  const updateTempLine = () => {
+    if (tempLineRef.current) {
+      tempLineRef.current.points(drawingPointsRef.current);
+      tempLineRef.current.getLayer()?.batchDraw();
+    }
+    frameRef.current = requestAnimationFrame(updateTempLine);
+  };
   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
@@ -300,15 +313,18 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         return;
       }
       
-      const newLine = {
+      const color = tool === 'brush'
+        ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
+        : '#ffffff';
+      currentLineRef.current = {
         tool,
-        points: [adjustedPos.x, adjustedPos.y],
         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
         layer: activeLayer,
-        color: tool === 'brush' ? brushColor : '#ffffff'
+        color
       };
-      setLines([...lines, newLine]);
+      drawingPointsRef.current = [adjustedPos.x, adjustedPos.y];
+      frameRef.current = requestAnimationFrame(updateTempLine);
     }
   };
 
@@ -350,17 +366,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
     
-    const newLines = [...lines];
-    const lastLine = newLines[newLines.length - 1];
-    lastLine.points = lastLine.points.concat([adjustedPos.x, adjustedPos.y]);
-    setLines(newLines);
+    drawingPointsRef.current.push(adjustedPos.x, adjustedPos.y);
   };
 
   const handleMouseUp = () => {
     setIsDrawing(false);
     setIsPanning(false);
 
-    
+    if (currentLineRef.current) {
+      const newLine = { ...currentLineRef.current, points: [...drawingPointsRef.current] };
+      if (currentLineRef.current.layer === 'drawing') {
+        setDrawingLines(prev => [...prev, newLine]);
+      } else {
+        setStencilLines(prev => [...prev, newLine]);
+      }
+    }
+    cancelAnimationFrame(frameRef.current);
+    drawingPointsRef.current = [];
+    currentLineRef.current = null;
+
     // Finalizar borrado de stencil con restauración del contexto
     if (isErasingStencil && stencilCanvas) {
       // Restaurar contexto una sola vez al final
@@ -526,7 +550,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           originalImg={originalImg}
           stencilImg={stencilImg}
           filteredStencilImg={filteredStencilImg}
-          lines={lines}
+          drawingLines={drawingLines}
+          stencilLines={stencilLines}
+          currentLineRef={currentLineRef}
+          drawingPointsRef={drawingPointsRef}
+          tempLineRef={tempLineRef}
+          isErasingStencil={isErasingStencil}
           brushColor={brushColor}
           tool={tool}
           brushSize={brushSize}
