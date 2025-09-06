@@ -585,15 +585,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   return (
     <div className="h-screen relative flex" style={{
-      backgroundColor: '#2a2a2a',
-      backgroundImage: `
-        linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
-      `,
-      backgroundSize: '24px 24px'
+      backgroundColor: '#2a2a2a'
     }}>
       {/* Canvas principal */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative flex items-center justify-center">
         <Canvas
           stageRef={stageRef}
           isLayersOpen={isLayersOpen}
