@@ -37,10 +37,6 @@ export default function Navigation() {
         <div className="flex items-center space-x-4">
           {user && (
             <>
-              <Link href="/" className="flex items-center hover:text-blue-400 transition">
-                <Edit3 className="h-4 w-4 mr-1" />
-                <span className="text-sm">{t("nav.editor") || "Editor"}</span>
-              </Link>
               <Link href="/my-stencils" className="flex items-center hover:text-blue-400 transition">
                 <span className="text-sm mr-2">{t("nav.mystencils")}</span>
               </Link>

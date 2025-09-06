@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { Stencil } from "@shared/schema";
-import { Loader2 } from "lucide-react";
-import { Link } from "wouter";
+import { Loader2, Edit3 } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import Navigation from "@/components/layout/Navigation";
 
 // Componente para mostrar un stencil individual
 function StencilCard({ stencil }: { stencil: Stencil }) {
+  const [, setLocation] = useLocation();
   return (
     <Card className="overflow-hidden">
       <CardHeader className="p-4">
@@ -39,12 +40,27 @@ function StencilCard({ stencil }: { stencil: Stencil }) {
           <span>{new Date(stencil.createdAt).toLocaleDateString()}</span>
         </div>
         <div className="flex gap-2 w-full mt-2">
-          <Button variant="outline" className="w-full" asChild>
+          <Button variant="outline" className="flex-1" asChild>
             <a href={stencil.imageUrl} target="_blank" rel="noopener noreferrer">Ver</a>
           </Button>
-          <Button variant="outline" className="w-full" asChild>
+          <Button variant="outline" className="flex-1" asChild>
             <a href={stencil.imageUrl} download={`stencil-${stencil.id}.png`}>Descargar</a>
           </Button>
+          {stencil.originalImageUrl && (
+            <Button 
+              variant="default" 
+              className="flex-1"
+              onClick={() => {
+                const params = new URLSearchParams();
+                params.set('original', stencil.originalImageUrl!);
+                params.set('stencil', stencil.imageUrl);
+                setLocation(`/editor?${params.toString()}`);
+              }}
+            >
+              <Edit3 className="h-4 w-4 mr-1" />
+              Editar
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>
