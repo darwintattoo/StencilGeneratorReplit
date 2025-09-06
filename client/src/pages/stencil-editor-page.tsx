@@ -11,24 +11,23 @@ export default function StencilEditorPage() {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Para demo, usar imágenes por defecto si existen
+  // Cargar imágenes por defecto automáticamente
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const originalUrl = searchParams.get('original');
-    const stencilUrl = searchParams.get('stencil');
+    const loadDefaultImages = async () => {
+      try {
+        // Importar las imágenes usando el alias @assets
+        const originalImageModule = await import('@assets/generated-image-611_1757180752401.png');
+        const stencilImageModule = await import('@assets/stencil-steven-2025-09-06_1757180752401.png');
+        
+        setOriginalImage(originalImageModule.default);
+        setStencilImage(stencilImageModule.default);
+      } catch (error) {
+        console.error('Error loading default images:', error);
+        // Si no se pueden cargar, mantener null para mostrar el upload
+      }
+    };
     
-    if (originalUrl && stencilUrl) {
-      const convertAssetPath = (path: string) => {
-        if (path.startsWith('@assets/')) {
-          const assetPath = path.replace('@assets/', '');
-          return new URL(`../assets/${assetPath}`, import.meta.url).href;
-        }
-        return path;
-      };
-      
-      setOriginalImage(convertAssetPath(originalUrl));
-      setStencilImage(convertAssetPath(stencilUrl));
-    }
+    loadDefaultImages();
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,7 +142,6 @@ export default function StencilEditorPage() {
         <StencilEditor
           originalImage={originalImage}
           stencilImage={stencilImage}
-          onSave={handleSaveStencil}
         />
       </div>
     </div>
