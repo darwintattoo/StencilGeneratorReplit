@@ -1,0 +1,216 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..988c096782df07281729cf4d721215c3f4a4429f 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -1,40 +1,41 @@
+ import React, { useState, useRef, useEffect } from 'react';
+ import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
+ import { Button } from '@/components/ui/button';
+ import { Slider } from '@/components/ui/slider';
+ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+ import { Switch } from '@/components/ui/switch';
+ import { 
+   PenTool, 
+   Eraser, 
+   Layers, 
+   GripVertical,
+   ArrowLeft,
+   Eye,
+   EyeOff,
+-  Move
++  Move,
++  Save
+ } from 'lucide-react';
+ import { useLocation } from 'wouter';
+ 
+ // Colores disponibles para el dibujo - solo negro, rojo y azul
+ const DRAWING_COLORS = [
+   '#000000', // Negro
+   '#ef4444', // Rojo
+   '#3b82f6', // Azul
+ ];
+ 
+ // Hook personalizado para manejar la lógica del canvas
+ function useStencilCanvas() {
+   const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
+   const [brushSize, setBrushSize] = useState(4);
+   const [eraserSize, setEraserSize] = useState(10);
+   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
+   const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
+   const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
+   const [layers, setLayers] = useState({
+     drawing: { visible: true, opacity: 100 },
+     stencil: { visible: true, opacity: 100 },
+     original: { visible: true, opacity: 20 }
+   });
+   const [viewTransform, setViewTransform] = useState({
+     x: 0,
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..988c096782df07281729cf4d721215c3f4a4429f 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -82,70 +83,77 @@ function useStencilCanvas() {
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
++  onSave?: (editedImageUrl: string) => void;
+ }
+ 
+-export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
++export default function StencilEditor({ originalImage, stencilImage, onSave }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<any>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState(false);
+   const [lines, setLines] = useState<any[]>([]);
+   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState(false);
+   const [touches, setTouches] = useState<Touch[]>([]);
+   const [lastPinchDistance, setLastPinchDistance] = useState(0);
+   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+ 
++  const handleSave = () => {
++    if (!stageRef.current || !onSave) return;
++    const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
++    onSave(uri);
++  };
++
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
+   // Cargar imágenes en resolución nativa
+   useEffect(() => {
+     if (stencilImage) {
+       const img = new window.Image();
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..988c096782df07281729cf4d721215c3f4a4429f 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -600,59 +608,72 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+                   image={stencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+               {lines.filter(line => line.layer === 'stencil').map((line, i) => (
+                 <Line
+                   key={`stencil-${i}`}
+                   points={line.points}
+                   stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
+                   strokeWidth={line.strokeWidth}
+                   tension={0.5}
+                   lineCap="round"
+                   lineJoin="round"
+                   globalCompositeOperation={line.globalCompositeOperation}
+                   perfectDrawEnabled={true}
+                   shadowForStrokeEnabled={false}
+                 />
+               ))}
+             </Layer>
+           )}
+         </Stage>
+ 
+         {/* Toolbar superior - estilo Procreate */}
+         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-40">
+-          <Button
+-            variant="ghost"
+-            size="sm"
+-            onClick={() => setLocation('/')}
+-            className="bg-white/90 hover:bg-white shadow-sm"
+-          >
+-            <ArrowLeft className="w-4 h-4 mr-2" />
+-            Galería
+-          </Button>
++          <div className="flex items-center gap-2">
++            <Button
++              variant="ghost"
++              size="sm"
++              onClick={() => setLocation('/')}
++              className="bg-white/90 hover:bg-white shadow-sm"
++            >
++              <ArrowLeft className="w-4 h-4 mr-2" />
++              Galería
++            </Button>
++            {onSave && (
++              <Button
++                variant="default"
++                size="sm"
++                onClick={handleSave}
++                className="bg-white/90 hover:bg-white shadow-sm"
++              >
++                <Save className="w-4 h-4 mr-2" />
++                Guardar
++              </Button>
++            )}
++          </div>
+ 
+           {/* Herramientas principales */}
+           <div className="flex gap-2">
+             <Button
+               variant={tool === 'brush' ? 'default' : 'ghost'}
+               size="sm"
+               onClick={() => setTool('brush')}
+               className="bg-white/90 hover:bg-white shadow-sm"
+             >
+               <PenTool className="w-4 h-4" />
+             </Button>
+             
+             <Button
+               variant={tool === 'eraser' ? 'default' : 'ghost'}
+               size="sm"
+               onClick={() => setTool('eraser')}
+               className="bg-white/90 hover:bg-white shadow-sm"
+             >
+               <Eraser className="w-4 h-4" />
+             </Button>
+ 
+             {/* Selector de capa activa - solo visible cuando está el borrador */}
+             {tool === 'eraser' && (
+               <div className="flex gap-1 bg-white/90 rounded-md p-1 shadow-sm">
+                 <Button
