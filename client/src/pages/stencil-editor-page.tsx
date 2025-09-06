@@ -140,20 +140,28 @@ export default function StencilEditorPage() {
   // Si tenemos las imágenes, mostrar el editor
   if (originalImage && stencilImage) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">{t("stencil_editor") || "Editor de Stencil"}</h1>
-          <Button variant="outline" onClick={() => setLocation('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("back") || "Volver"}
-          </Button>
+      <div className="min-h-screen bg-gray-900" style={{
+        backgroundImage: `
+          linear-gradient(rgba(55, 65, 81, 0.3) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(55, 65, 81, 0.3) 1px, transparent 1px)
+        `,
+        backgroundSize: '20px 20px'
+      }}>
+        <div className="container mx-auto py-8">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-white">{t("stencil_editor") || "Editor de Stencil"}</h1>
+            <Button variant="outline" onClick={() => setLocation('/')} className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("back") || "Volver"}
+            </Button>
+          </div>
+          
+          <StencilEditor
+            originalImage={originalImage}
+            stencilImage={stencilImage}
+            onSave={handleSaveStencil}
+          />
         </div>
-        
-        <StencilEditor
-          originalImage={originalImage}
-          stencilImage={stencilImage}
-          onSave={handleSaveStencil}
-        />
       </div>
     );
   }
