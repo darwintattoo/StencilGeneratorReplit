@@ -323,26 +323,55 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     // Herramienta gotero para copiar colores
     if (tool === 'eyedropper') {
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const { x, y } = transform.point(pos);
+      // Obtener coordenadas relativas al stage
+      const stageBox = stage.container().getBoundingClientRect();
+      const stageX = pos.x;
+      const stageY = pos.y;
       
-      // Obtener el color del pixel en la posición del click
-      const canvas = stage.toCanvas();
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const imageData = ctx.getImageData(x * viewTransform.scale, y * viewTransform.scale, 1, 1);
-        const data = imageData.data;
-        const r = data[0];
-        const g = data[1];
-        const b = data[2];
-        
-        // Convertir RGB a formato hex
-        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        setBrushColor(hex);
-        
-        // Cambiar automáticamente a la herramienta brush
-        setTool('brush');
-      }
+      // Crear un canvas temporal para capturar el contenido del stage
+      stage.toCanvas({
+        callback: (canvas: HTMLCanvasElement) => {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            try {
+              // Obtener el pixel en las coordenadas del click
+              const imageData = ctx.getImageData(stageX, stageY, 1, 1);
+              const data = imageData.data;
+              const r = data[0];
+              const g = data[1];
+              const b = data[2];
+              const a = data[3];
+              
+              console.log('Pixel data:', { r, g, b, a, x: stageX, y: stageY });
+              
+              // Solo cambiar color si el pixel no es transparente
+              if (a > 0) {
+                // Convertir RGB a formato hex
+                const hex = "#" + [r, g, b].map(x => {
+                  const h = x.toString(16);
+                  return h.length === 1 ? "0" + h : h;
+                }).join("");
+                
+                console.log('Color seleccionado:', hex);
+                setBrushColor(hex);
+              } else {
+                console.log('Pixel transparente, manteniendo color actual');
+              }
+              
+              // Cambiar automáticamente a la herramienta brush
+              setTool('brush');
+            } catch (error) {
+              console.error('Error al obtener color:', error);
+              // Si hay error, usar color por defecto
+              setBrushColor('#ef4444');
+              setTool('brush');
+            }
+          }
+        },
+        width: canvasSize.width,
+        height: canvasSize.height,
+        pixelRatio: 1
+      });
       return;
     }
 

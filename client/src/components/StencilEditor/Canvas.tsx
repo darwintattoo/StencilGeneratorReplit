@@ -288,7 +288,7 @@ export default function Canvas({
               <Line
                 key={`stencil-${i}`}
                 points={line.points}
-                stroke={adjustColor(line.baseColor || line.color, stencilHue, stencilSaturation)}
+                stroke={adjustColor(line.baseColor || line.color, stencilHue, stencilSaturation, stencilBrightness)}
                 strokeWidth={line.strokeWidth}
                 tension={0.5}
                 lineCap="round"
@@ -302,7 +302,7 @@ export default function Canvas({
               <Line
                 ref={tempLineRef}
                 points={drawingPointsRef.current || []}
-                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', stencilHue, stencilSaturation)}
+                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', stencilHue, stencilSaturation, stencilBrightness)}
                 strokeWidth={currentLineRef.current?.strokeWidth}
                 tension={0.5}
                 lineCap="round"
