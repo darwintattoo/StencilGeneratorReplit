@@ -296,6 +296,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
 
     if (tool === 'brush' || tool === 'eraser') {
+      // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+      const pointerEvent = e.evt as any;
+      if (pointerEvent.pointerType === 'touch') {
+        return;
+      }
       setIsDrawing(true);
       const transform = stage.getAbsoluteTransform().copy().invert();
       const { x, y } = transform.point(pos);
@@ -362,6 +367,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
 
     if (!isDrawing) return;
+    
+    // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+    const pointerEvent = e.evt as any;
+    if (pointerEvent.pointerType === 'touch') {
+      return;
+    }
     const transform = stage.getAbsoluteTransform().copy().invert();
     const { x, y } = transform.point(pos);
 
