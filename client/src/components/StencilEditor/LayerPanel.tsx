@@ -154,12 +154,30 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-3">
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4" />
-            <Switch checked={true} disabled />
-            <span className="text-gray-800 text-sm font-medium flex-1">Color de fondo</span>
-            <Eye className="w-4 h-4 text-gray-600" />
+        <div className="bg-gray-600 rounded-lg p-3">
+          <div className="flex items-center gap-3 mb-2">
+            <GripVertical className="w-4 h-4 text-gray-300" />
+            <Switch
+              checked={layers.background.visible}
+              onCheckedChange={(checked) => toggleLayer('background', checked)}
+            />
+            <span className="text-white text-sm font-medium flex-1">Color de fondo</span>
+            <span className="text-gray-300 text-xs">N</span>
+            {layers.background.visible ? (
+              <Eye className="w-4 h-4 text-gray-300" />
+            ) : (
+              <EyeOff className="w-4 h-4 text-gray-300" />
+            )}
+          </div>
+          <div className="ml-7 mt-2">
+            <Slider
+              value={[layers.background.opacity]}
+              onValueChange={([value]) => setOpacity('background', value)}
+              max={100}
+              min={0}
+              step={1}
+              className="w-full"
+            />
           </div>
         </div>
       </div>

@@ -31,6 +31,7 @@ export interface LayersState {
   drawing: LayerState;
   stencil: LayerState;
   original: LayerState;
+  background: LayerState;
 }
 
 export interface TouchCenter {

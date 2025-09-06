@@ -41,7 +41,8 @@ function useStencilCanvas() {
   const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
-    original: { visible: true, opacity: 20 }
+    original: { visible: true, opacity: 20 },
+    background: { visible: true, opacity: 100 }
   });
   const [viewTransform, setViewTransform] = useState<ViewTransform>({
     x: 0,
