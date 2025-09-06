@@ -1,0 +1,324 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..749850a3f511af5947e061e8b5e016214f320f58 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -17,131 +17,148 @@ import {
+ import { useLocation } from 'wouter';
+ 
+ // Colores disponibles para el dibujo - solo negro, rojo y azul
+ const DRAWING_COLORS = [
+   '#000000', // Negro
+   '#ef4444', // Rojo
+   '#3b82f6', // Azul
+ ];
+ 
+ // Hook personalizado para manejar la lógica del canvas
+ function useStencilCanvas() {
+   const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
+   const [brushSize, setBrushSize] = useState(4);
+   const [eraserSize, setEraserSize] = useState(10);
+   const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
+   const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
+   const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
+   const [layers, setLayers] = useState({
+     drawing: { visible: true, opacity: 100 },
+     stencil: { visible: true, opacity: 100 },
+     original: { visible: true, opacity: 20 }
+   });
+   const [viewTransform, setViewTransform] = useState({
+     x: 0,
+     y: 0,
+-    scale: 1
++    scale: 1,
++    rotation: 0
+   });
+ 
+ 
+   const toggleLayer = (key: string, visible: boolean) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], visible }
+     }));
+   };
+ 
+   const setOpacity = (key: string, opacity: number) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], opacity }
+     }));
+   };
+ 
+-  const handleGesture = (type: 'pan' | 'pinch', data: any) => {
++  const handleGesture = (type: 'pan' | 'pinch' | 'rotate', data: any) => {
+     if (type === 'pan') {
+       setViewTransform(prev => ({
+         ...prev,
+         x: prev.x + data.deltaX,
+         y: prev.y + data.deltaY
+       }));
+     } else if (type === 'pinch') {
+       const newScale = Math.max(0.1, Math.min(5, data.scale));
+       setViewTransform(prev => ({
+         ...prev,
+         scale: newScale,
+         x: data.centerX - (data.centerX - prev.x) * (newScale / prev.scale),
+         y: data.centerY - (data.centerY - prev.y) * (newScale / prev.scale)
+       }));
++    } else if (type === 'rotate') {
++      setViewTransform(prev => {
++        const angleRad = (data.deltaRotation * Math.PI) / 180;
++        const cos = Math.cos(angleRad);
++        const sin = Math.sin(angleRad);
++        const x = prev.x - data.centerX;
++        const y = prev.y - data.centerY;
++
++        return {
++          ...prev,
++          rotation: prev.rotation + data.deltaRotation,
++          x: data.centerX + x * cos - y * sin,
++          y: data.centerY + x * sin + y * cos
++        };
++      });
+     }
+   };
+ 
+   const resetView = () => {
+-    setViewTransform({ x: 0, y: 0, scale: 1 });
++    setViewTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
+   };
+ 
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<any>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState(false);
+   const [lines, setLines] = useState<any[]>([]);
+   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState(false);
+   const [touches, setTouches] = useState<Touch[]>([]);
+   const [lastPinchDistance, setLastPinchDistance] = useState(0);
+   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
++  const [lastAngle, setLastAngle] = useState(0);
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..749850a3f511af5947e061e8b5e016214f320f58 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -426,141 +443,160 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     const oldScale = viewTransform.scale;
+     const pointer = stage.getPointerPosition();
+ 
+     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+     handleGesture('pinch', {
+       scale: Math.max(0.1, Math.min(5, newScale)),
+       centerX: pointer.x,
+       centerY: pointer.y
+     });
+   };
+ 
+   // Funciones para gestos táctiles
+   const getDistance = (touch1: Touch, touch2: Touch) => {
+     const dx = touch1.clientX - touch2.clientX;
+     const dy = touch1.clientY - touch2.clientY;
+     return Math.sqrt(dx * dx + dy * dy);
+   };
+ 
+   const getCenter = (touch1: Touch, touch2: Touch) => {
+     return {
+       x: (touch1.clientX + touch2.clientX) / 2,
+       y: (touch1.clientY + touch2.clientY) / 2
+     };
+   };
+ 
++  const getAngle = (touch1: Touch, touch2: Touch) => {
++    const dx = touch2.clientX - touch1.clientX;
++    const dy = touch2.clientY - touch1.clientY;
++    return (Math.atan2(dy, dx) * 180) / Math.PI;
++  };
++
+   const handleTouchStart = (e: any) => {
+     const touchList = Array.from(e.evt.touches) as Touch[];
+     setTouches(touchList);
+ 
+     if (touchList.length === 2) {
+-      // Inicio de pinch
++      // Inicio de pinch/rotación
+       const distance = getDistance(touchList[0], touchList[1]);
+       const center = getCenter(touchList[0], touchList[1]);
++      const angle = getAngle(touchList[0], touchList[1]);
+       setLastPinchDistance(distance);
+       setLastTouchCenter(center);
++      setLastAngle(angle);
+       setIsPanning(false);
+       setIsDrawing(false);
+     } else if (touchList.length === 1) {
+       // Toque único - dibujo o pan
+       handleMouseDown(e);
+     }
+   };
+ 
+   const handleTouchMove = (e: any) => {
+     e.evt.preventDefault();
+     const touchList = Array.from(e.evt.touches) as Touch[];
+ 
+     if (touchList.length === 2) {
+-      // Pinch zoom y pan con dos dedos
++      // Pinch zoom, pan y rotación con dos dedos
+       const distance = getDistance(touchList[0], touchList[1]);
+       const center = getCenter(touchList[0], touchList[1]);
++      const angle = getAngle(touchList[0], touchList[1]);
+ 
+       if (lastPinchDistance > 0) {
+         // Zoom
+         const scale = distance / lastPinchDistance;
+         const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
+-        
++
+         // Pan
+         const deltaX = center.x - lastTouchCenter.x;
+         const deltaY = center.y - lastTouchCenter.y;
+ 
++        // Rotación
++        const deltaRotation = angle - lastAngle;
++
+         handleGesture('pinch', {
+           scale: newScale,
+           centerX: center.x,
+           centerY: center.y
+         });
+ 
+         handleGesture('pan', { deltaX, deltaY });
++        handleGesture('rotate', {
++          deltaRotation,
++          centerX: center.x,
++          centerY: center.y
++        });
+       }
+ 
+       setLastPinchDistance(distance);
+       setLastTouchCenter(center);
++      setLastAngle(angle);
+     } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
+       // Dibujo con un dedo
+       handleMouseMove(e);
+     }
+   };
+ 
+   const handleTouchEnd = (e: any) => {
+     const touchList = Array.from(e.evt.touches) as Touch[];
+     setTouches(touchList);
+ 
+     if (touchList.length < 2) {
+       setLastPinchDistance(0);
+     }
+ 
+     if (touchList.length === 0) {
+       handleMouseUp();
+     }
+   };
+ 
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen bg-gray-100 relative flex">
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Stage
+           width={window.innerWidth - (isLayersOpen ? 320 : 0)}
+           height={window.innerHeight}
+           onMouseDown={handleMouseDown}
+           onMousemove={handleMouseMove}
+           onMouseup={handleMouseUp}
+           onWheel={handleWheel}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
+           onTouchEnd={handleTouchEnd}
+           onDblTap={handleDoubleTap}
+           ref={stageRef}
+           scaleX={viewTransform.scale}
+           scaleY={viewTransform.scale}
+           x={viewTransform.x}
+           y={viewTransform.y}
++          rotation={viewTransform.rotation}
+         >
+           {/* Layer Original */}
+           {layers.original.visible && (
+             <Layer opacity={layers.original.opacity / 100}>
+               {originalImg && (
+                 <KonvaImage
+                   image={originalImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+             </Layer>
+           )}
+ 
+           {/* Layer Stencil - Solo imagen de fondo */}
+           {layers.stencil.visible && (
+             <Layer opacity={layers.stencil.opacity / 100}>
+               {filteredStencilImg ? (
+                 <KonvaImage
+                   image={filteredStencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               ) : stencilImg ? (
+                 <KonvaImage

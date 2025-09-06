@@ -95,6 +95,7 @@ export default function Canvas({
         scaleY={viewTransform.scale}
         x={viewTransform.x}
         y={viewTransform.y}
+        rotation={viewTransform.rotation}
       >
         {layers.original.visible && (
           <Layer opacity={layers.original.opacity / 100}>

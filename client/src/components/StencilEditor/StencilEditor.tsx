@@ -19,7 +19,8 @@ import type {
   StageRef,
   LineRef,
   PanGestureData,
-  PinchGestureData
+  PinchGestureData,
+  RotateGestureData
 } from './types';
 
 // Colores disponibles para el dibujo - solo negro, rojo y azul
@@ -45,7 +46,8 @@ function useStencilCanvas() {
   const [viewTransform, setViewTransform] = useState<ViewTransform>({
     x: 0,
     y: 0,
-    scale: 1
+    scale: 1,
+    rotation: 0
   });
 
   const toggleLayer = (key: string, visible: boolean) => {
@@ -62,7 +64,7 @@ function useStencilCanvas() {
     }));
   };
 
-  const handleGesture = (type: 'pan' | 'pinch', data: PanGestureData | PinchGestureData) => {
+  const handleGesture = (type: 'pan' | 'pinch' | 'rotate', data: PanGestureData | PinchGestureData | RotateGestureData) => {
     if (type === 'pan') {
       const panData = data as PanGestureData;
       setViewTransform(prev => ({
@@ -79,11 +81,27 @@ function useStencilCanvas() {
         x: pinchData.centerX - (pinchData.centerX - prev.x) * (newScale / prev.scale),
         y: pinchData.centerY - (pinchData.centerY - prev.y) * (newScale / prev.scale)
       }));
+    } else if (type === 'rotate') {
+      const rotateData = data as RotateGestureData;
+      setViewTransform(prev => {
+        const angleRad = (rotateData.deltaRotation * Math.PI) / 180;
+        const cos = Math.cos(angleRad);
+        const sin = Math.sin(angleRad);
+        const x = prev.x - rotateData.centerX;
+        const y = prev.y - rotateData.centerY;
+
+        return {
+          ...prev,
+          rotation: prev.rotation + rotateData.deltaRotation,
+          x: rotateData.centerX + x * cos - y * sin,
+          y: rotateData.centerY + x * sin + y * cos
+        };
+      });
     }
   };
 
   const resetView = () => {
-    setViewTransform({ x: 0, y: 0, scale: 1 });
+    setViewTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
   };
 
   return {
@@ -140,6 +158,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const touchesRef = useRef<Touch[]>([]);
   const lastPinchDistanceRef = useRef<number>(0);
   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+  const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
@@ -468,16 +487,24 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     };
   };
 
+  const getAngle = (touch1: Touch, touch2: Touch): number => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
+  };
+
   const handleTouchStart = (e: KonvaTouchEvent) => {
     const touchList = Array.from(e.evt.touches) as Touch[];
     touchesRef.current = touchList;
 
     if (touchList.length === 2) {
-      // Inicio de pinch
+      // Inicio de pinch/rotación
       const distance = getDistance(touchList[0], touchList[1]);
       const center = getCenter(touchList[0], touchList[1]);
+      const angle = getAngle(touchList[0], touchList[1]);
       lastPinchDistanceRef.current = distance;
       lastTouchCenterRef.current = center;
+      lastAngleRef.current = angle;
       setIsPanning(false);
       setIsDrawing(false);
     } else if (touchList.length === 1) {
@@ -492,9 +519,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     touchesRef.current = touchList;
 
     if (touchList.length === 2) {
-      // Pinch zoom y pan con dos dedos
+      // Pinch zoom, pan y rotación con dos dedos
       const distance = getDistance(touchList[0], touchList[1]);
       const center = getCenter(touchList[0], touchList[1]);
+      const angle = getAngle(touchList[0], touchList[1]);
 
       if (lastPinchDistanceRef.current > 0) {
         // Zoom
@@ -505,6 +533,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const deltaX = center.x - lastTouchCenterRef.current.x;
         const deltaY = center.y - lastTouchCenterRef.current.y;
 
+        // Rotación
+        const deltaRotation = angle - lastAngleRef.current;
+
         handleGesture('pinch', {
           scale: newScale,
           centerX: center.x,
@@ -512,10 +543,16 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         });
 
         handleGesture('pan', { deltaX, deltaY });
+        handleGesture('rotate', {
+          deltaRotation,
+          centerX: center.x,
+          centerY: center.y
+        });
       }
 
       lastPinchDistanceRef.current = distance;
       lastTouchCenterRef.current = center;
+      lastAngleRef.current = angle;
     } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
       // Dibujo con un dedo
       handleMouseMove(e);
@@ -528,6 +565,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (touchList.length < 2) {
       lastPinchDistanceRef.current = 0;
+      lastAngleRef.current = 0;
     }
 
     if (touchList.length === 0) {

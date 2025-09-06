@@ -19,6 +19,7 @@ export interface ViewTransform {
   x: number;
   y: number;
   scale: number;
+  rotation: number;
 }
 
 export interface LayerState {
@@ -69,4 +70,10 @@ export interface PinchGestureData {
   centerY: number;
 }
 
-export type GestureData = PanGestureData | PinchGestureData;
+export interface RotateGestureData {
+  deltaRotation: number;
+  centerX: number;
+  centerY: number;
+}
+
+export type GestureData = PanGestureData | PinchGestureData | RotateGestureData;
