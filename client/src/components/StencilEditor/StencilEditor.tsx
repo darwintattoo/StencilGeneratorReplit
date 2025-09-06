@@ -41,6 +41,8 @@ function useStencilCanvas() {
   const [stencilSaturation, setStencilSaturation] = useState<number>(100); // Control de saturación para stencil
   const [drawingHue, setDrawingHue] = useState<number>(0); // Control de tono para drawing
   const [drawingSaturation, setDrawingSaturation] = useState<number>(100); // Control de saturación para drawing
+  const [drawingBrightness, setDrawingBrightness] = useState<number>(100); // Control de brillo para drawing
+  const [stencilBrightness, setStencilBrightness] = useState<number>(100); // Control de brillo para stencil
   const [isColorLinked, setIsColorLinked] = useState<boolean>(true); // Control para enlazar colores
   const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
@@ -128,6 +130,10 @@ function useStencilCanvas() {
     setDrawingHue,
     drawingSaturation,
     setDrawingSaturation,
+    drawingBrightness,
+    setDrawingBrightness,
+    stencilBrightness,
+    setStencilBrightness,
     isColorLinked,
     setIsColorLinked,
     layers,
@@ -200,6 +206,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setDrawingHue,
     drawingSaturation,
     setDrawingSaturation,
+    drawingBrightness,
+    setDrawingBrightness,
+    stencilBrightness,
+    setStencilBrightness,
     isColorLinked,
     setIsColorLinked,
     layers,
@@ -254,7 +264,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   useEffect(() => {
     if (stencilImg) {
       // Si no hay cambios, usar imagen original
-      if (stencilHue === 0 && stencilSaturation === 100) {
+      if (stencilHue === 0 && stencilSaturation === 100 && stencilBrightness === 100) {
         setFilteredStencilImg(null);
         return;
       }
@@ -272,7 +282,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         
         // Aplicar filtros nativos del canvas (mucho más rápido que píxel a píxel)
         const saturationValue = stencilSaturation / 100;
-        ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue})`;
+        const brightnessValue = stencilBrightness / 100;
+        ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
         
         // Dibujar imagen con filtros aplicados
         ctx.drawImage(stencilImg, 0, 0);
@@ -293,7 +304,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         }
       }
     }
-  }, [stencilImg, stencilHue, stencilSaturation]);
+  }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness]);
 
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
@@ -665,8 +676,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           setEraserSize={setEraserSize}
           drawingHue={drawingHue}
           drawingSaturation={drawingSaturation}
+          drawingBrightness={drawingBrightness}
           stencilHue={stencilHue}
           stencilSaturation={stencilSaturation}
+          stencilBrightness={stencilBrightness}
           nativeSize={nativeSize}
           canvasSize={canvasSize}
         />
@@ -702,6 +715,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setDrawingHue={setDrawingHue}
         drawingSaturation={drawingSaturation}
         setDrawingSaturation={setDrawingSaturation}
+        drawingBrightness={drawingBrightness}
+        setDrawingBrightness={setDrawingBrightness}
+        stencilBrightness={stencilBrightness}
+        setStencilBrightness={setStencilBrightness}
         isColorLinked={isColorLinked}
         setIsColorLinked={setIsColorLinked}
         onClose={() => setIsLayersOpen(false)}

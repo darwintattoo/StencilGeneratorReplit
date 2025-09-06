@@ -46,8 +46,10 @@ interface CanvasProps {
   setEraserSize: (size: number) => void;
   drawingHue: number;
   drawingSaturation: number;
+  drawingBrightness: number;
   stencilHue: number;
   stencilSaturation: number;
+  stencilBrightness: number;
   nativeSize: NativeSize;
   canvasSize: NativeSize;
 }
@@ -83,40 +85,98 @@ export default function Canvas({
   setEraserSize,
   drawingHue,
   drawingSaturation,
+  drawingBrightness,
   stencilHue,
   stencilSaturation,
+  stencilBrightness,
   nativeSize,
   canvasSize
 }: CanvasProps) {
   
-  // Función simple y rápida para cambiar color
+  // Función para cambiar color con HSL
   const adjustColor = useMemo(() => {
-    return (color: string, hue: number, sat: number): string => {
-      if (hue === 0 && sat === 100) return color;
+    return (color: string, hue: number, sat: number, bright: number): string => {
+      if (hue === 0 && sat === 100 && bright === 100) return color;
       
-      // Cambio simple de hue rotando por el espectro
-      if (hue !== 0) {
-        const hueShift = hue / 60; // Dividir en 6 secciones
-        switch (color) {
-          case '#ef4444': // rojo original
-            if (hueShift < 1) return '#ef4444'; // rojo
-            if (hueShift < 2) return '#eab308'; // amarillo  
-            if (hueShift < 3) return '#22c55e'; // verde
-            if (hueShift < 4) return '#06b6d4'; // cyan
-            if (hueShift < 5) return '#3b82f6'; // azul
-            return '#a855f7'; // magenta
-          case '#000000': // negro se mantiene
-            return '#000000';
-          case '#3b82f6': // azul original
-            if (hueShift < 1) return '#a855f7'; // magenta
-            if (hueShift < 2) return '#ef4444'; // rojo
-            if (hueShift < 3) return '#eab308'; // amarillo
-            if (hueShift < 4) return '#22c55e'; // verde
-            if (hueShift < 5) return '#06b6d4'; // cyan
-            return '#3b82f6'; // azul
+      // Convertir hex a RGB
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+      };
+      
+      // Convertir RGB a HSL
+      const rgbToHsl = (r: number, g: number, b: number) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h: number, s: number, l = (max + min) / 2;
+        
+        if (max === min) {
+          h = s = 0;
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+            default: h = 0;
+          }
+          h /= 6;
         }
-      }
-      return color;
+        return { h, s, l };
+      };
+      
+      // Convertir HSL a RGB
+      const hslToRgb = (h: number, s: number, l: number) => {
+        let r: number, g: number, b: number;
+        
+        if (s === 0) {
+          r = g = b = l;
+        } else {
+          const hue2rgb = (p: number, q: number, t: number) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+          };
+          
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+          const p = 2 * l - q;
+          r = hue2rgb(p, q, h + 1/3);
+          g = hue2rgb(p, q, h);
+          b = hue2rgb(p, q, h - 1/3);
+        }
+        
+        return {
+          r: Math.round(r * 255),
+          g: Math.round(g * 255),
+          b: Math.round(b * 255)
+        };
+      };
+      
+      const rgb = hexToRgb(color);
+      const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+      
+      // Aplicar transformaciones
+      let newH = (hsl.h + hue / 360) % 1;
+      let newS = Math.max(0, Math.min(1, hsl.s * (sat / 100)));
+      let newL = Math.max(0, Math.min(1, hsl.l * (bright / 100)));
+      
+      const newRgb = hslToRgb(newH, newS, newL);
+      
+      // Convertir de vuelta a hex
+      const componentToHex = (c: number) => {
+        const hex = c.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      };
+      
+      return `#${componentToHex(newRgb.r)}${componentToHex(newRgb.g)}${componentToHex(newRgb.b)}`;
     };
   }, []);
   return (
@@ -188,7 +248,7 @@ export default function Canvas({
               <Line
                 key={i}
                 points={line.points}
-                stroke={adjustColor(line.baseColor || line.color, drawingHue, drawingSaturation)}
+                stroke={adjustColor(line.baseColor || line.color, drawingHue, drawingSaturation, drawingBrightness)}
                 strokeWidth={line.strokeWidth}
                 tension={0.5}
                 lineCap="round"
@@ -202,7 +262,7 @@ export default function Canvas({
               <Line
                 ref={tempLineRef}
                 points={drawingPointsRef.current || []}
-                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', drawingHue, drawingSaturation)}
+                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', drawingHue, drawingSaturation, drawingBrightness)}
                 strokeWidth={currentLineRef.current?.strokeWidth}
                 tension={0.5}
                 lineCap="round"

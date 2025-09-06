@@ -22,6 +22,10 @@ interface LayerPanelProps {
   setDrawingHue: (hue: number) => void;
   drawingSaturation: number;
   setDrawingSaturation: (saturation: number) => void;
+  drawingBrightness: number;
+  setDrawingBrightness: (brightness: number) => void;
+  stencilBrightness: number;
+  setStencilBrightness: (brightness: number) => void;
   isColorLinked: boolean;
   setIsColorLinked: (linked: boolean) => void;
   onClose: () => void;
@@ -42,6 +46,10 @@ export default function LayerPanel({
   setDrawingHue,
   drawingSaturation,
   setDrawingSaturation,
+  drawingBrightness,
+  setDrawingBrightness,
+  stencilBrightness,
+  setStencilBrightness,
   isColorLinked,
   setIsColorLinked,
   onClose
@@ -119,7 +127,7 @@ export default function LayerPanel({
                 <span>Saturation:</span>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingSaturation)}</span>
               </div>
-              <div className="relative">
+              <div className="relative mb-4">
                 <div className="h-3 rounded-full" style={{
                   background: 'linear-gradient(to right, #808080, #ff0000)'
                 }}></div>
@@ -129,6 +137,28 @@ export default function LayerPanel({
                     setDrawingSaturation(value);
                     if (isColorLinked) {
                       setStencilSaturation(value);
+                    }
+                  }}
+                  max={200}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
+              </div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Brightness:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingBrightness)}</span>
+              </div>
+              <div className="relative">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #000000, #ffffff)'
+                }}></div>
+                <Slider
+                  value={[drawingBrightness]}
+                  onValueChange={([value]) => {
+                    setDrawingBrightness(value);
+                    if (isColorLinked) {
+                      setStencilBrightness(value);
                     }
                   }}
                   max={200}
@@ -184,7 +214,7 @@ export default function LayerPanel({
                 <span>Saturation:</span>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilSaturation)}</span>
               </div>
-              <div className="relative">
+              <div className="relative mb-4">
                 <div className="h-3 rounded-full" style={{
                   background: 'linear-gradient(to right, #808080, #ff0000)'
                 }}></div>
@@ -194,6 +224,28 @@ export default function LayerPanel({
                     setStencilSaturation(value);
                     if (isColorLinked) {
                       setDrawingSaturation(value);
+                    }
+                  }}
+                  max={200}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
+              </div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Brightness:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilBrightness)}</span>
+              </div>
+              <div className="relative">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #000000, #ffffff)'
+                }}></div>
+                <Slider
+                  value={[stencilBrightness]}
+                  onValueChange={([value]) => {
+                    setStencilBrightness(value);
+                    if (isColorLinked) {
+                      setDrawingBrightness(value);
                     }
                   }}
                   max={200}
