@@ -41,9 +41,9 @@ export default function Toolbar({
         variant="outline"
         size="sm"
         onClick={onBack}
-        className="bg-white/95 hover:bg-white shadow-sm text-gray-700 hover:text-gray-900 border-gray-200"
+        className="bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 hover:text-white border-gray-600"
       >
-        <ArrowLeft className="w-4 h-4 mr-2 text-gray-600" />
+        <ArrowLeft className="w-4 h-4 mr-2 text-gray-400" />
         Galería
       </Button>
 
@@ -54,10 +54,10 @@ export default function Toolbar({
           onClick={() => setTool('brush')}
           className={tool === 'brush' 
             ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm border-blue-500" 
-            : "bg-white/95 hover:bg-gray-100 shadow-sm text-gray-700 border-gray-200"
+            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <PenTool className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-600'}`} />
+          <PenTool className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <Button
@@ -66,22 +66,22 @@ export default function Toolbar({
           onClick={() => setTool('eraser')}
           className={tool === 'eraser' 
             ? "bg-red-500 hover:bg-red-600 text-white shadow-sm border-red-500" 
-            : "bg-white/95 hover:bg-gray-100 shadow-sm text-gray-700 border-gray-200"
+            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-600'}`} />
+          <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         {tool === 'eraser' && (
-          <div className="flex gap-1 bg-white/95 rounded-md p-1 shadow-sm border border-gray-200">
+          <div className="flex gap-1 bg-gray-800/95 rounded-md p-1 shadow-sm border border-gray-600">
             <Button
               variant={activeLayer === 'drawing' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveLayer('drawing')}
               className={`text-xs px-2 py-1 h-auto ${
                 activeLayer === 'drawing' 
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white border-gray-700' 
-                  : 'bg-transparent hover:bg-gray-100 text-gray-600 border-gray-300'
+                  ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                  : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
               }`}
             >
               Dibujo
@@ -92,8 +92,8 @@ export default function Toolbar({
               onClick={() => setActiveLayer('stencil')}
               className={`text-xs px-2 py-1 h-auto ${
                 activeLayer === 'stencil' 
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white border-gray-700' 
-                  : 'bg-transparent hover:bg-gray-100 text-gray-600 border-gray-300'
+                  ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                  : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
               }`}
             >
               Stencil
@@ -102,7 +102,7 @@ export default function Toolbar({
         )}
 
         {tool === 'brush' && (
-          <div className="flex gap-2 bg-white/95 rounded-md p-2 shadow-sm border border-gray-200">
+          <div className="flex gap-2 bg-gray-800/95 rounded-md p-2 shadow-sm border border-gray-600">
             {COLORS.map((color, index) => (
               <button
                 key={color}
@@ -125,10 +125,10 @@ export default function Toolbar({
           onClick={() => setTool('move')}
           className={tool === 'move' 
             ? "bg-green-500 hover:bg-green-600 text-white shadow-sm border-green-500" 
-            : "bg-white/95 hover:bg-gray-100 shadow-sm text-gray-700 border-gray-200"
+            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-600'}`} />
+          <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <Button
@@ -137,15 +137,15 @@ export default function Toolbar({
           onClick={() => setIsLayersOpen(!isLayersOpen)}
           className={isLayersOpen
             ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm border-purple-500"
-            : "bg-white/95 hover:bg-gray-100 shadow-sm text-gray-700 border-gray-200"
+            : "bg-gray-800/95 hover:bg-gray-700 shadow-sm text-gray-300 border-gray-600"
           }
         >
-          <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-600'}`} />
+          <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 bg-white/95 rounded-md px-3 py-2 shadow-sm border border-gray-200">
-        <span className="text-xs text-gray-700 font-medium">Original</span>
+      <div className="flex items-center gap-2 bg-gray-800/95 rounded-md px-3 py-2 shadow-sm border border-gray-600">
+        <span className="text-xs text-gray-300 font-medium">Original</span>
         <div className="w-20">
           <Slider
             value={[layers.original.opacity]}
@@ -156,10 +156,10 @@ export default function Toolbar({
             className="w-20"
           />
         </div>
-        <span className="text-xs text-gray-700 min-w-[30px]">{layers.original.opacity}%</span>
+        <span className="text-xs text-gray-300 min-w-[30px]">{layers.original.opacity}%</span>
       </div>
 
-      <div className="text-sm text-gray-700 bg-white/95 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+      <div className="text-sm text-gray-300 bg-gray-800/95 px-2 py-1 rounded-md shadow-sm border border-gray-600">
         {Math.round(viewTransform.scale * 100)}%
       </div>
     </div>
