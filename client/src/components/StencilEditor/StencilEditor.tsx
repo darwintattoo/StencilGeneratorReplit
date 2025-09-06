@@ -257,7 +257,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Dibujar imagen original
         ctx.drawImage(stencilImg, 0, 0);
         
-        if (stencilHue !== 0) {
+        if (stencilHue !== 0 || stencilSaturation !== 100) {
           // Obtener datos de píxeles
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
@@ -271,11 +271,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
             // Convertir RGB a HSL
             const [h, s, l] = rgbToHsl(r, g, b);
             
-            // Aplicar cambio de tono
+            // Aplicar cambio de tono y saturación
             const newH = (h + stencilHue / 360) % 1;
+            const newS = Math.min(1, Math.max(0, s * (stencilSaturation / 100)));
             
             // Convertir de vuelta a RGB
-            const [newR, newG, newB] = hslToRgb(newH, s, l);
+            const [newR, newG, newB] = hslToRgb(newH, newS, l);
             
             data[i] = newR;
             data[i + 1] = newG;
@@ -294,7 +295,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         newImg.src = canvas.toDataURL();
       }
     }
-  }, [stencilImg, stencilHue]);
+  }, [stencilImg, stencilHue, stencilSaturation]);
 
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
@@ -468,7 +469,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const newImg = new Image();
         newImg.onload = () => {
           setStencilImg(newImg);
-          if (stencilHue !== 0) {
+          if (stencilHue !== 0 || stencilSaturation !== 100) {
             setFilteredStencilImg(null);
           }
         };

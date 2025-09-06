@@ -76,18 +76,39 @@ export default function LayerPanel({
           </div>
           <div className="ml-7 space-y-3">
             <div>
-              <div className="text-xs text-gray-300 mb-2">Color</div>
-              <div className="flex gap-2 flex-wrap">
-                {DRAWING_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setBrushColor(color)}
-                    className={`w-6 h-6 rounded-full border-2 ${
-                      brushColor === color ? 'border-white' : 'border-gray-400'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Hue:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
+              </div>
+              <div className="relative mb-4">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
+                }}></div>
+                <Slider
+                  value={[drawingHue]}
+                  onValueChange={([value]) => setDrawingHue(value)}
+                  max={360}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
+              </div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Saturation:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingSaturation)}</span>
+              </div>
+              <div className="relative">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #808080, #ff0000)'
+                }}></div>
+                <Slider
+                  value={[drawingSaturation]}
+                  onValueChange={([value]) => setDrawingSaturation(value)}
+                  max={200}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
               </div>
             </div>
           </div>
@@ -108,33 +129,42 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
-          <div className="ml-7 mt-2">
-            <div className="text-xs text-gray-300 mb-2">Color</div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStencilHue(200)}
-                className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 200 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
-                }`}
-                style={{ backgroundColor: '#000000' }}
-                title="Negro"
-              />
-              <button
-                onClick={() => setStencilHue(0)}
-                className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 0 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
-                }`}
-                style={{ backgroundColor: '#ef4444' }}
-                title="Rojo"
-              />
-              <button
-                onClick={() => setStencilHue(220)}
-                className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 220 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
-                }`}
-                style={{ backgroundColor: '#3b82f6' }}
-                title="Azul"
-              />
+          <div className="ml-7 mt-2 space-y-3">
+            <div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Hue:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilHue)}</span>
+              </div>
+              <div className="relative mb-4">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
+                }}></div>
+                <Slider
+                  value={[stencilHue]}
+                  onValueChange={([value]) => setStencilHue(value)}
+                  max={360}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
+              </div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Saturation:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilSaturation)}</span>
+              </div>
+              <div className="relative">
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #808080, #ff0000)'
+                }}></div>
+                <Slider
+                  value={[stencilSaturation]}
+                  onValueChange={([value]) => setStencilSaturation(value)}
+                  max={200}
+                  min={0}
+                  step={1}
+                  className="absolute inset-0 opacity-75"
+                />
+              </div>
             </div>
           </div>
         </div>
