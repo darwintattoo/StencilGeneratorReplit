@@ -54,6 +54,7 @@ function StencilCard({ stencil }: { stencil: Stencil }) {
 
 export default function MyStencils() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   
   const { data: stencils, isLoading, error } = useQuery<Stencil[]>({
     queryKey: ["/api/my-stencils"],
