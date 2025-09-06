@@ -66,7 +66,7 @@ export default function LayerPanel({
       <div className="space-y-4">
         <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-start gap-3 mb-2">
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-6">
               <GripVertical className="w-4 h-4 text-gray-300" />
               <Button
                 variant="ghost"
