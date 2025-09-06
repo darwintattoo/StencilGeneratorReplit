@@ -2,23 +2,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { PenTool, Eraser, Layers, ArrowLeft, Move } from 'lucide-react';
+import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
 
 const COLORS = ['#000000', '#ef4444', '#3b82f6'];
 
-interface LayersState {
-  [key: string]: { visible: boolean; opacity: number };
-}
-
 interface ToolbarProps {
-  tool: 'brush' | 'eraser' | 'move';
-  setTool: (tool: 'brush' | 'eraser' | 'move') => void;
-  activeLayer: 'drawing' | 'stencil';
-  setActiveLayer: (layer: 'drawing' | 'stencil') => void;
+  tool: Tool;
+  setTool: (tool: Tool) => void;
+  activeLayer: ActiveLayer;
+  setActiveLayer: (layer: ActiveLayer) => void;
   brushColor: string;
   setBrushColor: (color: string) => void;
   layers: LayersState;
   setOpacity: (key: string, opacity: number) => void;
-  viewTransform: { scale: number };
+  viewTransform: Pick<ViewTransform, 'scale'>;
   isLayersOpen: boolean;
   setIsLayersOpen: (open: boolean) => void;
   onBack: () => void;

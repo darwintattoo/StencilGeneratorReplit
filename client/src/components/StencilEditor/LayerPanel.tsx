@@ -3,12 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { GripVertical, Eye, EyeOff } from 'lucide-react';
+import type { LayersState } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
-
-interface LayersState {
-  [key: string]: { visible: boolean; opacity: number };
-}
 
 interface LayerPanelProps {
   isOpen: boolean;
