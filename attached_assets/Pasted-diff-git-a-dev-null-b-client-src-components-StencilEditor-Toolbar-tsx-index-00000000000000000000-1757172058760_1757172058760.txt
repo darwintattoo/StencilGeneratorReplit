@@ -1,0 +1,153 @@
+diff --git a//dev/null b/client/src/components/StencilEditor/Toolbar.tsx
+index 0000000000000000000000000000000000000000..dc38ee184da06903cdae2f43cf3e6c46afcea140 100644
+--- a//dev/null
++++ b/client/src/components/StencilEditor/Toolbar.tsx
+@@ -0,0 +1,148 @@
++import React from 'react';
++import { Button } from '@/components/ui/button';
++import { Slider } from '@/components/ui/slider';
++import { PenTool, Eraser, Layers, ArrowLeft, Move } from 'lucide-react';
++
++const COLORS = ['#000000', '#ef4444', '#3b82f6'];
++
++interface LayersState {
++  [key: string]: { visible: boolean; opacity: number };
++}
++
++interface ToolbarProps {
++  tool: 'brush' | 'eraser' | 'move';
++  setTool: (tool: 'brush' | 'eraser' | 'move') => void;
++  activeLayer: 'drawing' | 'stencil';
++  setActiveLayer: (layer: 'drawing' | 'stencil') => void;
++  brushColor: string;
++  setBrushColor: (color: string) => void;
++  layers: LayersState;
++  setOpacity: (key: string, opacity: number) => void;
++  viewTransform: { scale: number };
++  isLayersOpen: boolean;
++  setIsLayersOpen: (open: boolean) => void;
++  onBack: () => void;
++}
++
++export default function Toolbar({
++  tool,
++  setTool,
++  activeLayer,
++  setActiveLayer,
++  brushColor,
++  setBrushColor,
++  layers,
++  setOpacity,
++  viewTransform,
++  isLayersOpen,
++  setIsLayersOpen,
++  onBack
++}: ToolbarProps) {
++  return (
++    <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-40">
++      <Button
++        variant="ghost"
++        size="sm"
++        onClick={onBack}
++        className="bg-white/90 hover:bg-white shadow-sm"
++      >
++        <ArrowLeft className="w-4 h-4 mr-2" />
++        Galería
++      </Button>
++
++      <div className="flex gap-2">
++        <Button
++          variant={tool === 'brush' ? 'default' : 'ghost'}
++          size="sm"
++          onClick={() => setTool('brush')}
++          className="bg-white/90 hover:bg-white shadow-sm"
++        >
++          <PenTool className="w-4 h-4" />
++        </Button>
++
++        <Button
++          variant={tool === 'eraser' ? 'default' : 'ghost'}
++          size="sm"
++          onClick={() => setTool('eraser')}
++          className="bg-white/90 hover:bg-white shadow-sm"
++        >
++          <Eraser className="w-4 h-4" />
++        </Button>
++
++        {tool === 'eraser' && (
++          <div className="flex gap-1 bg-white/90 rounded-md p-1 shadow-sm">
++            <Button
++              variant={activeLayer === 'drawing' ? 'default' : 'ghost'}
++              size="sm"
++              onClick={() => setActiveLayer('drawing')}
++              className="text-xs px-2 py-1 h-auto"
++            >
++              Dibujo
++            </Button>
++            <Button
++              variant={activeLayer === 'stencil' ? 'default' : 'ghost'}
++              size="sm"
++              onClick={() => setActiveLayer('stencil')}
++              className="text-xs px-2 py-1 h-auto"
++            >
++              Stencil
++            </Button>
++          </div>
++        )}
++
++        {tool === 'brush' && (
++          <div className="flex gap-2 bg-white/90 rounded-md p-2 shadow-sm">
++            {COLORS.map((color, index) => (
++              <button
++                key={color}
++                onClick={() => setBrushColor(color)}
++                className={`w-7 h-7 rounded-full border-2 ${
++                  brushColor === color ? 'border-gray-700 ring-2 ring-blue-400' : 'border-gray-300'
++                }`}
++                style={{ backgroundColor: color }}
++                title={['Negro', 'Rojo', 'Azul'][index]}
++              />
++            ))}
++          </div>
++        )}
++
++        <Button
++          variant={tool === 'move' ? 'default' : 'ghost'}
++          size="sm"
++          onClick={() => setTool('move')}
++          className="bg-white/90 hover:bg-white shadow-sm"
++        >
++          <Move className="w-4 h-4" />
++        </Button>
++
++        <Button
++          variant={isLayersOpen ? 'default' : 'ghost'}
++          size="sm"
++          onClick={() => setIsLayersOpen(!isLayersOpen)}
++          className="bg-white/90 hover:bg-white shadow-sm"
++        >
++          <Layers className="w-4 h-4" />
++        </Button>
++      </div>
++
++      <div className="flex items-center gap-2 bg-white/90 rounded-md px-3 py-2 shadow-sm">
++        <span className="text-xs text-gray-600 font-medium">Original</span>
++        <div className="w-20">
++          <Slider
++            value={[layers.original.opacity]}
++            onValueChange={([value]) => setOpacity('original', value)}
++            max={100}
++            min={0}
++            step={1}
++            className="w-20"
++          />
++        </div>
++        <span className="text-xs text-gray-600 min-w-[30px]">{layers.original.opacity}%</span>
++      </div>
++
++      <div className="text-sm text-gray-600">
++        {Math.round(viewTransform.scale * 100)}%
++      </div>
++    </div>
++  );
++}

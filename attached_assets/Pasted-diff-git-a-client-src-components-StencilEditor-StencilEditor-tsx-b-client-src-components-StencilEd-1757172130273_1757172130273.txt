@@ -1,0 +1,390 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..729234afd2d559dcadf169eaa7ad68d40f6f200a 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -90,51 +90,64 @@ function useStencilCanvas() {
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<any>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState(false);
+-  const [lines, setLines] = useState<any[]>([]);
++  const [drawingLines, setDrawingLines] = useState<any[]>([]);
++  const [stencilLines, setStencilLines] = useState<any[]>([]);
++  const drawingPointsRef = useRef<number[]>([]);
++  const currentLineRef = useRef<any>(null);
++  const frameRef = useRef<number>(0);
++  const tempLineRef = useRef<any>(null);
++
++  const updateTempLine = () => {
++    if (tempLineRef.current) {
++      tempLineRef.current.points(drawingPointsRef.current);
++      tempLineRef.current.getLayer()?.batchDraw();
++    }
++    frameRef.current = requestAnimationFrame(updateTempLine);
++  };
+   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState(false);
+   const [touches, setTouches] = useState<Touch[]>([]);
+   const [lastPinchDistance, setLastPinchDistance] = useState(0);
+   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..729234afd2d559dcadf169eaa7ad68d40f6f200a 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -263,161 +276,173 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+   };
+ 
+   // Manejo de gestos táctiles y mouse
+   const handleMouseDown = (e: any) => {
+     const stage = e.target.getStage();
+     const pos = stage.getPointerPosition();
+     
+     if (tool === 'move' || e.evt.button === 1 || e.evt.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+       setIsDrawing(true);
+       const adjustedPos = {
+         x: (pos.x - viewTransform.x) / viewTransform.scale,
+         y: (pos.y - viewTransform.y) / viewTransform.scale
+       };
+ 
+       // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+-        
++
+         // Crear canvas de trabajo si no existe
+         if (!stencilCanvas) {
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
+-        
++
+         // Aplicar borrado inicial
+         if (stencilCanvas) {
+           const ctx = stencilCanvas.getContext('2d');
+           if (ctx) {
+             ctx.save();
+             ctx.globalCompositeOperation = 'destination-out';
+             ctx.beginPath();
+             ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+             ctx.fill();
+             ctx.restore();
+           }
+         }
+         return;
+       }
+-      
+-      const newLine = {
++
++      const color = tool === 'brush'
++        ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
++        : '#ffffff';
++      currentLineRef.current = {
+         tool,
+-        points: [adjustedPos.x, adjustedPos.y],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+-        color: tool === 'brush' ? brushColor : '#ffffff'
++        color
+       };
+-      setLines([...lines, newLine]);
++      drawingPointsRef.current = [adjustedPos.x, adjustedPos.y];
++      frameRef.current = requestAnimationFrame(updateTempLine);
+     }
+   };
+ 
+   const handleMouseMove = (e: any) => {
+     const stage = e.target.getStage();
+     const pos = stage.getPointerPosition();
+ 
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+     
+     const adjustedPos = {
+       x: (pos.x - viewTransform.x) / viewTransform.scale,
+       y: (pos.y - viewTransform.y) / viewTransform.scale
+     };
+ 
+     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
+     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
+       const ctx = stencilCanvas.getContext('2d');
+       
+       if (ctx) {
+         // Borrado inmediato sin operaciones bloqueantes
+         ctx.globalCompositeOperation = 'destination-out';
+         ctx.fillStyle = '#000';
+         
+         // Borrado instantáneo con mínimo procesamiento
+         ctx.beginPath();
+         ctx.arc(adjustedPos.x, adjustedPos.y, eraserSize, 0, 2 * Math.PI);
+         ctx.fill();
+         
+         // Sin restaurar contexto durante movimiento para máxima velocidad
+       }
+       return;
+     }
+     
+-    const newLines = [...lines];
+-    const lastLine = newLines[newLines.length - 1];
+-    lastLine.points = lastLine.points.concat([adjustedPos.x, adjustedPos.y]);
+-    setLines(newLines);
++    drawingPointsRef.current.push(adjustedPos.x, adjustedPos.y);
+   };
+ 
+   const handleMouseUp = () => {
+     setIsDrawing(false);
+     setIsPanning(false);
+ 
+-    
++    if (currentLineRef.current) {
++      const newLine = { ...currentLineRef.current, points: [...drawingPointsRef.current] };
++      if (currentLineRef.current.layer === 'drawing') {
++        setDrawingLines(prev => [...prev, newLine]);
++      } else {
++        setStencilLines(prev => [...prev, newLine]);
++      }
++    }
++    cancelAnimationFrame(frameRef.current);
++    drawingPointsRef.current = [];
++    currentLineRef.current = null;
++
++
+     // Finalizar borrado de stencil con restauración del contexto
+     if (isErasingStencil && stencilCanvas) {
+       // Restaurar contexto una sola vez al final
+       const ctx = stencilCanvas.getContext('2d');
+       if (ctx) {
+         ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
+       }
+-      
++
+       // Actualización diferida para no bloquear
+       setTimeout(() => {
+         const newImg = new Image();
+         newImg.onload = () => {
+           setStencilImg(newImg);
+           if (stencilHue !== 0) {
+             setFilteredStencilImg(null);
+           }
+         };
+         newImg.src = stencilCanvas.toDataURL();
+       }, 0);
+       setIsErasingStencil(false);
+     }
+-    
++
+     if (tool === 'eraser' && stageRef.current) {
+       setTimeout(() => {
+         if (stageRef.current) {
+           const layers = stageRef.current.find('Layer');
+           layers.forEach((layer: any) => {
+             try {
+               const hitCanvas = layer.getHitCanvas();
+               if (hitCanvas) {
+                 const hitContext = hitCanvas.getContext('2d');
+                 hitContext.clearRect(0, 0, nativeSize.width, nativeSize.height);
+                 layer.clearHitCache();
+               }
+             } catch (e) {
+               console.log('Error limpiando hit canvas:', e);
+             }
+             layer.batchDraw();
+           });
+           stageRef.current.batchDraw();
+         }
+       }, 50);
+     }
+   };
+ 
+   const handleWheel = (e: any) => {
+     e.evt.preventDefault();
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..729234afd2d559dcadf169eaa7ad68d40f6f200a 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -553,91 +578,119 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+             </Layer>
+           )}
+ 
+           {/* Layer Stencil - Solo imagen de fondo */}
+           {layers.stencil.visible && (
+             <Layer opacity={layers.stencil.opacity / 100}>
+               {filteredStencilImg ? (
+                 <KonvaImage
+                   image={filteredStencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               ) : stencilImg ? (
+                 <KonvaImage
+                   image={stencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               ) : null}
+             </Layer>
+           )}
+ 
+           {/* Layer Drawing */}
+           {layers.drawing.visible && (
+             <Layer opacity={layers.drawing.opacity / 100}>
+-              {lines.filter(line => line.layer === 'drawing').map((line, i) => (
++              {drawingLines.map((line, i) => (
+                 <Line
+                   key={i}
+                   points={line.points}
+-                  stroke={line.tool === 'brush' ? (line.color || brushColor) : '#ffffff'}
++                  stroke={line.color}
+                   strokeWidth={line.strokeWidth}
+                   tension={0.5}
+                   lineCap="round"
+                   lineJoin="round"
+                   globalCompositeOperation={line.globalCompositeOperation}
+                   perfectDrawEnabled={true}
+                   shadowForStrokeEnabled={false}
+                 />
+               ))}
++              {isDrawing && currentLineRef.current?.layer === 'drawing' && !isErasingStencil && (
++                <Line
++                  ref={tempLineRef}
++                  points={drawingPointsRef.current}
++                  stroke={currentLineRef.current?.color}
++                  strokeWidth={currentLineRef.current?.strokeWidth}
++                  tension={0.5}
++                  lineCap="round"
++                  lineJoin="round"
++                  globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
++                  perfectDrawEnabled={true}
++                  shadowForStrokeEnabled={false}
++                />
++              )}
+             </Layer>
+           )}
+ 
+           {/* Layer Stencil Editable */}
+           {layers.stencil.visible && (
+             <Layer opacity={layers.stencil.opacity / 100}>
+               {stencilImg && (
+                 <KonvaImage
+                   image={stencilImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+-              {lines.filter(line => line.layer === 'stencil').map((line, i) => (
++              {stencilLines.map((line, i) => (
+                 <Line
+                   key={`stencil-${i}`}
+                   points={line.points}
+-                  stroke={line.tool === 'brush' ? '#ef4444' : '#ffffff'}
++                  stroke={line.color}
+                   strokeWidth={line.strokeWidth}
+                   tension={0.5}
+                   lineCap="round"
+                   lineJoin="round"
+                   globalCompositeOperation={line.globalCompositeOperation}
+                   perfectDrawEnabled={true}
+                   shadowForStrokeEnabled={false}
+                 />
+               ))}
++              {isDrawing && currentLineRef.current?.layer === 'stencil' && !isErasingStencil && (
++                <Line
++                  ref={tempLineRef}
++                  points={drawingPointsRef.current}
++                  stroke={currentLineRef.current?.color}
++                  strokeWidth={currentLineRef.current?.strokeWidth}
++                  tension={0.5}
++                  lineCap="round"
++                  lineJoin="round"
++                  globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
++                  perfectDrawEnabled={true}
++                  shadowForStrokeEnabled={false}
++                />
++              )}
+             </Layer>
+           )}
+         </Stage>
+ 
+         {/* Toolbar superior - estilo Procreate */}
+         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-40">
+           <Button
+             variant="ghost"
+             size="sm"
+             onClick={() => setLocation('/')}
+             className="bg-white/90 hover:bg-white shadow-sm"
+           >
+             <ArrowLeft className="w-4 h-4 mr-2" />
+             Galería
+           </Button>
+ 
+           {/* Herramientas principales */}
+           <div className="flex gap-2">
+             <Button
+               variant={tool === 'brush' ? 'default' : 'ghost'}
+               size="sm"
+               onClick={() => setTool('brush')}
+               className="bg-white/90 hover:bg-white shadow-sm"
+             >
+               <PenTool className="w-4 h-4" />
