@@ -94,10 +94,10 @@ export default function LayerPanel({
                 >
                   {isColorLinked ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
                 </Button>
-                <div className="text-xs text-gray-300 flex items-center gap-2">
-                  <span>Hue:</span>
-                  <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
-                </div>
+              </div>
+              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+                <span>Hue:</span>
+                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
               </div>
               <div className="relative mb-4">
                 <div className="h-3 rounded-full" style={{
