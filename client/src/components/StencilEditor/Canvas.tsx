@@ -79,14 +79,7 @@ export default function Canvas({
 }: CanvasProps) {
   return (
     <>
-      <div 
-        className="inline-block border border-gray-600 rounded-lg overflow-hidden shadow-lg"
-        style={{
-          margin: 'auto',
-          alignSelf: 'center'
-        }}
-      >
-        <Stage
+      <Stage
         width={canvasSize.width - (isLayersOpen ? 320 : 0)}
         height={canvasSize.height}
         onMouseDown={handleMouseDown}
@@ -219,8 +212,7 @@ export default function Canvas({
             )}
           </Layer>
         )}
-        </Stage>
-      </div>
+      </Stage>
 
       {tool === 'brush' && (
         <div className="absolute left-6 top-1/2 transform -translate-y-1/2 z-30">

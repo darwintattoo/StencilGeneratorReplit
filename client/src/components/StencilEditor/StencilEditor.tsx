@@ -588,7 +588,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       backgroundColor: '#2a2a2a'
     }}>
       {/* Canvas principal */}
-      <div className="flex-1 relative flex items-center justify-center">
+      <div className="flex-1 relative">
         <Canvas
           stageRef={stageRef}
           isLayersOpen={isLayersOpen}
