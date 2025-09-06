@@ -47,31 +47,31 @@ export default function LayerPanel({
       </div>
 
       <div className="space-y-4">
-        <div className="bg-blue-600 rounded-lg p-3">
+        <div className="bg-gray-600 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
-            <GripVertical className="w-4 h-4 text-blue-200" />
+            <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.drawing.visible}
               onCheckedChange={(checked) => toggleLayer('drawing', checked)}
             />
             <span className="text-white text-sm font-medium flex-1">Drawing</span>
-            <span className="text-blue-200 text-xs">N</span>
+            <span className="text-gray-300 text-xs">N</span>
             {layers.drawing.visible ? (
-              <Eye className="w-4 h-4 text-blue-200" />
+              <Eye className="w-4 h-4 text-gray-300" />
             ) : (
-              <EyeOff className="w-4 h-4 text-blue-200" />
+              <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
           <div className="ml-7 space-y-3">
             <div>
-              <div className="text-xs text-blue-200 mb-2">Color</div>
+              <div className="text-xs text-gray-300 mb-2">Color</div>
               <div className="flex gap-2 flex-wrap">
                 {DRAWING_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setBrushColor(color)}
                     className={`w-6 h-6 rounded-full border-2 ${
-                      brushColor === color ? 'border-white' : 'border-blue-300'
+                      brushColor === color ? 'border-white' : 'border-gray-400'
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -81,28 +81,28 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-red-600 rounded-lg p-3">
+        <div className="bg-gray-600 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
-            <GripVertical className="w-4 h-4 text-red-200" />
+            <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.stencil.visible}
               onCheckedChange={(checked) => toggleLayer('stencil', checked)}
             />
             <span className="text-white text-sm font-medium flex-1">Stencil</span>
-            <span className="text-red-200 text-xs">N</span>
+            <span className="text-gray-300 text-xs">N</span>
             {layers.stencil.visible ? (
-              <Eye className="w-4 h-4 text-red-200" />
+              <Eye className="w-4 h-4 text-gray-300" />
             ) : (
-              <EyeOff className="w-4 h-4 text-red-200" />
+              <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
           <div className="ml-7 mt-2">
-            <div className="text-xs text-red-200 mb-2">Color</div>
+            <div className="text-xs text-gray-300 mb-2">Color</div>
             <div className="flex gap-2">
               <button
                 onClick={() => setStencilHue(200)}
                 className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 200 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                  stencilHue === 200 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
                 }`}
                 style={{ backgroundColor: '#000000' }}
                 title="Negro"
@@ -110,7 +110,7 @@ export default function LayerPanel({
               <button
                 onClick={() => setStencilHue(0)}
                 className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 0 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                  stencilHue === 0 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
                 }`}
                 style={{ backgroundColor: '#ef4444' }}
                 title="Rojo"
@@ -118,7 +118,7 @@ export default function LayerPanel({
               <button
                 onClick={() => setStencilHue(220)}
                 className={`w-7 h-7 rounded-full border-2 ${
-                  stencilHue === 220 ? 'border-white ring-2 ring-red-300' : 'border-red-300'
+                  stencilHue === 220 ? 'border-white ring-2 ring-gray-400' : 'border-gray-400'
                 }`}
                 style={{ backgroundColor: '#3b82f6' }}
                 title="Azul"
