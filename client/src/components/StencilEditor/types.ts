@@ -1,0 +1,72 @@
+import type { KonvaEventObject } from 'konva/lib/Node';
+import type { Stage } from 'konva/lib/Stage';
+import type { Layer } from 'konva/lib/Layer';
+import type { Line } from 'konva/lib/shapes/Line';
+
+export type Tool = 'brush' | 'eraser' | 'move';
+export type ActiveLayer = 'drawing' | 'stencil';
+
+export interface DrawingLine {
+  tool: Tool;
+  points: number[];
+  strokeWidth: number;
+  layer: ActiveLayer;
+  color: string;
+  globalCompositeOperation: 'source-over' | 'destination-out';
+}
+
+export interface ViewTransform {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export interface LayerState {
+  visible: boolean;
+  opacity: number;
+}
+
+export interface LayersState {
+  drawing: LayerState;
+  stencil: LayerState;
+  original: LayerState;
+}
+
+export interface TouchCenter {
+  x: number;
+  y: number;
+}
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface NativeSize {
+  width: number;
+  height: number;
+}
+
+// Konva event types
+export type KonvaMouseEvent = KonvaEventObject<MouseEvent>;
+export type KonvaTouchEvent = KonvaEventObject<TouchEvent>;
+export type KonvaWheelEvent = KonvaEventObject<WheelEvent>;
+
+// Konva element refs
+export type StageRef = Stage | null;
+export type LayerRef = Layer | null;
+export type LineRef = Line | null;
+
+// Gesture data interfaces
+export interface PanGestureData {
+  deltaX: number;
+  deltaY: number;
+}
+
+export interface PinchGestureData {
+  scale: number;
+  centerX: number;
+  centerY: number;
+}
+
+export type GestureData = PanGestureData | PinchGestureData;

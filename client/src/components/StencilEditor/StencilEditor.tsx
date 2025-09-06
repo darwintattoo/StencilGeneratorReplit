@@ -3,6 +3,23 @@ import { useLocation } from 'wouter';
 import Canvas from './Canvas';
 import LayerPanel from './LayerPanel';
 import Toolbar from './Toolbar';
+import type {
+  DrawingLine,
+  ViewTransform,
+  LayersState,
+  Tool,
+  ActiveLayer,
+  Position,
+  TouchCenter,
+  NativeSize,
+  KonvaMouseEvent,
+  KonvaTouchEvent,
+  KonvaWheelEvent,
+  StageRef,
+  LineRef,
+  PanGestureData,
+  PinchGestureData
+} from './types';
 
 // Colores disponibles para el dibujo - solo negro, rojo y azul
 const DRAWING_COLORS = [
@@ -13,18 +30,18 @@ const DRAWING_COLORS = [
 
 // Hook personalizado para manejar la lógica del canvas
 function useStencilCanvas() {
-  const [tool, setTool] = useState<'brush' | 'eraser' | 'move'>('brush');
-  const [brushSize, setBrushSize] = useState(4);
-  const [eraserSize, setEraserSize] = useState(10);
-  const [activeLayer, setActiveLayer] = useState<'drawing' | 'stencil'>('drawing');
-  const [brushColor, setBrushColor] = useState('#ef4444'); // Rojo por defecto
-  const [stencilHue, setStencilHue] = useState(0); // Control de tono para stencil
-  const [layers, setLayers] = useState({
+  const [tool, setTool] = useState<Tool>('brush');
+  const [brushSize, setBrushSize] = useState<number>(4);
+  const [eraserSize, setEraserSize] = useState<number>(10);
+  const [activeLayer, setActiveLayer] = useState<ActiveLayer>('drawing');
+  const [brushColor, setBrushColor] = useState<string>('#ef4444'); // Rojo por defecto
+  const [stencilHue, setStencilHue] = useState<number>(0); // Control de tono para stencil
+  const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
     original: { visible: true, opacity: 20 }
   });
-  const [viewTransform, setViewTransform] = useState({
+  const [viewTransform, setViewTransform] = useState<ViewTransform>({
     x: 0,
     y: 0,
     scale: 1
@@ -44,20 +61,22 @@ function useStencilCanvas() {
     }));
   };
 
-  const handleGesture = (type: 'pan' | 'pinch', data: any) => {
+  const handleGesture = (type: 'pan' | 'pinch', data: PanGestureData | PinchGestureData) => {
     if (type === 'pan') {
+      const panData = data as PanGestureData;
       setViewTransform(prev => ({
         ...prev,
-        x: prev.x + data.deltaX,
-        y: prev.y + data.deltaY
+        x: prev.x + panData.deltaX,
+        y: prev.y + panData.deltaY
       }));
     } else if (type === 'pinch') {
-      const newScale = Math.max(0.1, Math.min(5, data.scale));
+      const pinchData = data as PinchGestureData;
+      const newScale = Math.max(0.1, Math.min(5, pinchData.scale));
       setViewTransform(prev => ({
         ...prev,
         scale: newScale,
-        x: data.centerX - (data.centerX - prev.x) * (newScale / prev.scale),
-        y: data.centerY - (data.centerY - prev.y) * (newScale / prev.scale)
+        x: pinchData.centerX - (pinchData.centerX - prev.x) * (newScale / prev.scale),
+        y: pinchData.centerY - (pinchData.centerY - prev.y) * (newScale / prev.scale)
       }));
     }
   };
@@ -95,16 +114,16 @@ interface StencilEditorProps {
 
 export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
   const [location, setLocation] = useLocation();
-  const stageRef = useRef<any>(null);
+  const stageRef = useRef<StageRef>(null);
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [drawingLines, setDrawingLines] = useState<any[]>([]);
-  const [stencilLines, setStencilLines] = useState<any[]>([]);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+  const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
   const drawingPointsRef = useRef<number[]>([]);
-  const currentLineRef = useRef<any>(null);
+  const currentLineRef = useRef<DrawingLine | null>(null);
   const frameRef = useRef<number>(0);
-  const tempLineRef = useRef<any>(null);
+  const tempLineRef = useRef<LineRef>(null);
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -113,15 +132,15 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
     frameRef.current = requestAnimationFrame(updateTempLine);
   };
-  const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
-  const [isLayersOpen, setIsLayersOpen] = useState(false);
+  const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+  const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
   const [touches, setTouches] = useState<Touch[]>([]);
-  const [lastPinchDistance, setLastPinchDistance] = useState(0);
-  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+  const [lastPinchDistance, setLastPinchDistance] = useState<number>(0);
+  const [lastTouchCenter, setLastTouchCenter] = useState<TouchCenter>({ x: 0, y: 0 });
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
-  const [isErasingStencil, setIsErasingStencil] = useState(false);
+  const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
 
   const {
