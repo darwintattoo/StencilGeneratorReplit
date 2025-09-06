@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Line, Rect } from 'react-konva';
 import { Slider } from '@/components/ui/slider';
 import type {
   DrawingLine,
@@ -97,6 +97,19 @@ export default function Canvas({
         y={viewTransform.y}
         rotation={viewTransform.rotation}
       >
+        {/* Capa de fondo blanco */}
+        {layers.background.visible && (
+          <Layer opacity={layers.background.opacity / 100}>
+            <Rect
+              x={-canvasSize.width * 2}
+              y={-canvasSize.height * 2}
+              width={canvasSize.width * 4}
+              height={canvasSize.height * 4}
+              fill="white"
+            />
+          </Layer>
+        )}
+
         {layers.original.visible && (
           <Layer opacity={layers.original.opacity / 100}>
             {originalImg && (
