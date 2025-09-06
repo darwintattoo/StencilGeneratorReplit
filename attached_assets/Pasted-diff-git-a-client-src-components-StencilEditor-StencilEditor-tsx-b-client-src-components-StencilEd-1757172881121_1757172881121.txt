@@ -1,0 +1,186 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..95d979efba9a51f3650b2d120c542f2958e4266b 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -95,53 +95,53 @@ function useStencilCanvas() {
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<any>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState(false);
+   const [lines, setLines] = useState<any[]>([]);
+   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState(false);
+-  const [touches, setTouches] = useState<Touch[]>([]);
+-  const [lastPinchDistance, setLastPinchDistance] = useState(0);
+-  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
++  const touchesRef = useRef<Touch[]>([]);
++  const lastPinchDistanceRef = useRef(0);
++  const lastTouchCenterRef = useRef({ x: 0, y: 0 });
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..95d979efba9a51f3650b2d120c542f2958e4266b 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -428,107 +428,108 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+ 
+     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+     handleGesture('pinch', {
+       scale: Math.max(0.1, Math.min(5, newScale)),
+       centerX: pointer.x,
+       centerY: pointer.y
+     });
+   };
+ 
+   // Funciones para gestos táctiles
+   const getDistance = (touch1: Touch, touch2: Touch) => {
+     const dx = touch1.clientX - touch2.clientX;
+     const dy = touch1.clientY - touch2.clientY;
+     return Math.sqrt(dx * dx + dy * dy);
+   };
+ 
+   const getCenter = (touch1: Touch, touch2: Touch) => {
+     return {
+       x: (touch1.clientX + touch2.clientX) / 2,
+       y: (touch1.clientY + touch2.clientY) / 2
+     };
+   };
+ 
+   const handleTouchStart = (e: any) => {
+     const touchList = Array.from(e.evt.touches) as Touch[];
+-    setTouches(touchList);
++    touchesRef.current = touchList;
+ 
+     if (touchList.length === 2) {
+       // Inicio de pinch
+       const distance = getDistance(touchList[0], touchList[1]);
+       const center = getCenter(touchList[0], touchList[1]);
+-      setLastPinchDistance(distance);
+-      setLastTouchCenter(center);
++      lastPinchDistanceRef.current = distance;
++      lastTouchCenterRef.current = center;
+       setIsPanning(false);
+       setIsDrawing(false);
+     } else if (touchList.length === 1) {
+       // Toque único - dibujo o pan
+       handleMouseDown(e);
+     }
+   };
+ 
+   const handleTouchMove = (e: any) => {
+     e.evt.preventDefault();
+     const touchList = Array.from(e.evt.touches) as Touch[];
++    touchesRef.current = touchList;
+ 
+     if (touchList.length === 2) {
+       // Pinch zoom y pan con dos dedos
+       const distance = getDistance(touchList[0], touchList[1]);
+       const center = getCenter(touchList[0], touchList[1]);
+ 
+-      if (lastPinchDistance > 0) {
++      if (lastPinchDistanceRef.current > 0) {
+         // Zoom
+-        const scale = distance / lastPinchDistance;
++        const scale = distance / lastPinchDistanceRef.current;
+         const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
+-        
++
+         // Pan
+-        const deltaX = center.x - lastTouchCenter.x;
+-        const deltaY = center.y - lastTouchCenter.y;
++        const deltaX = center.x - lastTouchCenterRef.current.x;
++        const deltaY = center.y - lastTouchCenterRef.current.y;
+ 
+         handleGesture('pinch', {
+           scale: newScale,
+           centerX: center.x,
+           centerY: center.y
+         });
+ 
+         handleGesture('pan', { deltaX, deltaY });
+       }
+ 
+-      setLastPinchDistance(distance);
+-      setLastTouchCenter(center);
++      lastPinchDistanceRef.current = distance;
++      lastTouchCenterRef.current = center;
+     } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
+       // Dibujo con un dedo
+       handleMouseMove(e);
+     }
+   };
+ 
+   const handleTouchEnd = (e: any) => {
+     const touchList = Array.from(e.evt.touches) as Touch[];
+-    setTouches(touchList);
++    touchesRef.current = touchList;
+ 
+     if (touchList.length < 2) {
+-      setLastPinchDistance(0);
++      lastPinchDistanceRef.current = 0;
+     }
+ 
+     if (touchList.length === 0) {
+       handleMouseUp();
+     }
+   };
+ 
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen bg-gray-100 relative flex">
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Stage
+           width={window.innerWidth - (isLayersOpen ? 320 : 0)}
+           height={window.innerHeight}
+           onMouseDown={handleMouseDown}
+           onMousemove={handleMouseMove}
+           onMouseup={handleMouseUp}
+           onWheel={handleWheel}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
