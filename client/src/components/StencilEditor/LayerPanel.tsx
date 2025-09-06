@@ -33,21 +33,21 @@ export default function LayerPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 top-0 h-full w-80 bg-gray-800 border-l border-gray-600 p-4 overflow-y-auto z-50">
-      <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-800 pb-2 z-50">
+    <div className="absolute right-0 top-0 h-full w-80 bg-gray-900 border-l border-gray-700 p-4 overflow-y-auto z-50">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-900 pb-2 z-50">
         <h3 className="text-white font-medium">Capas</h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 min-w-[32px] h-8"
+          className="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 min-w-[32px] h-8"
         >
           ×
         </Button>
       </div>
 
       <div className="space-y-4">
-        <div className="bg-gray-600 rounded-lg p-3">
+        <div className="bg-gray-800 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
@@ -81,7 +81,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-lg p-3">
+        <div className="bg-gray-800 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
@@ -127,7 +127,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-lg p-3">
+        <div className="bg-gray-800 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-400" />
             <Switch
@@ -154,7 +154,7 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-lg p-3">
+        <div className="bg-gray-800 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
