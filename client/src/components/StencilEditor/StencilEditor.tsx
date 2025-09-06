@@ -632,19 +632,30 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
           {/* Herramientas derecha */}
           <div className="flex items-center gap-4">
-            {/* Colores de pincel */}
+            {/* Colores y tamaño de pincel */}
             {tool === 'brush' && (
-              <div className="flex gap-2">
-                {['#000000', '#ef4444', '#3b82f6'].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setBrushColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      brushColor === color ? 'border-white scale-110' : 'border-gray-600'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  {['#000000', '#ef4444', '#3b82f6'].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setBrushColor(color)}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        brushColor === color ? 'border-white scale-110' : 'border-gray-600'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {brushSize}px
+                </div>
+              </div>
+            )}
+            {/* Tamaño de borrador */}
+            {tool === 'eraser' && (
+              <div className="text-xs text-gray-400">
+                {eraserSize}px
               </div>
             )}
             <button
@@ -703,17 +714,24 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         {/* Toolbar ahora integrado en la barra superior */}
       </div>
 
-      <LayerPanel
-        isOpen={isLayersOpen}
-        layers={layers}
-        toggleLayer={toggleLayer}
-        setOpacity={setOpacity}
-        brushColor={brushColor}
-        setBrushColor={setBrushColor}
-        stencilHue={stencilHue}
-        setStencilHue={setStencilHue}
-        onClose={() => setIsLayersOpen(false)}
-      />
+      {/* Modal de capas centrado */}
+      {isLayersOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <LayerPanel
+              isOpen={isLayersOpen}
+              layers={layers}
+              toggleLayer={toggleLayer}
+              setOpacity={setOpacity}
+              brushColor={brushColor}
+              setBrushColor={setBrushColor}
+              stencilHue={stencilHue}
+              setStencilHue={setStencilHue}
+              onClose={() => setIsLayersOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
