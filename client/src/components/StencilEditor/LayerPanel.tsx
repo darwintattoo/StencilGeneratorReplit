@@ -33,14 +33,14 @@ export default function LayerPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="w-full p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-white text-xl font-medium">Capas</h3>
+    <div className="absolute right-0 top-0 h-full w-80 bg-gray-800 border-l border-gray-600 p-4 overflow-y-auto z-50">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-800 pb-2 z-50">
+        <h3 className="text-white font-medium">Capas</h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 min-w-[40px] h-10 text-lg"
+          className="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 min-w-[32px] h-8"
         >
           ×
         </Button>

@@ -80,7 +80,7 @@ export default function Canvas({
   return (
     <>
       <Stage
-        width={canvasSize.width}
+        width={canvasSize.width - (isLayersOpen ? 320 : 0)}
         height={canvasSize.height}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
