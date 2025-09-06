@@ -80,9 +80,23 @@ export default function MyStencils() {
       <div className="container mx-auto py-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Mis Stencils Guardados</h1>
-          <Button variant="default" asChild>
-            <Link href="/">Crear nuevo stencil</Link>
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const params = new URLSearchParams();
+                params.set('original', '@assets/generated-image-611_1757170484534.png');
+                params.set('stencil', '@assets/347f99ab-ec0e-43f8-b80c-6cc63caabfa2_1757170560086.png');
+                setLocation(`/editor?${params.toString()}`);
+              }}
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Prueba Editor
+            </Button>
+            <Button variant="default" asChild>
+              <Link href="/">Crear nuevo stencil</Link>
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
