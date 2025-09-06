@@ -1,0 +1,219 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index db879940f52f4fd50ecaa98e3007f67112702b25..2a4efeaeb16e0bef7e9a73193e569f7cb3ddc5c1 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -107,50 +107,51 @@ function useStencilCanvas() {
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
++  onSave?: (editedImageUrl: string) => Promise<void>;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<StageRef>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
+   const drawingPointsRef = useRef<number[]>([]);
+   const currentLineRef = useRef<DrawingLine | null>(null);
+   const frameRef = useRef<number>(0);
+   const tempLineRef = useRef<LineRef>(null);
+ 
+   const updateTempLine = () => {
+     if (tempLineRef.current) {
+       tempLineRef.current.points(drawingPointsRef.current);
+       tempLineRef.current.getLayer()?.batchDraw();
+     }
+     frameRef.current = requestAnimationFrame(updateTempLine);
+   };
+   const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState<boolean>(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index db879940f52f4fd50ecaa98e3007f67112702b25..2a4efeaeb16e0bef7e9a73193e569f7cb3ddc5c1 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -258,148 +259,134 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+             // Aplicar cambio de tono
+             const newH = (h + stencilHue / 360) % 1;
+             
+             // Convertir de vuelta a RGB
+             const [newR, newG, newB] = hslToRgb(newH, s, l);
+             
+             data[i] = newR;
+             data[i + 1] = newG;
+             data[i + 2] = newB;
+           }
+           
+           // Aplicar datos modificados
+           ctx.putImageData(imageData, 0, 0);
+         }
+         
+         // Crear nueva imagen
+         const newImg = new Image();
+         newImg.onload = () => {
+           setFilteredStencilImg(newImg);
+         };
+         newImg.src = canvas.toDataURL();
+       }
+     }
+   }, [stencilImg, stencilHue]);
+ 
+-  // Función para corregir coordenadas con rotación
+-  const getRotatedPosition = (adjX: number, adjY: number) => {
+-    const centerX = nativeSize.width / 2;
+-    const centerY = nativeSize.height / 2;
+-    const rad = -viewTransform.rotation * Math.PI / 180;
+-    const cos = Math.cos(rad);
+-    const sin = Math.sin(rad);
+-    const dx = adjX - centerX;
+-    const dy = adjY - centerY;
+-    return {
+-      x: centerX + dx * cos - dy * sin,
+-      y: centerY + dx * sin + dy * cos,
+-    };
+-  };
+-
+   // Manejo de gestos táctiles y mouse
+   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+-    const pos = stageRef.current?.getPointerPosition();
++    const stage = stageRef.current;
++    if (!stage) return;
++    const pos = stage.getPointerPosition();
+     if (!pos) return;
+     
+     const mouseEvent = e.evt as MouseEvent;
+     if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+       setIsDrawing(true);
+-      const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
+-      const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
+-      const { x, y } = getRotatedPosition(adjX, adjY);
++      const transform = stage.getAbsoluteTransform().copy().invert();
++      const { x, y } = transform.point(pos);
+ 
+       // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+         
+         // Crear canvas de trabajo si no existe
+         if (!stencilCanvas) {
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
+         
+         // Aplicar borrado inicial
+         if (stencilCanvas) {
+           const ctx = stencilCanvas.getContext('2d');
+           if (ctx) {
+             ctx.save();
+             ctx.globalCompositeOperation = 'destination-out';
+             ctx.beginPath();
+             ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+             ctx.fill();
+             ctx.restore();
+           }
+         }
+         return;
+       }
+       
+       const color = tool === 'brush'
+         ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
+         : '#ffffff';
+       currentLineRef.current = {
+         tool,
+         points: [],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+         color
+       };
+       drawingPointsRef.current = [x, y];
+       frameRef.current = requestAnimationFrame(updateTempLine);
+     }
+   };
+ 
+   const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+-    const pos = stageRef.current?.getPointerPosition();
++    const stage = stageRef.current;
++    if (!stage) return;
++    const pos = stage.getPointerPosition();
+     if (!pos) return;
+ 
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+-    
+-    const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
+-    const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
+-    const { x, y } = getRotatedPosition(adjX, adjY);
++    const transform = stage.getAbsoluteTransform().copy().invert();
++    const { x, y } = transform.point(pos);
+ 
+     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
+     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
+       const ctx = stencilCanvas.getContext('2d');
+       
+       if (ctx) {
+         // Borrado inmediato sin operaciones bloqueantes
+         ctx.globalCompositeOperation = 'destination-out';
+         ctx.fillStyle = '#000';
+         
+         // Borrado instantáneo con mínimo procesamiento
+         ctx.beginPath();
+         ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+         ctx.fill();
+         
+         // Sin restaurar contexto durante movimiento para máxima velocidad
+       }
+       return;
+     }
+     
+     drawingPointsRef.current.push(x, y);
+   };
+ 
+   const handleMouseUp = () => {
+     setIsDrawing(false);

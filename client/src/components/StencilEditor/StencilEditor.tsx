@@ -280,24 +280,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   }, [stencilImg, stencilHue]);
 
-  // Función para corregir coordenadas con rotación
-  const getRotatedPosition = (adjX: number, adjY: number) => {
-    const centerX = nativeSize.width / 2;
-    const centerY = nativeSize.height / 2;
-    const rad = -viewTransform.rotation * Math.PI / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    const dx = adjX - centerX;
-    const dy = adjY - centerY;
-    return {
-      x: centerX + dx * cos - dy * sin,
-      y: centerY + dx * sin + dy * cos,
-    };
-  };
-
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
-    const pos = stageRef.current?.getPointerPosition();
+    const stage = stageRef.current;
+    if (!stage) return;
+    const pos = stage.getPointerPosition();
     if (!pos) return;
     
     const mouseEvent = e.evt as MouseEvent;
@@ -310,9 +297,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (tool === 'brush' || tool === 'eraser') {
       setIsDrawing(true);
-      const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
-      const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
-      const { x, y } = getRotatedPosition(adjX, adjY);
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
 
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
@@ -362,7 +348,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   };
 
   const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
-    const pos = stageRef.current?.getPointerPosition();
+    const stage = stageRef.current;
+    if (!stage) return;
+    const pos = stage.getPointerPosition();
     if (!pos) return;
 
     if (isPanning) {
@@ -374,10 +362,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
 
     if (!isDrawing) return;
-    
-    const adjX = (pos.x - viewTransform.x) / viewTransform.scale;
-    const adjY = (pos.y - viewTransform.y) / viewTransform.scale;
-    const { x, y } = getRotatedPosition(adjX, adjY);
+    const transform = stage.getAbsoluteTransform().copy().invert();
+    const { x, y } = transform.point(pos);
 
     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
