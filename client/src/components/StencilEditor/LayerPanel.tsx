@@ -82,7 +82,6 @@ export default function LayerPanel({
           <div className="ml-7 space-y-3">
             <div>
               <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Hue:</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -95,6 +94,7 @@ export default function LayerPanel({
                 >
                   {isColorLinked ? <Link className="w-2 h-2" /> : <Unlink className="w-2 h-2" />}
                 </Button>
+                <span>Hue:</span>
                 <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
               </div>
               <div className="relative mb-4">
