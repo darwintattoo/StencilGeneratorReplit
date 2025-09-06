@@ -101,10 +101,10 @@ export default function Canvas({
         {layers.background.visible && (
           <Layer opacity={layers.background.opacity / 100}>
             <Rect
-              x={-canvasSize.width * 2}
-              y={-canvasSize.height * 2}
-              width={canvasSize.width * 4}
-              height={canvasSize.height * 4}
+              x={0}
+              y={0}
+              width={nativeSize.width}
+              height={nativeSize.height}
               fill="white"
             />
           </Layer>
