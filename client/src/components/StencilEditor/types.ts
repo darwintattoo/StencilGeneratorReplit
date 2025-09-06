@@ -3,7 +3,7 @@ import type { Stage } from 'konva/lib/Stage';
 import type { Layer } from 'konva/lib/Layer';
 import type { Line } from 'konva/lib/shapes/Line';
 
-export type Tool = 'brush' | 'eraser' | 'move';
+export type Tool = 'brush' | 'eraser' | 'move' | 'eyedropper';
 export type ActiveLayer = 'drawing' | 'stencil';
 
 export interface DrawingLine {

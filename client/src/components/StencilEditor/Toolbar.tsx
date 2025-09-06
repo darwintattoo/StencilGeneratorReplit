@@ -1,10 +1,23 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PenTool, Eraser, Layers, ArrowLeft, Move } from 'lucide-react';
+import { PenTool, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
 import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
 
-const COLORS = ['#000000', '#ef4444', '#3b82f6'];
+const COLORS = [
+  '#000000', // Negro
+  '#ef4444', // Rojo
+  '#3b82f6', // Azul
+  '#22c55e', // Verde
+  '#f59e0b', // Amarillo/Naranja
+  '#8b5cf6', // Morado
+  '#ec4899', // Rosa
+  '#6b7280', // Gris
+  '#ffffff', // Blanco
+  '#fbbf24', // Amarillo
+  '#06b6d4', // Cian
+  '#f97316'  // Naranja
+];
 
 interface ToolbarProps {
   tool: Tool;
