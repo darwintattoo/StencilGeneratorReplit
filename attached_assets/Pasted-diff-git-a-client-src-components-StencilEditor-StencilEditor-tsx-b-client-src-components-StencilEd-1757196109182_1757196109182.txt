@@ -1,0 +1,371 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -16,50 +16,51 @@ import type {
+   KonvaMouseEvent,
+   KonvaTouchEvent,
+   KonvaWheelEvent,
+   StageRef,
+   LineRef,
+   PanGestureData,
+   PinchGestureData,
+   RotateGestureData
+ } from './types';
+ 
+ // Colores disponibles para el dibujo - solo negro, rojo y azul
+ const DRAWING_COLORS = [
+   '#000000', // Negro
+   '#ef4444', // Rojo
+   '#3b82f6', // Azul
+ ];
+ 
+ // Hook personalizado para manejar la lógica del canvas
+ function useStencilCanvas() {
+   const [tool, setTool] = useState<Tool>('brush');
+   const [brushSize, setBrushSize] = useState<number>(4);
+   const [eraserSize, setEraserSize] = useState<number>(10);
+   const [activeLayer, setActiveLayer] = useState<ActiveLayer>('drawing');
+   const [brushColor, setBrushColor] = useState<string>('#ef4444'); // Rojo por defecto
+   const [stencilHue, setStencilHue] = useState<number>(0); // Control de tono para stencil
++  const [stencilSaturation, setStencilSaturation] = useState<number>(100);
+   const [layers, setLayers] = useState<LayersState>({
+     drawing: { visible: true, opacity: 100 },
+     stencil: { visible: true, opacity: 100 },
+     original: { visible: true, opacity: 20 },
+     background: { visible: true, opacity: 100 }
+   });
+   const [viewTransform, setViewTransform] = useState<ViewTransform>({
+     x: 0,
+     y: 0,
+     scale: 1,
+     rotation: 0
+   });
+ 
+   const toggleLayer = (key: string, visible: boolean) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], visible }
+     }));
+   };
+ 
+   const setOpacity = (key: string, opacity: number) => {
+     setLayers(prev => ({
+       ...prev,
+       [key]: { ...prev[key as keyof typeof prev], opacity }
+     }));
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -96,62 +97,65 @@ function useStencilCanvas() {
+           rotation: prev.rotation + rotateData.deltaRotation,
+           x: rotateData.centerX + x * cos - y * sin,
+           y: rotateData.centerY + x * sin + y * cos
+         };
+       });
+     }
+   };
+ 
+   const resetView = () => {
+     setViewTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
+   };
+ 
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
++    stencilSaturation,
++    setStencilSaturation,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
++  onSave?: (editedImageUrl: string) => Promise<void>;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<StageRef>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
+   const drawingPointsRef = useRef<number[]>([]);
+   const currentLineRef = useRef<DrawingLine | null>(null);
+   const frameRef = useRef<number>(0);
+   const tempLineRef = useRef<LineRef>(null);
+ 
+   const updateTempLine = () => {
+     if (tempLineRef.current) {
+       tempLineRef.current.points(drawingPointsRef.current);
+       tempLineRef.current.getLayer()?.batchDraw();
+     }
+     frameRef.current = requestAnimationFrame(updateTempLine);
+   };
+   const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState<boolean>(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -159,50 +163,52 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+   const touchesRef = useRef<Touch[]>([]);
+   const lastPinchDistanceRef = useRef<number>(0);
+   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+   const lastAngleRef = useRef<number>(0);
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
+     width: window.innerWidth, 
+     height: window.innerHeight 
+   });
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
++    stencilSaturation,
++    setStencilSaturation,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
+   // Manejar redimensionamiento de ventana para hacer el canvas responsivo
+   useEffect(() => {
+     const handleResize = (): void => {
+       setCanvasSize({ 
+         width: window.innerWidth, 
+         height: window.innerHeight 
+       });
+     };
+     
+     window.addEventListener('resize', handleResize);
+     window.addEventListener('orientationchange', handleResize);
+     
+     return () => {
+       window.removeEventListener('resize', handleResize);
+       window.removeEventListener('orientationchange', handleResize);
+     };
+   }, []);
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -259,50 +265,58 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+             // Aplicar cambio de tono
+             const newH = (h + stencilHue / 360) % 1;
+             
+             // Convertir de vuelta a RGB
+             const [newR, newG, newB] = hslToRgb(newH, s, l);
+             
+             data[i] = newR;
+             data[i + 1] = newG;
+             data[i + 2] = newB;
+           }
+           
+           // Aplicar datos modificados
+           ctx.putImageData(imageData, 0, 0);
+         }
+         
+         // Crear nueva imagen
+         const newImg = new Image();
+         newImg.onload = () => {
+           setFilteredStencilImg(newImg);
+         };
+         newImg.src = canvas.toDataURL();
+       }
+     }
+   }, [stencilImg, stencilHue]);
+ 
++  useEffect(() => {
++    setDrawingLines(prev => prev.map(line => ({ ...line, color: line.baseColor })));
++    setStencilLines(prev => prev.map(line => ({ ...line, color: line.baseColor })));
++    if (currentLineRef.current) {
++      currentLineRef.current.color = currentLineRef.current.baseColor;
++    }
++  }, [stencilHue, stencilSaturation]);
++
+   // Manejo de gestos táctiles y mouse
+   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+     
+     const mouseEvent = e.evt as MouseEvent;
+     if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+       // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+       const pointerEvent = e.evt as any;
+       if (pointerEvent.pointerType === 'touch') {
+         return;
+       }
+       setIsDrawing(true);
+       const transform = stage.getAbsoluteTransform().copy().invert();
+       const { x, y } = transform.point(pos);
+ 
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -315,60 +329,61 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
+         
+         // Aplicar borrado inicial
+         if (stencilCanvas) {
+           const ctx = stencilCanvas.getContext('2d');
+           if (ctx) {
+             ctx.save();
+             ctx.globalCompositeOperation = 'destination-out';
+             ctx.beginPath();
+             ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+             ctx.fill();
+             ctx.restore();
+           }
+         }
+         return;
+       }
+       
+-      const color = tool === 'brush'
++      const baseColor = tool === 'brush'
+         ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
+         : '#ffffff';
+       currentLineRef.current = {
+         tool,
+         points: [],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+-        color
++        color: baseColor,
++        baseColor
+       };
+       drawingPointsRef.current = [x, y];
+       frameRef.current = requestAnimationFrame(updateTempLine);
+     }
+   };
+ 
+   const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+ 
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+     
+     // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+     const pointerEvent = e.evt as any;
+     if (pointerEvent.pointerType === 'touch') {
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..512e93e3c984221bfa704b784a3c49da9afd81bd 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -602,50 +617,52 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+           handleMouseMove={handleMouseMove}
+           handleMouseUp={handleMouseUp}
+           handleWheel={handleWheel}
+           handleTouchStart={handleTouchStart}
+           handleTouchMove={handleTouchMove}
+           handleTouchEnd={handleTouchEnd}
+           handleDoubleTap={handleDoubleTap}
+           layers={layers}
+           originalImg={originalImg}
+           stencilImg={stencilImg}
+           filteredStencilImg={filteredStencilImg}
+           drawingLines={drawingLines}
+           stencilLines={stencilLines}
+           currentLineRef={currentLineRef}
+           drawingPointsRef={drawingPointsRef}
+           tempLineRef={tempLineRef}
+           isErasingStencil={isErasingStencil}
+           brushColor={brushColor}
+           tool={tool}
+           brushSize={brushSize}
+           setBrushSize={setBrushSize}
+           eraserSize={eraserSize}
+           setEraserSize={setEraserSize}
+           nativeSize={nativeSize}
+           canvasSize={canvasSize}
++          stencilHue={stencilHue}
++          stencilSaturation={stencilSaturation}
+         />
+ 
+         <Toolbar
+           tool={tool}
+           setTool={setTool}
+           activeLayer={activeLayer}
+           setActiveLayer={setActiveLayer}
+           brushColor={brushColor}
+           setBrushColor={setBrushColor}
+           layers={layers}
+           setOpacity={setOpacity}
+           viewTransform={viewTransform}
+           isLayersOpen={isLayersOpen}
+           setIsLayersOpen={setIsLayersOpen}
+           onBack={() => setLocation('/')}
+         />
+       </div>
+ 
+       <LayerPanel
+         isOpen={isLayersOpen}
+         layers={layers}
+         toggleLayer={toggleLayer}
+         setOpacity={setOpacity}
+         brushColor={brushColor}
+         setBrushColor={setBrushColor}

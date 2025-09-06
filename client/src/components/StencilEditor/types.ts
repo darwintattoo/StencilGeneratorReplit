@@ -12,6 +12,7 @@ export interface DrawingLine {
   strokeWidth: number;
   layer: ActiveLayer;
   color: string;
+  baseColor: string;
   globalCompositeOperation: 'source-over' | 'destination-out';
 }
 
