@@ -669,6 +669,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           setBrushSize={setBrushSize}
           eraserSize={eraserSize}
           setEraserSize={setEraserSize}
+          drawingHue={drawingHue}
+          drawingSaturation={drawingSaturation}
           nativeSize={nativeSize}
           canvasSize={canvasSize}
         />
