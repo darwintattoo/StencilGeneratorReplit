@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { GripVertical, Eye, EyeOff } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Link, Unlink } from 'lucide-react';
 import type { LayersState } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
@@ -62,6 +62,28 @@ export default function LayerPanel({
         </Button>
       </div>
 
+      {/* Control de enlace global */}
+      <div className="rounded-lg p-3 mb-4 border border-gray-600" style={{ backgroundColor: '#2d2d2d' }}>
+        <div className="flex items-center justify-between">
+          <span className="text-white text-sm font-medium">Sincronizar Colores</span>
+          <Button
+            variant={isColorLinked ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsColorLinked(!isColorLinked)}
+            className={`min-w-[32px] h-8 ${
+              isColorLinked 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+            }`}
+          >
+            {isColorLinked ? <Link className="w-4 h-4" /> : <Unlink className="w-4 h-4" />}
+          </Button>
+        </div>
+        {isColorLinked && (
+          <p className="text-xs text-gray-400 mt-2">Los controles de color se mueven juntos</p>
+        )}
+      </div>
+
       <div className="space-y-4">
         <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
@@ -90,7 +112,12 @@ export default function LayerPanel({
                 }}></div>
                 <Slider
                   value={[drawingHue]}
-                  onValueChange={([value]) => setDrawingHue(value)}
+                  onValueChange={([value]) => {
+                    setDrawingHue(value);
+                    if (isColorLinked) {
+                      setStencilHue(value);
+                    }
+                  }}
                   max={360}
                   min={0}
                   step={1}
@@ -107,7 +134,12 @@ export default function LayerPanel({
                 }}></div>
                 <Slider
                   value={[drawingSaturation]}
-                  onValueChange={([value]) => setDrawingSaturation(value)}
+                  onValueChange={([value]) => {
+                    setDrawingSaturation(value);
+                    if (isColorLinked) {
+                      setStencilSaturation(value);
+                    }
+                  }}
                   max={200}
                   min={0}
                   step={1}
@@ -145,7 +177,12 @@ export default function LayerPanel({
                 }}></div>
                 <Slider
                   value={[stencilHue]}
-                  onValueChange={([value]) => setStencilHue(value)}
+                  onValueChange={([value]) => {
+                    setStencilHue(value);
+                    if (isColorLinked) {
+                      setDrawingHue(value);
+                    }
+                  }}
                   max={360}
                   min={0}
                   step={1}
@@ -162,7 +199,12 @@ export default function LayerPanel({
                 }}></div>
                 <Slider
                   value={[stencilSaturation]}
-                  onValueChange={([value]) => setStencilSaturation(value)}
+                  onValueChange={([value]) => {
+                    setStencilSaturation(value);
+                    if (isColorLinked) {
+                      setDrawingSaturation(value);
+                    }
+                  }}
                   max={200}
                   min={0}
                   step={1}
