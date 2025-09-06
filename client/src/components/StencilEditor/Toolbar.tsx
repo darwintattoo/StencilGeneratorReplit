@@ -102,14 +102,14 @@ export default function Toolbar({
       {/* DERECHA: Layers + Controles + Colores */}
       <div className="flex items-center gap-2">
         {(tool === 'brush' || tool === 'eyedropper') && (
-          <div className="flex items-center gap-2 rounded-md p-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <div className="flex items-center gap-3 rounded-md px-3 py-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
             {COLORS.map((color, index) => (
               <button
                 key={color}
                 onClick={() => setBrushColor(color)}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                className={`w-8 h-8 rounded-full border-2 transition-all ${
                   brushColor === color 
-                    ? 'border-gray-800 ring-2 ring-blue-400 scale-110' 
+                    ? 'border-gray-800 ring-2 ring-blue-400 scale-105' 
                     : 'border-gray-400 hover:border-gray-600'
                 }`}
                 style={{ backgroundColor: color }}
@@ -117,16 +117,16 @@ export default function Toolbar({
               />
             ))}
             
-            <div className="w-px h-6 bg-gray-600 mx-1"></div>
+            <div className="w-px h-7 bg-gray-600 mx-2"></div>
             
             <Button
               variant={tool === 'eyedropper' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTool('eyedropper')}
-              className={tool === 'eyedropper' 
+              className={`h-8 px-3 ${tool === 'eyedropper' 
                 ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm border-orange-500" 
                 : "shadow-sm text-gray-300 border-gray-600"
-              }
+              }`}
             >
               <Pipette className={`w-4 h-4 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
             </Button>
@@ -166,30 +166,30 @@ export default function Toolbar({
           variant={isLayersOpen ? 'default' : 'outline'}
           size="sm"
           onClick={() => setIsLayersOpen(!isLayersOpen)}
-          className={isLayersOpen
+          className={`h-8 px-3 ${isLayersOpen
             ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm border-purple-500"
             : "shadow-sm text-gray-300 border-gray-600"
-          }
+          }`}
         >
           <Layers className={`w-4 h-4 ${isLayersOpen ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
-        <div className="flex items-center gap-2 rounded-md px-3 py-2 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
-          <span className="text-xs text-gray-300 font-medium">Original</span>
-          <div className="w-20">
+        <div className="flex items-center gap-3 rounded-md px-4 py-2 shadow-sm border border-gray-600 h-8" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <span className="text-sm text-gray-300 font-medium min-w-[50px]">Original</span>
+          <div className="w-24">
             <Slider
               value={[layers.original.opacity]}
               onValueChange={([value]) => setOpacity('original', value)}
               max={100}
               min={0}
               step={1}
-              className="w-20"
+              className="w-24"
             />
           </div>
-          <span className="text-xs text-gray-300 min-w-[30px]">{layers.original.opacity}%</span>
+          <span className="text-sm text-gray-300 min-w-[35px] font-mono">{layers.original.opacity}%</span>
         </div>
 
-        <div className="text-sm text-gray-300 px-2 py-1 rounded-md shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+        <div className="text-sm text-gray-300 px-3 py-2 rounded-md shadow-sm border border-gray-600 h-8 flex items-center font-mono" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
           {Math.round(viewTransform.scale * 100)}%
         </div>
       </div>
