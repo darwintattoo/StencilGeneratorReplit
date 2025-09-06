@@ -79,7 +79,7 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
-          <div className="flex justify-start ml-1 mb-2">
+          <div className="flex justify-start ml-1">
             <Button
               variant="ghost"
               size="sm"
