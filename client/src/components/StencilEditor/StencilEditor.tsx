@@ -392,7 +392,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
         layer: activeLayer,
-        color
+        color,
+        baseColor: color
       };
       drawingPointsRef.current = [x, y];
       frameRef.current = requestAnimationFrame(updateTempLine);
