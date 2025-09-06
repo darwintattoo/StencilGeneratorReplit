@@ -38,6 +38,9 @@ function useStencilCanvas() {
   const [activeLayer, setActiveLayer] = useState<ActiveLayer>('drawing');
   const [brushColor, setBrushColor] = useState<string>('#ef4444'); // Rojo por defecto
   const [stencilHue, setStencilHue] = useState<number>(0); // Control de tono para stencil
+  const [stencilSaturation, setStencilSaturation] = useState<number>(100); // Control de saturación para stencil
+  const [drawingHue, setDrawingHue] = useState<number>(0); // Control de tono para drawing
+  const [drawingSaturation, setDrawingSaturation] = useState<number>(100); // Control de saturación para drawing
   const [layers, setLayers] = useState<LayersState>({
     drawing: { visible: true, opacity: 100 },
     stencil: { visible: true, opacity: 100 },
@@ -118,6 +121,12 @@ function useStencilCanvas() {
     setBrushColor,
     stencilHue,
     setStencilHue,
+    stencilSaturation,
+    setStencilSaturation,
+    drawingHue,
+    setDrawingHue,
+    drawingSaturation,
+    setDrawingSaturation,
     layers,
     toggleLayer,
     setOpacity,
@@ -181,6 +190,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     setBrushColor,
     stencilHue,
     setStencilHue,
+    stencilSaturation,
+    setStencilSaturation,
+    drawingHue,
+    setDrawingHue,
+    drawingSaturation,
+    setDrawingSaturation,
     layers,
     toggleLayer,
     setOpacity,
@@ -677,6 +692,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setBrushColor={setBrushColor}
         stencilHue={stencilHue}
         setStencilHue={setStencilHue}
+        stencilSaturation={stencilSaturation}
+        setStencilSaturation={setStencilSaturation}
+        drawingHue={drawingHue}
+        setDrawingHue={setDrawingHue}
+        drawingSaturation={drawingSaturation}
+        setDrawingSaturation={setDrawingSaturation}
         onClose={() => setIsLayersOpen(false)}
       />
     </div>

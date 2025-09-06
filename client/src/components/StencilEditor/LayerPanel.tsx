@@ -16,6 +16,12 @@ interface LayerPanelProps {
   setBrushColor: (color: string) => void;
   stencilHue: number;
   setStencilHue: (hue: number) => void;
+  stencilSaturation: number;
+  setStencilSaturation: (saturation: number) => void;
+  drawingHue: number;
+  setDrawingHue: (hue: number) => void;
+  drawingSaturation: number;
+  setDrawingSaturation: (saturation: number) => void;
   onClose: () => void;
 }
 
@@ -28,6 +34,12 @@ export default function LayerPanel({
   setBrushColor,
   stencilHue,
   setStencilHue,
+  stencilSaturation,
+  setStencilSaturation,
+  drawingHue,
+  setDrawingHue,
+  drawingSaturation,
+  setDrawingSaturation,
   onClose
 }: LayerPanelProps) {
   if (!isOpen) return null;
