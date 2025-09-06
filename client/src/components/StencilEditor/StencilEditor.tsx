@@ -175,6 +175,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+  const filterCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
     width: window.innerWidth, 
     height: window.innerHeight 
@@ -249,48 +250,35 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   }, [originalImage]);
 
-  // Aplicar filtro de tono al stencil
+  // Aplicar filtro de tono y saturación al stencil usando filtros nativos (mucho más rápido)
   useEffect(() => {
     if (stencilImg) {
-      const canvas = document.createElement('canvas');
+      // Si no hay cambios, usar imagen original
+      if (stencilHue === 0 && stencilSaturation === 100) {
+        setFilteredStencilImg(null);
+        return;
+      }
+
+      // Reutilizar canvas o crear uno nuevo
+      const canvas = filterCanvasRef.current ?? document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
         canvas.width = stencilImg.width;
         canvas.height = stencilImg.height;
         
-        // Dibujar imagen original
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Aplicar filtros nativos del canvas (mucho más rápido que píxel a píxel)
+        const saturationValue = stencilSaturation / 100;
+        ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue})`;
+        
+        // Dibujar imagen con filtros aplicados
         ctx.drawImage(stencilImg, 0, 0);
         
-        if (stencilHue !== 0 || stencilSaturation !== 100) {
-          // Obtener datos de píxeles
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          
-          // Aplicar transformación de tono
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            
-            // Convertir RGB a HSL
-            const [h, s, l] = rgbToHsl(r, g, b);
-            
-            // Aplicar cambio de tono y saturación
-            const newH = (h + stencilHue / 360) % 1;
-            const newS = Math.min(1, Math.max(0, s * (stencilSaturation / 100)));
-            
-            // Convertir de vuelta a RGB
-            const [newR, newG, newB] = hslToRgb(newH, newS, l);
-            
-            data[i] = newR;
-            data[i + 1] = newG;
-            data[i + 2] = newB;
-          }
-          
-          // Aplicar datos modificados
-          ctx.putImageData(imageData, 0, 0);
-        }
+        // Resetear filtro
+        ctx.filter = 'none';
         
         // Crear nueva imagen
         const newImg = new Image();
@@ -298,6 +286,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           setFilteredStencilImg(newImg);
         };
         newImg.src = canvas.toDataURL();
+
+        // Guardar referencia del canvas para reutilización
+        if (!filterCanvasRef.current) {
+          filterCanvasRef.current = canvas;
+        }
       }
     }
   }, [stencilImg, stencilHue, stencilSaturation]);
