@@ -137,9 +137,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
-  const [touches, setTouches] = useState<Touch[]>([]);
-  const [lastPinchDistance, setLastPinchDistance] = useState<number>(0);
-  const [lastTouchCenter, setLastTouchCenter] = useState<TouchCenter>({ x: 0, y: 0 });
+  const touchesRef = useRef<Touch[]>([]);
+  const lastPinchDistanceRef = useRef<number>(0);
+  const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
@@ -447,14 +447,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   const handleTouchStart = (e: KonvaTouchEvent) => {
     const touchList = Array.from(e.evt.touches) as Touch[];
-    setTouches(touchList);
+    touchesRef.current = touchList;
 
     if (touchList.length === 2) {
       // Inicio de pinch
       const distance = getDistance(touchList[0], touchList[1]);
       const center = getCenter(touchList[0], touchList[1]);
-      setLastPinchDistance(distance);
-      setLastTouchCenter(center);
+      lastPinchDistanceRef.current = distance;
+      lastTouchCenterRef.current = center;
       setIsPanning(false);
       setIsDrawing(false);
     } else if (touchList.length === 1) {
@@ -466,20 +466,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const handleTouchMove = (e: KonvaTouchEvent) => {
     e.evt.preventDefault();
     const touchList = Array.from(e.evt.touches) as Touch[];
+    touchesRef.current = touchList;
 
     if (touchList.length === 2) {
       // Pinch zoom y pan con dos dedos
       const distance = getDistance(touchList[0], touchList[1]);
       const center = getCenter(touchList[0], touchList[1]);
 
-      if (lastPinchDistance > 0) {
+      if (lastPinchDistanceRef.current > 0) {
         // Zoom
-        const scale = distance / lastPinchDistance;
+        const scale = distance / lastPinchDistanceRef.current;
         const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
         
         // Pan
-        const deltaX = center.x - lastTouchCenter.x;
-        const deltaY = center.y - lastTouchCenter.y;
+        const deltaX = center.x - lastTouchCenterRef.current.x;
+        const deltaY = center.y - lastTouchCenterRef.current.y;
 
         handleGesture('pinch', {
           scale: newScale,
@@ -490,8 +491,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         handleGesture('pan', { deltaX, deltaY });
       }
 
-      setLastPinchDistance(distance);
-      setLastTouchCenter(center);
+      lastPinchDistanceRef.current = distance;
+      lastTouchCenterRef.current = center;
     } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
       // Dibujo con un dedo
       handleMouseMove(e);
@@ -500,10 +501,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   const handleTouchEnd = (e: KonvaTouchEvent) => {
     const touchList = Array.from(e.evt.touches) as Touch[];
-    setTouches(touchList);
+    touchesRef.current = touchList;
 
     if (touchList.length < 2) {
-      setLastPinchDistance(0);
+      lastPinchDistanceRef.current = 0;
     }
 
     if (touchList.length === 0) {

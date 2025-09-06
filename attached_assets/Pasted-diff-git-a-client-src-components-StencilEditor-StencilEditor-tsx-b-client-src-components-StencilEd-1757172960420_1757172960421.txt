@@ -1,0 +1,145 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..60385e9b25e94a8cb9003b8bd2291bc91ca2c862 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -101,72 +101,81 @@ function useStencilCanvas() {
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<any>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState(false);
+   const [lines, setLines] = useState<any[]>([]);
+   const [nativeSize, setNativeSize] = useState({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState(false);
+   const [touches, setTouches] = useState<Touch[]>([]);
+   const [lastPinchDistance, setLastPinchDistance] = useState(0);
+   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
++  const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
++  useEffect(() => {
++    const handleResize = () => {
++      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
++    };
++    window.addEventListener('resize', handleResize);
++    return () => window.removeEventListener('resize', handleResize);
++  }, []);
++
+   // Cargar imágenes en resolución nativa
+   useEffect(() => {
+     if (stencilImage) {
+       const img = new window.Image();
+       img.crossOrigin = 'anonymous';
+       img.onload = () => {
+         setStencilImg(img);
+         setNativeSize({ width: img.width, height: img.height });
+       };
+       img.src = stencilImage;
+     }
+   }, [stencilImage]);
+ 
+   useEffect(() => {
+     if (originalImage) {
+       const img = new window.Image();
+       img.crossOrigin = 'anonymous';
+       img.onload = () => setOriginalImg(img);
+       img.src = originalImage;
+     }
+   }, [originalImage]);
+ 
+   // Aplicar filtro de tono al stencil
+   useEffect(() => {
+     if (stencilImg) {
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index bcb34fd0ff4343e955c6963ff4c15d1cb6baab3c..60385e9b25e94a8cb9003b8bd2291bc91ca2c862 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -502,52 +511,52 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+   };
+ 
+   const handleTouchEnd = (e: any) => {
+     const touchList = Array.from(e.evt.touches) as Touch[];
+     setTouches(touchList);
+ 
+     if (touchList.length < 2) {
+       setLastPinchDistance(0);
+     }
+ 
+     if (touchList.length === 0) {
+       handleMouseUp();
+     }
+   };
+ 
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen bg-gray-100 relative flex">
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Stage
+-          width={window.innerWidth - (isLayersOpen ? 320 : 0)}
+-          height={window.innerHeight}
++          width={canvasSize.width - (isLayersOpen ? 320 : 0)}
++          height={canvasSize.height}
+           onMouseDown={handleMouseDown}
+           onMousemove={handleMouseMove}
+           onMouseup={handleMouseUp}
+           onWheel={handleWheel}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
+           onTouchEnd={handleTouchEnd}
+           onDblTap={handleDoubleTap}
+           ref={stageRef}
+           scaleX={viewTransform.scale}
+           scaleY={viewTransform.scale}
+           x={viewTransform.x}
+           y={viewTransform.y}
+         >
+           {/* Layer Original */}
+           {layers.original.visible && (
+             <Layer opacity={layers.original.opacity / 100}>
+               {originalImg && (
+                 <KonvaImage
+                   image={originalImg}
+                   width={nativeSize.width}
+                   height={nativeSize.height}
+                 />
+               )}
+             </Layer>
