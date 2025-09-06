@@ -198,6 +198,7 @@ export default function Canvas({
         x={viewTransform.x}
         y={viewTransform.y}
         rotation={viewTransform.rotation}
+        style={{ cursor: tool === 'eyedropper' ? 'crosshair' : 'default' }}
       >
         {/* Capa de fondo blanco */}
         {layers.background.visible && (
@@ -315,6 +316,16 @@ export default function Canvas({
           </Layer>
         )}
       </Stage>
+      
+      {/* Indicador visual del gotero */}
+      {tool === 'eyedropper' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-orange-500 text-white px-3 py-2 rounded-lg shadow-lg border-2 border-white">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full border-2 border-white" style={{ backgroundColor: brushColor }}></div>
+            <span className="text-sm font-medium">Seleccionar Color</span>
+          </div>
+        </div>
+      )}
 
       {tool === 'brush' && !isLayersOpen && (
         <div className="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 z-30">

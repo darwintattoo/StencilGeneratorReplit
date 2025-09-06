@@ -326,86 +326,114 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       e.evt.preventDefault();
       
       try {
-        // Capturar el stage completo con todas las transformaciones aplicadas
+        // Obtener el contenedor del stage para calcular coordenadas relativas
+        const stageContainer = stage.container();
+        const rect = stageContainer.getBoundingClientRect();
+        
+        // Capturar el stage completo
         stage.toCanvas({
           callback: (canvas: HTMLCanvasElement) => {
             const ctx = canvas.getContext('2d');
             if (!ctx) {
               console.error('No se pudo obtener el contexto del canvas');
+              setTool('brush');
               return;
             }
 
             try {
-              // Aplicar las transformaciones de escala al canvas para obtener las coordenadas correctas
-              const scale = stage.scaleX();
-              const stagePos = stage.position();
+              // Coordenadas del mouse relativas al canvas
+              const x = Math.floor(pos.x);
+              const y = Math.floor(pos.y);
               
-              // Calcular las coordenadas ajustadas en el canvas renderizado
-              const canvasX = Math.floor((pos.x - stagePos.x) / scale);
-              const canvasY = Math.floor((pos.y - stagePos.y) / scale);
+              console.log('Sampling at coordinates:', { x, y, canvasSize: { width: canvas.width, height: canvas.height } });
               
-              // Verificar que las coordenadas estén dentro del canvas
-              if (canvasX < 0 || canvasY < 0 || canvasX >= canvas.width || canvasY >= canvas.height) {
-                console.log('Coordenadas fuera del canvas, manteniendo color actual');
+              // Verificar límites del canvas
+              if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+                console.log('Coordenadas fuera del canvas');
                 setTool('brush');
                 return;
               }
 
-              // Obtener el pixel en las coordenadas calculadas
-              const imageData = ctx.getImageData(canvasX, canvasY, 1, 1);
-              const data = imageData.data;
-              const r = data[0];
-              const g = data[1];
-              const b = data[2];
-              const a = data[3];
+              // Muestrear un área de 3x3 píxeles para mejor detección
+              const sampleSize = 3;
+              const halfSample = Math.floor(sampleSize / 2);
               
-              console.log('Pixel data:', { r, g, b, a, x: canvasX, y: canvasY, originalPos: pos });
+              let totalR = 0, totalG = 0, totalB = 0, totalA = 0;
+              let validPixels = 0;
               
-              // Solo cambiar color si el pixel no es completamente transparente
-              if (a > 20) { // Umbral más bajo para capturar colores semitransparentes
+              for (let dy = -halfSample; dy <= halfSample; dy++) {
+                for (let dx = -halfSample; dx <= halfSample; dx++) {
+                  const sampleX = Math.max(0, Math.min(canvas.width - 1, x + dx));
+                  const sampleY = Math.max(0, Math.min(canvas.height - 1, y + dy));
+                  
+                  const imageData = ctx.getImageData(sampleX, sampleY, 1, 1);
+                  const data = imageData.data;
+                  
+                  if (data[3] > 10) { // Si el pixel no es completamente transparente
+                    totalR += data[0];
+                    totalG += data[1];
+                    totalB += data[2];
+                    totalA += data[3];
+                    validPixels++;
+                  }
+                }
+              }
+              
+              console.log('Valid pixels found:', validPixels);
+              
+              if (validPixels > 0) {
+                // Promediar los colores de los píxeles válidos
+                const r = Math.round(totalR / validPixels);
+                const g = Math.round(totalG / validPixels);
+                const b = Math.round(totalB / validPixels);
+                
                 // Convertir RGB a formato hex
                 const hex = "#" + [r, g, b].map(x => {
                   const h = x.toString(16);
                   return h.length === 1 ? "0" + h : h;
                 }).join("");
                 
-                console.log('Color seleccionado:', hex);
+                console.log('Color seleccionado:', hex, { r, g, b });
                 setBrushColor(hex);
                 
-                // Mostrar feedback visual temporal
+                // Mostrar feedback visual
                 const toast = document.createElement('div');
                 toast.style.cssText = `
                   position: fixed;
-                  top: 50%;
+                  top: 20%;
                   left: 50%;
                   transform: translate(-50%, -50%);
                   background: ${hex};
                   color: ${r + g + b > 382 ? '#000' : '#fff'};
-                  padding: 10px 20px;
-                  border-radius: 8px;
-                  border: 2px solid #fff;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                  padding: 12px 24px;
+                  border-radius: 12px;
+                  border: 3px solid #fff;
+                  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
                   z-index: 10000;
                   font-family: monospace;
                   font-weight: bold;
+                  font-size: 16px;
                 `;
-                toast.textContent = `Color: ${hex}`;
+                toast.textContent = `✓ ${hex}`;
                 document.body.appendChild(toast);
-                setTimeout(() => document.body.removeChild(toast), 1500);
+                setTimeout(() => {
+                  if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                  }
+                }, 2000);
               } else {
-                console.log('Pixel transparente o área vacía, manteniendo color actual');
+                console.log('No se encontraron píxeles válidos');
               }
               
-              // Cambiar automáticamente a la herramienta brush después de seleccionar color
-              setTool('brush');
+              // SIEMPRE volver a brush automáticamente
+              setTimeout(() => setTool('brush'), 100);
+              
             } catch (error) {
               console.error('Error al procesar el pixel:', error);
               setTool('brush');
             }
           },
-          pixelRatio: 1,
-          width: nativeSize.width,
-          height: nativeSize.height
+          pixelRatio: 1
         });
       } catch (error) {
         console.error('Error al capturar el canvas:', error);
