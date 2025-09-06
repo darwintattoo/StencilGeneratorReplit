@@ -84,6 +84,37 @@ export default function Canvas({
   nativeSize,
   canvasSize
 }: CanvasProps) {
+  
+  // Función simple y rápida para cambiar color
+  const adjustColor = useMemo(() => {
+    return (color: string, hue: number, sat: number): string => {
+      if (hue === 0 && sat === 100) return color;
+      
+      // Cambio simple de hue rotando por el espectro
+      if (hue !== 0) {
+        const hueShift = hue / 60; // Dividir en 6 secciones
+        switch (color) {
+          case '#ef4444': // rojo original
+            if (hueShift < 1) return '#ef4444'; // rojo
+            if (hueShift < 2) return '#eab308'; // amarillo  
+            if (hueShift < 3) return '#22c55e'; // verde
+            if (hueShift < 4) return '#06b6d4'; // cyan
+            if (hueShift < 5) return '#3b82f6'; // azul
+            return '#a855f7'; // magenta
+          case '#000000': // negro se mantiene
+            return '#000000';
+          case '#3b82f6': // azul original
+            if (hueShift < 1) return '#a855f7'; // magenta
+            if (hueShift < 2) return '#ef4444'; // rojo
+            if (hueShift < 3) return '#eab308'; // amarillo
+            if (hueShift < 4) return '#22c55e'; // verde
+            if (hueShift < 5) return '#06b6d4'; // cyan
+            return '#3b82f6'; // azul
+        }
+      }
+      return color;
+    };
+  }, []);
   return (
     <>
       <Stage
@@ -148,17 +179,12 @@ export default function Canvas({
         )}
 
         {layers.drawing.visible && (
-          <Layer 
-            opacity={layers.drawing.opacity / 100}
-            filters={drawingHue !== 0 || drawingSaturation !== 100 ? ['Hue', 'Saturation'] : []}
-            hue={drawingHue}
-            saturation={drawingSaturation / 100 - 1}
-          >
+          <Layer opacity={layers.drawing.opacity / 100}>
             {drawingLines.map((line, i) => (
               <Line
                 key={i}
                 points={line.points}
-                stroke={line.color}
+                stroke={adjustColor(line.color, drawingHue, drawingSaturation)}
                 strokeWidth={line.strokeWidth}
                 tension={0.5}
                 lineCap="round"
@@ -172,7 +198,7 @@ export default function Canvas({
               <Line
                 ref={tempLineRef}
                 points={drawingPointsRef.current || []}
-                stroke={currentLineRef.current?.color}
+                stroke={adjustColor(currentLineRef.current?.color || '#ef4444', drawingHue, drawingSaturation)}
                 strokeWidth={currentLineRef.current?.strokeWidth}
                 tension={0.5}
                 lineCap="round"
