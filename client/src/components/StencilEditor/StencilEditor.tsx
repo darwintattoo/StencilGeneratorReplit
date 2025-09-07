@@ -166,8 +166,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const tempLineRef = useRef<LineRef>(null);
   const stencilLayerRef = useRef<LayerRef>(null);
   const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [eyedropperPosition, setEyedropperPosition] = useState<Position | null>(null);
-  const [previewColor, setPreviewColor] = useState<string | null>('#ffffff');
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -269,25 +267,28 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   }, [originalImage]);
 
   const pickColorAt = (x: number, y: number): string | null => {
+    // Priorizar imagen filtrada si existe, sino usar original
     const sourceImg = filteredStencilImg || stencilImg;
-    if (!sourceImg) return brushColor;
+    if (!sourceImg) return null;
     
+    // Crear canvas temporal para muestreo
+    const canvas = document.createElement('canvas');
+    canvas.width = sourceImg.width;
+    canvas.height = sourceImg.height;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return null;
+    ctx.drawImage(sourceImg, 0, 0);
+    
+    // Clampear coordenadas
     const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
     const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
     
-    // Usar canvas existente si está disponible
-    if (sourceImg instanceof HTMLCanvasElement) {
-      const ctx = sourceImg.getContext('2d');
-      if (ctx) {
-        const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
-        const r = data[0], g = data[1], b = data[2], a = data[3];
-        if (a > 128 && !(r > 240 && g > 240 && b > 240)) {
-          return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-        }
-      }
-    }
-    
-    return brushColor;
+    const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
+    const r = data[0];
+    const g = data[1];
+    const b = data[2];
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   };
 
   const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
@@ -369,21 +370,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (tool === 'eyedropper') {
       e.evt.preventDefault();
-      
-      // Obtener posición transformada para picking
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const { x, y } = transform.point(pos);
-      
-      // Seleccionar color y cambiar a brush
-      const picked = pickColorAt(x, y);
-      if (picked) {
-        setBrushColor(picked);
+      if (typeof (window as any).EyeDropper === 'function') {
+        const eyeDropper = new (window as any).EyeDropper();
+        eyeDropper
+          .open()
+          .then((result: { sRGBHex: string }) => {
+            setBrushColor(result.sRGBHex);
+            setTool('brush');
+          })
+          .catch(() => setTool('brush'));
+      } else {
+        // Usar la nueva función pickColorAt
+        const transform = stage.getAbsoluteTransform().copy().invert();
+        const { x, y } = transform.point(pos);
+        const picked = pickColorAt(x, y);
+        if (picked) {
+          setBrushColor(picked);
+        }
+        setTool('brush');
       }
-      
-      // Limpiar preview y cambiar herramienta
-      setEyedropperPosition(null);
-      setPreviewColor(null);
-      setTool('brush');
       return;
     }
 
@@ -465,17 +470,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
-
-    // Preview del eyedropper - instantáneo
-    if (tool === 'eyedropper' && !isPanning) {
-      setEyedropperPosition(pos);
-      
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const { x, y } = transform.point(pos);
-      const color = pickColorAt(x, y);
-      setPreviewColor(color);
-      return;
-    }
 
     if (isPanning) {
       const deltaX = pos.x - lastPointerPosition.x;
@@ -576,32 +570,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       }, 50);
     }
   };
-
-  const handleMouseEnter = () => {
-    if (tool === 'eyedropper') {
-      document.body.style.cursor = 'none'; // Ocultar cursor por defecto
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (tool === 'eyedropper') {
-      setEyedropperPosition(null);
-      setPreviewColor('#ffffff');
-      document.body.style.cursor = 'auto'; // Restaurar cursor
-    }
-  };
-
-  // Limpiar cursor cuando cambie herramienta
-  useEffect(() => {
-    if (tool !== 'eyedropper') {
-      setEyedropperPosition(null);
-      setPreviewColor('#ffffff');
-      document.body.style.cursor = 'auto';
-    } else {
-      // Inicializar con blanco cuando se selecciona eyedropper
-      setPreviewColor('#ffffff');
-    }
-  }, [tool]);
 
   const handleWheel = (e: KonvaWheelEvent) => {
     e.evt.preventDefault();
@@ -744,8 +712,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           handleMouseDown={handleMouseDown}
           handleMouseMove={handleMouseMove}
           handleMouseUp={handleMouseUp}
-          handleMouseEnter={handleMouseEnter}
-          handleMouseLeave={handleMouseLeave}
           handleWheel={handleWheel}
           handleTouchStart={handleTouchStart}
           handleTouchMove={handleTouchMove}
@@ -777,8 +743,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           stencilBrightness={stencilBrightness}
           nativeSize={nativeSize}
           canvasSize={canvasSize}
-          eyedropperPosition={eyedropperPosition}
-          previewColor={previewColor}
         />
 
         <Toolbar
