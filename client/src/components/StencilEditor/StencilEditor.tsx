@@ -13,8 +13,7 @@ import type {
   Position,
   TouchCenter,
   NativeSize,
-  KonvaMouseEvent,
-  KonvaTouchEvent,
+  KonvaPointerEvent,
   KonvaWheelEvent,
   StageRef,
   LineRef,
@@ -178,7 +177,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
-  const touchesRef = useRef<Touch[]>([]);
+  const pointersRef = useRef<Map<number, Position>>(new Map());
   const lastPinchDistanceRef = useRef<number>(0);
   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
   const lastAngleRef = useRef<number>(0);
@@ -353,23 +352,61 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness, stencilVersion]);
 
-  // Manejo de gestos táctiles y mouse
-  const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+  // Funciones auxiliares para gestos
+  const getDistance = (p1: Position, p2: Position): number => {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getCenter = (p1: Position, p2: Position): TouchCenter => {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2
+    };
+  };
+
+  const getAngle = (p1: Position, p2: Position): number => {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
+  };
+
+  // Manejo unificado de pointer events (mouse, touch, Apple Pencil)
+  const handlePointerDown = (e: KonvaPointerEvent) => {
     const stage = stageRef.current;
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
-    
-    const mouseEvent = e.evt as MouseEvent;
-    if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
-      e.evt.preventDefault();
+
+    const pointerEvent = e.evt;
+
+    // Manejar multi-touch
+    if (pointerEvent.pointerType === 'touch') {
+      pointersRef.current.set(pointerEvent.pointerId, {
+        x: pointerEvent.clientX,
+        y: pointerEvent.clientY,
+      });
+      if (pointersRef.current.size === 2) {
+        const [p1, p2] = Array.from(pointersRef.current.values());
+        lastPinchDistanceRef.current = getDistance(p1, p2);
+        lastTouchCenterRef.current = getCenter(p1, p2);
+        lastAngleRef.current = getAngle(p1, p2);
+        setIsPanning(false);
+        setIsDrawing(false);
+        return;
+      }
+    }
+
+    if (tool === 'move' || pointerEvent.button === 1 || pointerEvent.button === 2) {
+      pointerEvent.preventDefault();
       setIsPanning(true);
       setLastPointerPosition(pos);
       return;
     }
 
     if (tool === 'eyedropper') {
-      e.evt.preventDefault();
+      pointerEvent.preventDefault();
       if (typeof (window as any).EyeDropper === 'function') {
         const eyeDropper = new (window as any).EyeDropper();
         eyeDropper
@@ -380,7 +417,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           })
           .catch(() => setTool('brush'));
       } else {
-        // Usar la nueva función pickColorAt
         const transform = stage.getAbsoluteTransform().copy().invert();
         const { x, y } = transform.point(pos);
         const picked = pickColorAt(x, y);
@@ -393,27 +429,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
 
     if (tool === 'brush' || tool === 'eraser') {
-      // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
-      const pointerEvent = e.evt as any;
-      if (pointerEvent.pointerType === 'touch') {
-        return;
-      }
-
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const point = transform.point(pos);
-      const x = Math.max(0, Math.min(nativeSize.width, point.x));
-      const y = Math.max(0, Math.min(nativeSize.height, point.y));
-
-      // Alt+click para gotero
-      if (mouseEvent.altKey) {
-        const picked = pickColorAt(x, y);
-        if (picked) {
-          setBrushColor(picked);
-        }
-        return;
-      }
-
       setIsDrawing(true);
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
 
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
@@ -465,11 +483,42 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   };
 
-  const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+  const handlePointerMove = (e: KonvaPointerEvent) => {
     const stage = stageRef.current;
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
+
+    const pointerEvent = e.evt;
+    
+    // Manejar multi-touch
+    if (pointerEvent.pointerType === 'touch') {
+      pointerEvent.preventDefault();
+      pointersRef.current.set(pointerEvent.pointerId, {
+        x: pointerEvent.clientX,
+        y: pointerEvent.clientY,
+      });
+      if (pointersRef.current.size === 2) {
+        const [p1, p2] = Array.from(pointersRef.current.values());
+        const distance = getDistance(p1, p2);
+        const center = getCenter(p1, p2);
+        const angle = getAngle(p1, p2);
+        if (lastPinchDistanceRef.current > 0) {
+          const scale = distance / lastPinchDistanceRef.current;
+          const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
+          const deltaX = center.x - lastTouchCenterRef.current.x;
+          const deltaY = center.y - lastTouchCenterRef.current.y;
+          const deltaRotation = angle - lastAngleRef.current;
+          handleGesture('pinch', { scale: newScale, centerX: center.x, centerY: center.y });
+          handleGesture('pan', { deltaX, deltaY });
+          handleGesture('rotate', { deltaRotation, centerX: center.x, centerY: center.y });
+        }
+        lastPinchDistanceRef.current = distance;
+        lastTouchCenterRef.current = center;
+        lastAngleRef.current = angle;
+        return;
+      }
+    }
 
     if (isPanning) {
       const deltaX = pos.x - lastPointerPosition.x;
@@ -480,12 +529,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
 
     if (!isDrawing) return;
-    
-    // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
-    const pointerEvent = e.evt as any;
-    if (pointerEvent.pointerType === 'touch') {
-      return;
-    }
     const transform = stage.getAbsoluteTransform().copy().invert();
     const point = transform.point(pos);
     const x = Math.max(0, Math.min(nativeSize.width, point.x));
@@ -505,7 +548,18 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     drawingPointsRef.current.push(x, y);
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = (e: KonvaPointerEvent) => {
+    const pointerEvent = e.evt;
+    if (pointerEvent.pointerType === 'touch') {
+      pointersRef.current.delete(pointerEvent.pointerId);
+      if (pointersRef.current.size < 2) {
+        lastPinchDistanceRef.current = 0;
+        lastAngleRef.current = 0;
+      }
+      if (pointersRef.current.size > 0) {
+        return;
+      }
+    }
     setIsDrawing(false);
     setIsPanning(false);
 
@@ -589,105 +643,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     });
   };
 
-  // Funciones para gestos táctiles
-  const getDistance = (touch1: Touch, touch2: Touch): number => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
 
-  const getCenter = (touch1: Touch, touch2: Touch): TouchCenter => {
-    return {
-      x: (touch1.clientX + touch2.clientX) / 2,
-      y: (touch1.clientY + touch2.clientY) / 2
-    };
-  };
 
-  const getAngle = (touch1: Touch, touch2: Touch): number => {
-    const dx = touch2.clientX - touch1.clientX;
-    const dy = touch2.clientY - touch1.clientY;
-    return (Math.atan2(dy, dx) * 180) / Math.PI;
-  };
 
-  const handleTouchStart = (e: KonvaTouchEvent) => {
-    const touchList = Array.from(e.evt.touches) as Touch[];
-    touchesRef.current = touchList;
-
-    if (touchList.length === 2) {
-      // Inicio de pinch/rotación
-      const distance = getDistance(touchList[0], touchList[1]);
-      const center = getCenter(touchList[0], touchList[1]);
-      const angle = getAngle(touchList[0], touchList[1]);
-      lastPinchDistanceRef.current = distance;
-      lastTouchCenterRef.current = center;
-      lastAngleRef.current = angle;
-      setIsPanning(false);
-      setIsDrawing(false);
-    } else if (touchList.length === 1) {
-      // Toque único - dibujo o pan
-      handleMouseDown(e);
-    }
-  };
-
-  const handleTouchMove = (e: KonvaTouchEvent) => {
-    e.evt.preventDefault();
-    const touchList = Array.from(e.evt.touches) as Touch[];
-    touchesRef.current = touchList;
-
-    if (touchList.length === 2) {
-      // Pinch zoom, pan y rotación con dos dedos
-      const distance = getDistance(touchList[0], touchList[1]);
-      const center = getCenter(touchList[0], touchList[1]);
-      const angle = getAngle(touchList[0], touchList[1]);
-
-      if (lastPinchDistanceRef.current > 0) {
-        // Zoom
-        const scale = distance / lastPinchDistanceRef.current;
-        const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
-        
-        // Pan
-        const deltaX = center.x - lastTouchCenterRef.current.x;
-        const deltaY = center.y - lastTouchCenterRef.current.y;
-
-        // Rotación
-        const deltaRotation = angle - lastAngleRef.current;
-
-        handleGesture('pinch', {
-          scale: newScale,
-          centerX: center.x,
-          centerY: center.y
-        });
-
-        handleGesture('pan', { deltaX, deltaY });
-        handleGesture('rotate', {
-          deltaRotation,
-          centerX: center.x,
-          centerY: center.y
-        });
-      }
-
-      lastPinchDistanceRef.current = distance;
-      lastTouchCenterRef.current = center;
-      lastAngleRef.current = angle;
-    } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
-      // Dibujo con un dedo
-      handleMouseMove(e);
-    }
-  };
-
-  const handleTouchEnd = (e: KonvaTouchEvent) => {
-    const touchList = Array.from(e.evt.touches) as Touch[];
-    touchesRef.current = touchList;
-
-    if (touchList.length < 2) {
-      lastPinchDistanceRef.current = 0;
-      lastAngleRef.current = 0;
-    }
-
-    if (touchList.length === 0) {
-      handleMouseUp();
-    }
-  };
 
   // Doble tap para reset
   const handleDoubleTap = () => {
@@ -709,13 +667,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           stageRef={stageRef}
           isLayersOpen={isLayersOpen}
           viewTransform={viewTransform}
-          handleMouseDown={handleMouseDown}
-          handleMouseMove={handleMouseMove}
-          handleMouseUp={handleMouseUp}
+          handlePointerDown={handlePointerDown}
+          handlePointerMove={handlePointerMove}
+          handlePointerUp={handlePointerUp}
           handleWheel={handleWheel}
-          handleTouchStart={handleTouchStart}
-          handleTouchMove={handleTouchMove}
-          handleTouchEnd={handleTouchEnd}
           handleDoubleTap={handleDoubleTap}
           layers={layers}
           originalImg={originalImg}
