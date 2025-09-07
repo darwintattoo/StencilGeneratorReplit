@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette, RotateCcw } from 'lucide-react';
 import type { LayersState, ActiveLayer, DrawingLine, StageRef } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
@@ -242,6 +242,34 @@ export default function LayerPanel({
           step={1}
           className="absolute inset-0 opacity-75"
         />
+      </div>
+      
+      {/* Botón de Reset */}
+      <div className="mt-4 pt-3 border-t border-gray-600">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setHue(0);
+            setSaturation(100);
+            setBrightness(100);
+            if (isColorLinked) {
+              if (type === 'drawing') {
+                setStencilHue(0);
+                setStencilSaturation(100);
+                setStencilBrightness(100);
+              } else {
+                setDrawingHue(0);
+                setDrawingSaturation(100);
+                setDrawingBrightness(100);
+              }
+            }
+          }}
+          className="w-full flex items-center gap-2 text-xs text-gray-300 hover:text-white border-gray-600 hover:border-gray-500"
+        >
+          <RotateCcw className="w-3 h-3" />
+          Reset
+        </Button>
       </div>
     </div>
   );
