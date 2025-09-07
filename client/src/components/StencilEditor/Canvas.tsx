@@ -230,7 +230,7 @@ export default function Canvas({
         )}
 
         {layers.stencil.visible && (
-          <Layer opacity={layers.stencil.opacity / 100}>
+          <Layer opacity={layers.stencil.opacity / 100} ref={stencilLayerRef}>
             {filteredStencilImg ? (
               <KonvaImage
                 image={filteredStencilImg}
@@ -244,6 +244,34 @@ export default function Canvas({
                 height={nativeSize.height}
               />
             ) : null}
+            {stencilLines.map((line, i) => (
+              <Line
+                key={`stencil-${i}`}
+                points={line.points}
+                stroke={adjustColor(line.baseColor || line.color, stencilHue, stencilSaturation, stencilBrightness)}
+                strokeWidth={line.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={line.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            ))}
+            {currentLineRef.current?.layer === 'stencil' && !isErasingStencil && (
+              <Line
+                ref={tempLineRef}
+                points={drawingPointsRef.current || []}
+                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', stencilHue, stencilSaturation, stencilBrightness)}
+                strokeWidth={currentLineRef.current?.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+                globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
+                perfectDrawEnabled={true}
+                shadowForStrokeEnabled={false}
+              />
+            )}
           </Layer>
         )}
 
@@ -280,45 +308,6 @@ export default function Canvas({
           </Layer>
         )}
 
-        {layers.stencil.visible && (
-          <Layer opacity={layers.stencil.opacity / 100}>
-            {stencilImg && (
-              <KonvaImage
-                image={filteredStencilImg || stencilImg}
-                width={nativeSize.width}
-                height={nativeSize.height}
-              />
-            )}
-            {stencilLines.map((line, i) => (
-              <Line
-                key={`stencil-${i}`}
-                points={line.points}
-                stroke={adjustColor(line.baseColor || line.color, stencilHue, stencilSaturation, stencilBrightness)}
-                strokeWidth={line.strokeWidth}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation={line.globalCompositeOperation}
-                perfectDrawEnabled={true}
-                shadowForStrokeEnabled={false}
-              />
-            ))}
-            {currentLineRef.current?.layer === 'stencil' && !isErasingStencil && (
-              <Line
-                ref={tempLineRef}
-                points={drawingPointsRef.current || []}
-                stroke={adjustColor(currentLineRef.current?.baseColor || currentLineRef.current?.color || '#ef4444', stencilHue, stencilSaturation, stencilBrightness)}
-                strokeWidth={currentLineRef.current?.strokeWidth}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
-                perfectDrawEnabled={true}
-                shadowForStrokeEnabled={false}
-              />
-            )}
-          </Layer>
-        )}
       </Stage>
 
       {tool === 'brush' && !isLayersOpen && (

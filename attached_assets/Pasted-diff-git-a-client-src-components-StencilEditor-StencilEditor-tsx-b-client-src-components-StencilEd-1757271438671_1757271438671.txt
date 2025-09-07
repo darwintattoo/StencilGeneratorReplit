@@ -1,0 +1,271 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..10c2c553d5c91a491a395c07cad01154c2f67933 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -139,55 +139,56 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
+   const drawingPointsRef = useRef<number[]>([]);
+   const currentLineRef = useRef<DrawingLine | null>(null);
+   const frameRef = useRef<number>(0);
+   const tempLineRef = useRef<LineRef>(null);
+ 
+   const updateTempLine = () => {
+     if (tempLineRef.current) {
+       tempLineRef.current.points(drawingPointsRef.current);
+       tempLineRef.current.getLayer()?.batchDraw();
+     }
+     frameRef.current = requestAnimationFrame(updateTempLine);
+   };
+   const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState<boolean>(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
+   const touchesRef = useRef<Touch[]>([]);
+   const lastPinchDistanceRef = useRef<number>(0);
+   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+   const lastAngleRef = useRef<number>(0);
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
++  const stencilCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+-  const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
+-    width: window.innerWidth, 
+-    height: window.innerHeight 
++  const [canvasSize, setCanvasSize] = useState<NativeSize>({
++    width: window.innerWidth,
++    height: window.innerHeight
+   });
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   } = useStencilCanvas();
+ 
+   // Manejar redimensionamiento de ventana para hacer el canvas responsivo
+   useEffect(() => {
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..10c2c553d5c91a491a395c07cad01154c2f67933 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -287,175 +288,163 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+     
+     const mouseEvent = e.evt as MouseEvent;
+     if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+       // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+       const pointerEvent = e.evt as any;
+       if (pointerEvent.pointerType === 'touch') {
+         return;
+       }
+       setIsDrawing(true);
+       const transform = stage.getAbsoluteTransform().copy().invert();
+       const { x, y } = transform.point(pos);
+ 
+       // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+-        
+-        // Crear canvas de trabajo si no existe
+-        if (!stencilCanvas) {
+-          const canvas = document.createElement('canvas');
++
++        let canvas = stencilCanvas;
++        if (!canvas) {
++          canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+-          const ctx = canvas.getContext('2d');
+-          if (ctx) {
+-            ctx.drawImage(stencilImg, 0, 0);
+-            setStencilCanvas(canvas);
+-          }
++          setStencilCanvas(canvas);
+         }
+-        
+-        // Aplicar borrado inicial
+-        if (stencilCanvas) {
+-          const ctx = stencilCanvas.getContext('2d');
+-          if (ctx) {
+-            ctx.save();
+-            ctx.globalCompositeOperation = 'destination-out';
+-            ctx.beginPath();
+-            ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+-            ctx.fill();
+-            ctx.restore();
++
++        const ctx = canvas.getContext('2d');
++        if (ctx) {
++          if (!stencilCanvas) {
++            ctx.drawImage(stencilImg, 0, 0);
+           }
++          stencilCtxRef.current = ctx;
++          ctx.globalCompositeOperation = 'destination-out';
++          ctx.fillStyle = '#000';
++          ctx.beginPath();
++          ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
++          ctx.fill();
+         }
+         return;
+       }
+       
+       const color = tool === 'brush'
+         ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
+         : '#ffffff';
+       currentLineRef.current = {
+         tool,
+         points: [],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+         color
+       };
+       drawingPointsRef.current = [x, y];
+       frameRef.current = requestAnimationFrame(updateTempLine);
+     }
+   };
+ 
+   const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+ 
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+     
+     // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+     const pointerEvent = e.evt as any;
+     if (pointerEvent.pointerType === 'touch') {
+       return;
+     }
+     const transform = stage.getAbsoluteTransform().copy().invert();
+     const { x, y } = transform.point(pos);
+ 
+     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
+-    if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
+-      const ctx = stencilCanvas.getContext('2d');
+-      
+-      if (ctx) {
+-        // Borrado inmediato sin operaciones bloqueantes
+-        ctx.globalCompositeOperation = 'destination-out';
+-        ctx.fillStyle = '#000';
+-        
+-        // Borrado instantáneo con mínimo procesamiento
+-        ctx.beginPath();
+-        ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+-        ctx.fill();
+-        
+-        // Sin restaurar contexto durante movimiento para máxima velocidad
+-      }
++    if (tool === 'eraser' && activeLayer === 'stencil' && isErasingStencil && stencilCtxRef.current) {
++      const ctx = stencilCtxRef.current;
++      // Borrado instantáneo con mínimo procesamiento
++      ctx.beginPath();
++      ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
++      ctx.fill();
++      // Sin restaurar contexto durante movimiento para máxima velocidad
+       return;
+     }
+     
+     drawingPointsRef.current.push(x, y);
+   };
+ 
+   const handleMouseUp = () => {
+     setIsDrawing(false);
+     setIsPanning(false);
+ 
+     if (currentLineRef.current) {
+       const newLine = { ...currentLineRef.current, points: [...drawingPointsRef.current] };
+       if (currentLineRef.current.layer === 'drawing') {
+         setDrawingLines(prev => [...prev, newLine]);
+       } else {
+         setStencilLines(prev => [...prev, newLine]);
+       }
+     }
+     cancelAnimationFrame(frameRef.current);
+     drawingPointsRef.current = [];
+     currentLineRef.current = null;
+ 
+     // Finalizar borrado de stencil con restauración del contexto
+     if (isErasingStencil && stencilCanvas) {
+       // Restaurar contexto una sola vez al final
+-      const ctx = stencilCanvas.getContext('2d');
+-      if (ctx) {
+-        ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
++      if (stencilCtxRef.current) {
++        stencilCtxRef.current.globalCompositeOperation = 'source-over';
+       }
+-      
++
+       // Actualización diferida para no bloquear
+       setTimeout(() => {
+         const newImg = new Image();
+         newImg.onload = () => {
+           setStencilImg(newImg);
+           if (stencilHue !== 0) {
+             setFilteredStencilImg(null);
+           }
+         };
+         newImg.src = stencilCanvas.toDataURL();
+       }, 0);
++      stencilCtxRef.current = null;
+       setIsErasingStencil(false);
+     }
+     
+     if (tool === 'eraser' && stageRef.current) {
+       setTimeout(() => {
+         if (stageRef.current) {
+           const layers = stageRef.current.find('Layer');
+           layers.forEach((layer: any) => {
+             try {
+               const hitCanvas = layer.getHitCanvas();
+               if (hitCanvas) {
+                 const hitContext = hitCanvas.getContext('2d');
+                 hitContext.clearRect(0, 0, nativeSize.width, nativeSize.height);
+                 layer.clearHitCache();
+               }
+             } catch (e) {
+               console.log('Error limpiando hit canvas:', e);
+             }
+             layer.batchDraw();
+           });
+           stageRef.current.batchDraw();
+         }
+       }, 50);
+     }
+   };
