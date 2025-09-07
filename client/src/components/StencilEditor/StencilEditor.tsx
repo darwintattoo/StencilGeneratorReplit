@@ -496,21 +496,33 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (tool === 'eyedropper') {
       pointerEvent.preventDefault();
+      console.log('[Eyedropper] Tool activated, checking API availability');
+      
       if (typeof (window as any).EyeDropper === 'function') {
+        console.log('[Eyedropper] Using native EyeDropper API');
         const eyeDropper = new (window as any).EyeDropper();
         eyeDropper
           .open()
           .then((result: { sRGBHex: string }) => {
+            console.log(`[Eyedropper] Native API color selected: ${result.sRGBHex}`);
             setBrushColor(result.sRGBHex);
             setTool('brush');
           })
-          .catch(() => setTool('brush'));
+          .catch((error: any) => {
+            console.log('[Eyedropper] Native API cancelled or failed:', error);
+            setTool('brush');
+          });
       } else {
+        console.log('[Eyedropper] Using fallback color picker');
         const transform = stage.getAbsoluteTransform().copy().invert();
         const { x, y } = transform.point(pos);
+        console.log(`[Eyedropper] Transformed coordinates: x=${x}, y=${y}`);
         const picked = pickColorAt(x, y);
         if (picked) {
+          console.log(`[Eyedropper] Fallback color selected: ${picked}`);
           setBrushColor(picked);
+        } else {
+          console.log('[Eyedropper] No color could be picked');
         }
         setTool('brush');
       }
