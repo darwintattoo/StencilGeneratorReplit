@@ -781,10 +781,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
       `,
-      backgroundSize: '24px 24px'
+      backgroundSize: '24px 24px',
+      touchAction: 'none' // Protección general contra gestos del navegador
     }}>
       {/* Canvas principal */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative" style={{ touchAction: 'none' }}>
         <Canvas
           stageRef={stageRef}
           isLayersOpen={isLayersOpen}

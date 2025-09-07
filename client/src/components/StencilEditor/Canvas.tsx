@@ -193,7 +193,10 @@ export default function Canvas({
         x={viewTransform.x}
         y={viewTransform.y}
         rotation={viewTransform.rotation}
-        style={{ cursor: tool === 'eyedropper' ? 'crosshair' : 'default' }}
+        style={{ 
+          cursor: tool === 'eyedropper' ? 'crosshair' : 'default',
+          touchAction: 'none' // Prevenir gestos del navegador en iOS (scroll, zoom nativo)
+        }}
       >
         {/* Capa de fondo blanco */}
         {layers.background.visible && (
