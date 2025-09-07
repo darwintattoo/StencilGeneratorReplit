@@ -96,7 +96,10 @@ export default function Toolbar({
         <Button
           variant={tool === 'eyedropper' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setTool('eyedropper')}
+          onClick={() => {
+            console.log('[DEBUG] Eyedropper button clicked, setting tool to eyedropper');
+            setTool('eyedropper');
+          }}
           className={`h-8 sm:h-9 px-2 sm:px-3 ${tool === 'eyedropper' 
             ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm border-orange-500" 
             : "shadow-sm text-gray-300 border-gray-600"

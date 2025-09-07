@@ -463,6 +463,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   // Manejo unificado de pointer events (mouse, touch, Apple Pencil)
   const handlePointerDown = (e: KonvaPointerEvent) => {
+    console.log(`[DEBUG] handlePointerDown called with current tool: ${tool}`);
     const stage = stageRef.current;
     if (!stage) return;
     const pos = stage.getPointerPosition();
