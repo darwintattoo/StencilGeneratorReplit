@@ -344,7 +344,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         if (tempCtx) {
           // Copiar el contenido del stage al canvas temporal
           stage.toCanvas({
-            callback: (stageCanvas) => {
+            callback: (stageCanvas: HTMLCanvasElement) => {
               tempCanvas.width = stageCanvas.width;
               tempCanvas.height = stageCanvas.height;
               tempCtx.drawImage(stageCanvas, 0, 0);
@@ -359,7 +359,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
               // Obtener el color del pixel
               if (pixelX >= 0 && pixelY >= 0 && pixelX < tempCanvas.width && pixelY < tempCanvas.height) {
                 const imageData = tempCtx.getImageData(pixelX, pixelY, 1, 1);
-                const [r, g, b, a] = imageData.data;
+                const data = imageData.data;
+                const r = data[0];
+                const g = data[1];
+                const b = data[2];
+                const a = data[3];
                 
                 // Si el pixel tiene contenido visible
                 if (a > 10) {
