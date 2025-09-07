@@ -1,0 +1,131 @@
+diff --git a/client/src/components/StencilEditor/Canvas.tsx b/client/src/components/StencilEditor/Canvas.tsx
+index 9b1c7cd3ed69d13724c96ee835fa0d101ea47961..0b2f2b8547b2dca404e82aaf4322adb453a55dc0 100644
+--- a/client/src/components/StencilEditor/Canvas.tsx
++++ b/client/src/components/StencilEditor/Canvas.tsx
+@@ -1,116 +1,106 @@
+ import React from 'react';
+ import { Stage, Layer, Image as KonvaImage, Line, Rect } from 'react-konva';
+ import { Slider } from '@/components/ui/slider';
+ import type {
+   DrawingLine,
+   ViewTransform,
+   LayersState,
+   Tool,
+   NativeSize,
+-  KonvaMouseEvent,
+-  KonvaTouchEvent,
++  KonvaPointerEvent,
+   KonvaWheelEvent,
+   StageRef,
+   LineRef
+ } from './types';
+ 
+ interface CanvasProps {
+   stageRef: React.RefObject<StageRef>;
+   isLayersOpen: boolean;
+   viewTransform: ViewTransform;
+-  handleMouseDown: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
+-  handleMouseMove: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
+-  handleMouseUp: () => void;
++  handlePointerDown: (e: KonvaPointerEvent) => void;
++  handlePointerMove: (e: KonvaPointerEvent) => void;
++  handlePointerUp: (e: KonvaPointerEvent) => void;
+   handleWheel: (e: KonvaWheelEvent) => void;
+-  handleTouchStart: (e: KonvaTouchEvent) => void;
+-  handleTouchMove: (e: KonvaTouchEvent) => void;
+-  handleTouchEnd: (e: KonvaTouchEvent) => void;
+   handleDoubleTap: () => void;
+   layers: LayersState;
+   originalImg: HTMLImageElement | null;
+   stencilImg: HTMLImageElement | null;
+   filteredStencilImg: HTMLImageElement | null;
+   drawingLines: DrawingLine[];
+   stencilLines: DrawingLine[];
+   currentLineRef: React.RefObject<DrawingLine | null>;
+   drawingPointsRef: React.RefObject<number[]>;
+   tempLineRef: React.RefObject<LineRef>;
+   isErasingStencil: boolean;
+   brushColor: string;
+   tool: Tool;
+   brushSize: number;
+   setBrushSize: (size: number) => void;
+   eraserSize: number;
+   setEraserSize: (size: number) => void;
+   nativeSize: NativeSize;
+   canvasSize: NativeSize;
+ }
+ 
+ export default function Canvas({
+   stageRef,
+   isLayersOpen,
+   viewTransform,
+-  handleMouseDown,
+-  handleMouseMove,
+-  handleMouseUp,
++  handlePointerDown,
++  handlePointerMove,
++  handlePointerUp,
+   handleWheel,
+-  handleTouchStart,
+-  handleTouchMove,
+-  handleTouchEnd,
+   handleDoubleTap,
+   layers,
+   originalImg,
+   stencilImg,
+   filteredStencilImg,
+   drawingLines,
+   stencilLines,
+   currentLineRef,
+   drawingPointsRef,
+   tempLineRef,
+   isErasingStencil,
+   brushColor,
+   tool,
+   brushSize,
+   setBrushSize,
+   eraserSize,
+   setEraserSize,
+   nativeSize,
+   canvasSize
+ }: CanvasProps) {
+   return (
+     <>
+       <Stage
+         width={canvasSize.width - (isLayersOpen ? 320 : 0)}
+         height={canvasSize.height}
+-        onMouseDown={handleMouseDown}
+-        onMouseMove={handleMouseMove}
+-        onMouseUp={handleMouseUp}
++        onPointerDown={handlePointerDown}
++        onPointerMove={handlePointerMove}
++        onPointerUp={handlePointerUp}
+         onWheel={handleWheel}
+-        onTouchStart={handleTouchStart}
+-        onTouchMove={handleTouchMove}
+-        onTouchEnd={handleTouchEnd}
+         onDblTap={handleDoubleTap}
+         ref={stageRef}
+         scaleX={viewTransform.scale}
+         scaleY={viewTransform.scale}
+         x={viewTransform.x}
+         y={viewTransform.y}
+         rotation={viewTransform.rotation}
+       >
+         {/* Capa de fondo blanco */}
+         {layers.background.visible && (
+           <Layer opacity={layers.background.opacity / 100}>
+             <Rect
+               x={0}
+               y={0}
+               width={nativeSize.width}
+               height={nativeSize.height}
+               fill="white"
+             />
+           </Layer>
+         )}
+ 
+         {layers.original.visible && (
+           <Layer opacity={layers.original.opacity / 100}>
+             {originalImg && (
+               <KonvaImage

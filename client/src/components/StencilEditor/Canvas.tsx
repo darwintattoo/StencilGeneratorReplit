@@ -8,8 +8,7 @@ import type {
   LayersState,
   Tool,
   NativeSize,
-  KonvaMouseEvent,
-  KonvaTouchEvent,
+  KonvaPointerEvent,
   KonvaWheelEvent,
   StageRef,
   LineRef,
@@ -21,13 +20,10 @@ interface CanvasProps {
   stageRef: React.RefObject<StageRef>;
   isLayersOpen: boolean;
   viewTransform: ViewTransform;
-  handleMouseDown: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
-  handleMouseMove: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
-  handleMouseUp: () => void;
+  handlePointerDown: (e: KonvaPointerEvent) => void;
+  handlePointerMove: (e: KonvaPointerEvent) => void;
+  handlePointerUp: (e: KonvaPointerEvent) => void;
   handleWheel: (e: KonvaWheelEvent) => void;
-  handleTouchStart: (e: KonvaTouchEvent) => void;
-  handleTouchMove: (e: KonvaTouchEvent) => void;
-  handleTouchEnd: (e: KonvaTouchEvent) => void;
   handleDoubleTap: () => void;
   layers: LayersState;
   originalImg: HTMLImageElement | null;
@@ -61,13 +57,10 @@ export default function Canvas({
   stageRef,
   isLayersOpen,
   viewTransform,
-  handleMouseDown,
-  handleMouseMove,
-  handleMouseUp,
+  handlePointerDown,
+  handlePointerMove,
+  handlePointerUp,
   handleWheel,
-  handleTouchStart,
-  handleTouchMove,
-  handleTouchEnd,
   handleDoubleTap,
   layers,
   originalImg,
@@ -220,12 +213,9 @@ export default function Canvas({
         width={canvasSize.width < 640 ? canvasSize.width : (canvasSize.width - (isLayersOpen ? 320 : 0))}
         height={canvasSize.height}
         onPointerDown={handlePointerDown}
-        onPointerMove={(e) => handleMouseMove(e as any)}
-        onPointerUp={handleMouseUp}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onWheel={handleWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         onDblTap={handleDoubleTap}
         ref={stageRef}
         scaleX={viewTransform.scale}
