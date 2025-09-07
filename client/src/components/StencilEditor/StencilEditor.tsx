@@ -448,7 +448,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     return (Math.atan2(dy, dx) * 180) / Math.PI;
   };
 
-  // Manejo unificado de pointer events (mouse, touch, Apple Pencil)
+  // Manejo optimizado por tipo de puntero (mouse, touch, Apple Pencil/stylus)
   const handlePointerDown = (e: KonvaPointerEvent) => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -456,9 +456,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     if (!pos) return;
 
     const pointerEvent = e.evt;
+    const { pointerType } = pointerEvent;
 
-    // Manejar multi-touch
-    if (pointerEvent.pointerType === 'touch') {
+    // Manejar multi-touch (solo para touch, no para stylus)
+    if (pointerType === 'touch') {
       pointersRef.current.set(pointerEvent.pointerId, {
         x: pointerEvent.clientX,
         y: pointerEvent.clientY,
@@ -516,6 +517,28 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       const transform = stage.getAbsoluteTransform().copy().invert();
       const { x, y } = transform.point(pos);
 
+      // Optimizaciones específicas por tipo de puntero
+      let adjustedBrushSize = brushSize;
+      let adjustedEraserSize = eraserSize;
+      
+      if (pointerType === 'pen') {
+        // Apple Pencil/Stylus: Mayor precisión, tamaño ligeramente reducido para mayor control
+        adjustedBrushSize = Math.max(1, brushSize * 0.85);
+        adjustedEraserSize = Math.max(2, eraserSize * 0.9);
+        
+        // Usar presión si está disponible (Apple Pencil)
+        if ('pressure' in pointerEvent && pointerEvent.pressure > 0) {
+          const pressureMultiplier = Math.max(0.3, Math.min(1.5, pointerEvent.pressure * 1.2));
+          adjustedBrushSize *= pressureMultiplier;
+          adjustedEraserSize *= pressureMultiplier;
+        }
+      } else if (pointerType === 'touch') {
+        // Touch: Tamaño ligeramente aumentado para compensar precisión de dedo
+        adjustedBrushSize = Math.min(50, brushSize * 1.15);
+        adjustedEraserSize = Math.min(80, eraserSize * 1.1);
+      }
+      // Mouse: usar tamaños normales (sin modificación)
+
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
         setIsErasingStencil(true);
@@ -542,7 +565,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           ctx.fillStyle = '#000';
           
           ctx.beginPath();
-          ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+          ctx.arc(x, y, adjustedEraserSize, 0, 2 * Math.PI);
           ctx.fill();
           stencilLayerRef.current?.batchDraw();
         }
@@ -555,11 +578,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       currentLineRef.current = {
         tool,
         points: [],
-        strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+        strokeWidth: tool === 'brush' ? adjustedBrushSize : adjustedEraserSize,
         globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
         layer: activeLayer,
         color,
-        baseColor: color
+        baseColor: color,
+        pointerType: pointerType // Almacenar tipo de puntero para uso posterior
       };
       drawingPointsRef.current = [x, y];
       frameRef.current = requestAnimationFrame(updateTempLine);
@@ -574,7 +598,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     const pointerEvent = e.evt;
     
-    // Manejar multi-touch
+    // Manejar multi-touch (solo para touch, no para stylus/pen)
     if (pointerEvent.pointerType === 'touch') {
       pointerEvent.preventDefault();
       pointersRef.current.set(pointerEvent.pointerId, {
@@ -592,8 +616,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           const deltaX = center.x - lastCenterRef.current.x;
           const deltaY = center.y - lastCenterRef.current.y;
           const deltaRotation = angle - lastAngleRef.current;
+          
+          // Touch multi-gesture: más sensible para dedos
+          const touchSensitivity = 1.2;
           handleGesture('pinch', { scale: newScale, centerX: center.x, centerY: center.y });
-          handleGesture('pan', { deltaX, deltaY });
+          handleGesture('pan', { deltaX: deltaX * touchSensitivity, deltaY: deltaY * touchSensitivity });
           handleGesture('rotate', { deltaRotation, centerX: center.x, centerY: center.y });
         }
         lastPinchDistanceRef.current = distance;

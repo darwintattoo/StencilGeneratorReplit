@@ -14,6 +14,7 @@ export interface DrawingLine {
   color: string;
   baseColor: string;
   globalCompositeOperation: 'source-over' | 'destination-out';
+  pointerType?: string; // 'mouse' | 'touch' | 'pen' - tipo de puntero usado
 }
 
 export interface ViewTransform {
