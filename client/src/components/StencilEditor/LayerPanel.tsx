@@ -333,6 +333,7 @@ export default function LayerPanel({
           onClick={() => setActiveLayer('drawing')}
         >
           <div className="flex items-center gap-3 mb-2">
+            <LayerThumbnail layerKey="drawing" />
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.drawing.visible}
@@ -348,7 +349,7 @@ export default function LayerPanel({
             )}
           </div>
           
-          <div className="ml-7">
+          <div className="ml-16">
             <Collapsible open={isDrawingColorOpen} onOpenChange={setIsDrawingColorOpen}>
               <CollapsibleTrigger asChild>
                 <Button
@@ -393,6 +394,7 @@ export default function LayerPanel({
           onClick={() => setActiveLayer('stencil')}
         >
           <div className="flex items-center gap-3 mb-2">
+            <LayerThumbnail layerKey="stencil" />
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.stencil.visible}
@@ -408,7 +410,7 @@ export default function LayerPanel({
             )}
           </div>
           
-          <div className="ml-7">
+          <div className="ml-16">
             <Collapsible open={isStencilColorOpen} onOpenChange={setIsStencilColorOpen}>
               <CollapsibleTrigger asChild>
                 <Button
@@ -441,6 +443,7 @@ export default function LayerPanel({
 
         <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
+            <LayerThumbnail layerKey="original" />
             <GripVertical className="w-4 h-4 text-gray-400" />
             <Switch
               checked={layers.original.visible}
@@ -454,7 +457,7 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-400" />
             )}
           </div>
-          <div className="ml-7 mt-2">
+          <div className="ml-16 mt-2">
             <Slider
               value={[layers.original.opacity]}
               onValueChange={([value]) => setOpacity('original', value)}
@@ -468,6 +471,7 @@ export default function LayerPanel({
 
         <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-white rounded border border-gray-600"></div>
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.background.visible}
@@ -481,7 +485,7 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
-          <div className="ml-7 mt-2">
+          <div className="ml-16 mt-2">
             <Slider
               value={[layers.background.opacity]}
               onValueChange={([value]) => setOpacity('background', value)}
