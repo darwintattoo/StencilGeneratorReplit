@@ -165,6 +165,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const frameRef = useRef<number>(0);
   const tempLineRef = useRef<LineRef>(null);
   const stencilLayerRef = useRef<LayerRef>(null);
+  const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -539,24 +540,33 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
     
     if (tool === 'eraser' && stageRef.current) {
-      setTimeout(() => {
-        if (stageRef.current) {
-          const layers = stageRef.current.find('Layer');
-          layers.forEach((layer: any) => {
-            try {
-              const hitCanvas = layer.getHitCanvas();
-              if (hitCanvas) {
-                const hitContext = hitCanvas.getContext('2d');
-                hitContext.clearRect(0, 0, nativeSize.width, nativeSize.height);
-                layer.clearHitCache();
-              }
-            } catch (e) {
-              console.log('Error limpiando hit canvas:', e);
+      // Cancelar timeout previo si existe
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+      }
+      
+      cleanupTimeoutRef.current = setTimeout(() => {
+        const stage = stageRef.current;
+        if (!stage) return;
+        
+        // Solo limpiar la capa específica que está siendo editada
+        const targetName = isErasingStencil ? 'stencil' : activeLayer;
+        const layers = stage.find(`Layer[name="${targetName}"]`);
+        
+        layers.forEach((layer: any) => {
+          try {
+            const hitCanvas = layer.getHitCanvas();
+            if (hitCanvas) {
+              // Técnica más eficiente: resetear dimensiones en lugar de clearRect
+              hitCanvas.width = 0;
+              hitCanvas.height = 0;
+              layer.clearHitCache();
             }
-            layer.batchDraw();
-          });
-          stageRef.current.batchDraw();
-        }
+          } catch (e) {
+            console.log('Error limpiando hit canvas:', e);
+          }
+          layer.batchDraw();
+        });
       }, 50);
     }
   };

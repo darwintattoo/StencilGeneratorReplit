@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette, RotateCcw } from 'lucide-react';
-import type { LayersState, ActiveLayer, DrawingLine, StageRef } from './types';
+import type { LayersState, ActiveLayer, DrawingLine, StageRef, StencilImage } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
 
@@ -33,7 +33,7 @@ interface LayerPanelProps {
   setActiveLayer: (layer: ActiveLayer) => void;
   stageRef?: React.RefObject<StageRef>;
   originalImage?: HTMLImageElement | null;
-  stencilImage?: HTMLImageElement | null;
+  stencilImage?: StencilImage | null;
   drawingLines?: DrawingLine[];
   onClose: () => void;
 }

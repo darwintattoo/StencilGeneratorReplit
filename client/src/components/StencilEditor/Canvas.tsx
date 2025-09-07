@@ -230,7 +230,7 @@ export default function Canvas({
         )}
 
         {layers.stencil.visible && (
-          <Layer opacity={layers.stencil.opacity / 100} ref={stencilLayerRef}>
+          <Layer name="stencil" opacity={layers.stencil.opacity / 100} ref={stencilLayerRef}>
             {filteredStencilImg ? (
               <KonvaImage
                 image={filteredStencilImg}
@@ -276,7 +276,7 @@ export default function Canvas({
         )}
 
         {layers.drawing.visible && (
-          <Layer opacity={layers.drawing.opacity / 100}>
+          <Layer name="drawing" opacity={layers.drawing.opacity / 100}>
             {drawingLines.map((line, i) => (
               <Line
                 key={i}
