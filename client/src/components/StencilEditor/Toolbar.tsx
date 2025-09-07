@@ -116,11 +116,22 @@ export default function Toolbar({
       <div className="flex items-center gap-1 sm:gap-2">
         {(tool === 'brush' || tool === 'eyedropper') && (
           <div className="flex items-center gap-1 sm:gap-2 rounded-md px-2 sm:px-3 py-1 sm:py-2 shadow-sm border border-gray-600 h-8 sm:h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+            {/* Indicador del color actual */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div 
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-lg ring-2 ring-blue-500 transition-all duration-300"
+                style={{ backgroundColor: brushColor }}
+                title={`Color actual: ${brushColor}`}
+              />
+              <div className="w-px h-4 sm:h-5 bg-gray-500 mx-1"></div>
+            </div>
+            
+            {/* Colores predefinidos */}
             {COLORS.map((color, index) => (
               <button
                 key={color}
                 onClick={() => setBrushColor(color)}
-                className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
+                className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all hover:scale-110 ${
                   brushColor === color 
                     ? 'border-gray-800 ring-2 ring-blue-400 scale-105' 
                     : 'border-gray-400 hover:border-gray-600'
@@ -129,7 +140,6 @@ export default function Toolbar({
                 title={['Negro', 'Rojo', 'Azul', 'Verde'][index]}
               />
             ))}
-            
           </div>
         )}
 
