@@ -333,14 +333,32 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           })
           .catch(() => setTool('brush'));
       } else {
-        const canvas = stage.toCanvas();
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          const transform = stage.getAbsoluteTransform().copy().invert();
-          const { x, y } = transform.point(pos);
-          const pixel = ctx.getImageData(x, y, 1, 1).data;
-          const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
-          setBrushColor(color);
+        // Usar la imagen filtrada si está disponible, sino la original del stage
+        const transform = stage.getAbsoluteTransform().copy().invert();
+        const { x, y } = transform.point(pos);
+        const sampleImg = filteredStencilImg || stencilImg;
+        
+        if (sampleImg && x >= 0 && y >= 0 && x < nativeSize.width && y < nativeSize.height) {
+          // Crear canvas temporal con la imagen correcta (filtrada o original)
+          const canvas = document.createElement('canvas');
+          canvas.width = sampleImg.width;
+          canvas.height = sampleImg.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(sampleImg, 0, 0);
+            const pixel = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+            const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
+            setBrushColor(color);
+          }
+        } else {
+          // Fallback al método original si no hay imagen específica
+          const canvas = stage.toCanvas();
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
+            setBrushColor(color);
+          }
         }
         setTool('brush');
       }
