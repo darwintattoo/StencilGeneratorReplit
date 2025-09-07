@@ -321,37 +321,29 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
 
-    // Herramienta gotero
     if (tool === 'eyedropper') {
       e.evt.preventDefault();
-      
-      // Capturar imagen del stage
-      stage.toCanvas({
-        callback: (canvas: HTMLCanvasElement) => {
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
+      if (typeof (window as any).EyeDropper === 'function') {
+        const eyeDropper = new (window as any).EyeDropper();
+        eyeDropper
+          .open()
+          .then((result: { sRGBHex: string }) => {
+            setBrushColor(result.sRGBHex);
             setTool('brush');
-            return;
-          }
-          
-          // Coordenadas directas del click
-          const x = Math.floor(pos.x);
-          const y = Math.floor(pos.y);
-          
-          if (x >= 0 && y >= 0 && x < canvas.width && y < canvas.height) {
-            const imageData = ctx.getImageData(x, y, 1, 1);
-            const [r, g, b, a] = imageData.data;
-            
-            if (a > 0) {
-              const hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-              setBrushColor(hex);
-            }
-          }
-          
-          setTool('brush');
+          })
+          .catch(() => setTool('brush'));
+      } else {
+        const canvas = stage.toCanvas();
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const transform = stage.getAbsoluteTransform().copy().invert();
+          const { x, y } = transform.point(pos);
+          const pixel = ctx.getImageData(x, y, 1, 1).data;
+          const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
+          setBrushColor(color);
         }
-      });
-      
+        setTool('brush');
+      }
       return;
     }
 

@@ -1,0 +1,81 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..5b120e1eea025992c1b29a9fd2263af07855ad51 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -274,50 +274,76 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+         // Crear nueva imagen
+         const newImg = new Image();
+         newImg.onload = () => {
+           setFilteredStencilImg(newImg);
+         };
+         newImg.src = canvas.toDataURL();
+       }
+     }
+   }, [stencilImg, stencilHue]);
+ 
+   // Manejo de gestos táctiles y mouse
+   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+     
+     const mouseEvent = e.evt as MouseEvent;
+     if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
+       e.evt.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
++    if (tool === 'eyedropper') {
++      e.evt.preventDefault();
++      if (typeof (window as any).EyeDropper === 'function') {
++        const eyeDropper = new (window as any).EyeDropper();
++        eyeDropper
++          .open()
++          .then((result: { sRGBHex: string }) => {
++            setBrushColor(result.sRGBHex);
++            setTool('brush');
++          })
++          .catch(() => setTool('brush'));
++      } else {
++        const canvas = stage.toCanvas();
++        const ctx = canvas.getContext('2d');
++        if (ctx) {
++          const transform = stage.getAbsoluteTransform().copy().invert();
++          const { x, y } = transform.point(pos);
++          const pixel = ctx.getImageData(x, y, 1, 1).data;
++          const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
++          setBrushColor(color);
++        }
++        setTool('brush');
++      }
++      return;
++    }
++
+     if (tool === 'brush' || tool === 'eraser') {
+       // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+       const pointerEvent = e.evt as any;
+       if (pointerEvent.pointerType === 'touch') {
+         return;
+       }
+       setIsDrawing(true);
+       const transform = stage.getAbsoluteTransform().copy().invert();
+       const { x, y } = transform.point(pos);
+ 
+       // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+         
+         // Crear canvas de trabajo si no existe
+         if (!stencilCanvas) {
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
