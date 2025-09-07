@@ -269,47 +269,91 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     const stage = stageRef.current;
     if (!stage) return null;
     
+    console.log(`[Eyedropper] Sampling at coordinates: x=${x}, y=${y}`);
+    
     try {
-      // Capturar toda la composición del stage (todas las capas visibles)
+      // Crear una región de muestreo más grande y capturar con pixelRatio completo
+      const sampleSize = 10;
+      const sampleX = Math.floor(x) - Math.floor(sampleSize / 2);
+      const sampleY = Math.floor(y) - Math.floor(sampleSize / 2);
+      
+      // Forzar renderizado del stage antes del muestreo
+      stage.draw();
+      
       const canvas = stage.toCanvas({
-        x: Math.floor(x) - 2, // Pequeño buffer para evitar bordes
-        y: Math.floor(y) - 2,
-        width: 5,
-        height: 5,
-        pixelRatio: 1
+        x: sampleX,
+        y: sampleY,
+        width: sampleSize,
+        height: sampleSize,
+        pixelRatio: window.devicePixelRatio || 1
       });
+      
+      console.log(`[Eyedropper] Canvas created: ${canvas.width}x${canvas.height}`);
       
       const ctx = canvas.getContext('2d');
       if (!ctx) return null;
       
-      // Leer el pixel central de la muestra 5x5
-      const { data } = ctx.getImageData(2, 2, 1, 1);
-      const [r, g, b, a] = data;
+      // Leer múltiples pixeles y promediar para mejor resultado
+      const centerX = Math.floor(canvas.width / 2);
+      const centerY = Math.floor(canvas.height / 2);
+      const sampleArea = 3; // área 3x3 para promediar
       
-      // Si el pixel es transparente, intentar fallback con imagen base
-      if (a === 0) {
-        const sourceImg = filteredStencilImg || stencilImg;
-        if (sourceImg) {
-          // Crear canvas temporal para muestreo de imagen base
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = sourceImg.width;
-          tempCanvas.height = sourceImg.height;
-          const tempCtx = tempCanvas.getContext('2d');
+      let totalR = 0, totalG = 0, totalB = 0, validPixels = 0;
+      
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const px = centerX + dx;
+          const py = centerY + dy;
           
-          if (tempCtx) {
-            tempCtx.drawImage(sourceImg, 0, 0);
-            const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
-            const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
-            const fallbackData = tempCtx.getImageData(clampedX, clampedY, 1, 1).data;
-            return `#${((fallbackData[0] << 16) | (fallbackData[1] << 8) | fallbackData[2]).toString(16).padStart(6, '0')}`;
+          if (px >= 0 && py >= 0 && px < canvas.width && py < canvas.height) {
+            const { data } = ctx.getImageData(px, py, 1, 1);
+            const [r, g, b, a] = data;
+            
+            if (a > 0) { // Solo contar pixeles no transparentes
+              totalR += r;
+              totalG += g;
+              totalB += b;
+              validPixels++;
+            }
           }
         }
-        return '#ffffff'; // Blanco por defecto si no hay contenido
       }
       
-      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+      if (validPixels > 0) {
+        // Promediar los pixeles válidos
+        const avgR = Math.round(totalR / validPixels);
+        const avgG = Math.round(totalG / validPixels);
+        const avgB = Math.round(totalB / validPixels);
+        const color = `#${((avgR << 16) | (avgG << 8) | avgB).toString(16).padStart(6, '0')}`;
+        console.log(`[Eyedropper] Color sampled: ${color} from ${validPixels} pixels`);
+        return color;
+      }
+      
+      // Si no hay pixeles válidos, intentar fallback con imagen base
+      console.log('[Eyedropper] No valid pixels, trying fallback');
+      const sourceImg = filteredStencilImg || stencilImg;
+      if (sourceImg) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = sourceImg.width;
+        tempCanvas.height = sourceImg.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        if (tempCtx) {
+          tempCtx.drawImage(sourceImg, 0, 0);
+          const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
+          const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
+          const fallbackData = tempCtx.getImageData(clampedX, clampedY, 1, 1).data;
+          const fallbackColor = `#${((fallbackData[0] << 16) | (fallbackData[1] << 8) | fallbackData[2]).toString(16).padStart(6, '0')}`;
+          console.log(`[Eyedropper] Fallback color: ${fallbackColor}`);
+          return fallbackColor;
+        }
+      }
+      
+      console.log('[Eyedropper] No color found, defaulting to white');
+      return '#ffffff'; // Blanco por defecto si no hay contenido
+      
     } catch (error) {
-      console.warn('Error picking color:', error);
+      console.error('[Eyedropper] Error picking color:', error);
       // Fallback a método anterior si falla
       const sourceImg = filteredStencilImg || stencilImg;
       if (!sourceImg) return null;
@@ -329,7 +373,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       const r = data[0];
       const g = data[1];
       const b = data[2];
-      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+      const errorFallbackColor = `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+      console.log(`[Eyedropper] Error fallback color: ${errorFallbackColor}`);
+      return errorFallbackColor;
     }
   };
 
