@@ -30,7 +30,7 @@ interface CanvasProps {
   layers: LayersState;
   originalImg: HTMLImageElement | null;
   stencilImg: HTMLImageElement | null;
-  filteredStencilImg: HTMLCanvasElement | null;
+  filteredStencilImg: HTMLImageElement | null;
   drawingLines: DrawingLine[];
   stencilLines: DrawingLine[];
   currentLineRef: React.RefObject<DrawingLine | null>;

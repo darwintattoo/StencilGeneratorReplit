@@ -180,7 +180,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
-  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLCanvasElement | null>(null);
+  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
   const filterCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
     width: window.innerWidth, 
@@ -261,22 +261,28 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   }, [originalImage]);
 
   const pickColorAt = (x: number, y: number): string | null => {
-    let source: HTMLCanvasElement | null = stencilCanvas || filteredStencilImg;
-    if (!source && stencilImg) {
-      source = document.createElement('canvas');
-      source.width = stencilImg.width;
-      source.height = stencilImg.height;
-      const tempCtx = source.getContext('2d');
-      tempCtx?.drawImage(stencilImg, 0, 0);
-    }
-    if (!source) return null;
-    const ctx = source.getContext('2d');
+    // Priorizar imagen filtrada si existe, sino usar original
+    const sourceImg = filteredStencilImg || stencilImg;
+    if (!sourceImg) return null;
+    
+    // Crear canvas temporal para muestreo
+    const canvas = document.createElement('canvas');
+    canvas.width = sourceImg.width;
+    canvas.height = sourceImg.height;
+    const ctx = canvas.getContext('2d');
+    
     if (!ctx) return null;
-    const { data } = ctx.getImageData(Math.round(x), Math.round(y), 1, 1);
+    ctx.drawImage(sourceImg, 0, 0);
+    
+    // Clampear coordenadas
+    const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
+    const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
+    
+    const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
     const r = data[0];
     const g = data[1];
     const b = data[2];
-    return `rgb(${r}, ${g}, ${b})`;
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   };
 
   const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
@@ -329,27 +335,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Resetear filtro
         ctx.filter = 'none';
         
-        // Actualizar canvas del stencil o crear uno nuevo
-        let targetCanvas = stencilCanvas;
-        if (targetCanvas) {
-          const tctx = targetCanvas.getContext('2d');
-          if (tctx) {
-            targetCanvas.width = canvas.width;
-            targetCanvas.height = canvas.height;
-            tctx.clearRect(0, 0, canvas.width, canvas.height);
-            tctx.drawImage(canvas, 0, 0);
-          }
-        } else {
-          targetCanvas = document.createElement('canvas');
-          targetCanvas.width = canvas.width;
-          targetCanvas.height = canvas.height;
-          const tctx = targetCanvas.getContext('2d');
-          tctx?.drawImage(canvas, 0, 0);
-          setStencilCanvas(targetCanvas);
-        }
-
-        // Usar el canvas resultante como imagen filtrada
-        setFilteredStencilImg(stencilHue !== 0 ? targetCanvas || null : null);
+        // Crear nueva imagen desde el canvas filtrado
+        const newImg = new Image();
+        newImg.onload = () => {
+          setFilteredStencilImg(newImg);
+        };
+        newImg.src = canvas.toDataURL();
 
         // Guardar referencia del canvas para reutilización
         if (!filterCanvasRef.current) {
@@ -564,13 +555,26 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const newImg = new Image();
         newImg.onload = () => {
           setStencilImg(newImg);
-          if (stencilCanvas) {
-            if (stencilHue !== 0) {
-              applyHue(stencilCanvas, stencilHue);
-              setFilteredStencilImg(stencilCanvas);
-            } else {
-              setFilteredStencilImg(null);
+          // Regenerar imagen filtrada si hay cambios de hue
+          if (stencilHue !== 0) {
+            // Recrear imagen filtrada después del borrado
+            const canvas = document.createElement('canvas');
+            canvas.width = newImg.width;
+            canvas.height = newImg.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              const saturationValue = stencilSaturation / 100;
+              const brightnessValue = stencilBrightness / 100;
+              ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
+              ctx.drawImage(newImg, 0, 0);
+              ctx.filter = 'none';
+              
+              const filteredImg = new Image();
+              filteredImg.onload = () => setFilteredStencilImg(filteredImg);
+              filteredImg.src = canvas.toDataURL();
             }
+          } else {
+            setFilteredStencilImg(null);
           }
         };
         newImg.src = stencilCanvas.toDataURL();
