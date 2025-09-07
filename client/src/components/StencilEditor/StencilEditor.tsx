@@ -179,7 +179,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
   const pointersRef = useRef<Map<number, Position>>(new Map());
   const lastPinchDistanceRef = useRef<number>(0);
-  const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+  const lastCenterRef = useRef<PointerCenter>({ x: 0, y: 0 });
   const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const stencilCtxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -359,7 +359,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const getCenter = (p1: Position, p2: Position): TouchCenter => {
+  const getCenter = (p1: Position, p2: Position): PointerCenter => {
     return {
       x: (p1.x + p2.x) / 2,
       y: (p1.y + p2.y) / 2
@@ -390,7 +390,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       if (pointersRef.current.size === 2) {
         const [p1, p2] = Array.from(pointersRef.current.values());
         lastPinchDistanceRef.current = getDistance(p1, p2);
-        lastTouchCenterRef.current = getCenter(p1, p2);
+        lastCenterRef.current = getCenter(p1, p2);
         lastAngleRef.current = getAngle(p1, p2);
         setIsPanning(false);
         setIsDrawing(false);
@@ -506,15 +506,15 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         if (lastPinchDistanceRef.current > 0) {
           const scale = distance / lastPinchDistanceRef.current;
           const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
-          const deltaX = center.x - lastTouchCenterRef.current.x;
-          const deltaY = center.y - lastTouchCenterRef.current.y;
+          const deltaX = center.x - lastCenterRef.current.x;
+          const deltaY = center.y - lastCenterRef.current.y;
           const deltaRotation = angle - lastAngleRef.current;
           handleGesture('pinch', { scale: newScale, centerX: center.x, centerY: center.y });
           handleGesture('pan', { deltaX, deltaY });
           handleGesture('rotate', { deltaRotation, centerX: center.x, centerY: center.y });
         }
         lastPinchDistanceRef.current = distance;
-        lastTouchCenterRef.current = center;
+        lastCenterRef.current = center;
         lastAngleRef.current = angle;
         return;
       }
