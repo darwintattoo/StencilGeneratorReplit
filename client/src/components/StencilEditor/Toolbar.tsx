@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Paintbrush, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
+import { Pencil, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
 import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
 
 const COLORS = [
@@ -66,7 +66,7 @@ export default function Toolbar({
             : "shadow-sm text-gray-300 border-gray-600"
           }`}
         >
-          <Paintbrush className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
+          <Pencil className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
 
         <Button
