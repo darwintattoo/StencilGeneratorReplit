@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 import Canvas from './Canvas';
 import LayerPanel from './LayerPanel';
 import Toolbar from './Toolbar';
@@ -33,6 +34,7 @@ const DRAWING_COLORS = [
 
 // Hook personalizado para manejar la lógica del canvas
 function useStencilCanvas() {
+  const { toast } = useToast();
   const [tool, setTool] = useState<Tool>('brush');
   const [brushSize, setBrushSize] = useState<number>(4);
   const [eraserSize, setEraserSize] = useState<number>(10);
@@ -496,6 +498,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           .then((result: { sRGBHex: string }) => {
             setBrushColor(result.sRGBHex);
             setTool('brush');
+            // Mostrar feedback visual del color seleccionado
+            toast({
+              description: `Color seleccionado: ${result.sRGBHex}`,
+              duration: 2000,
+            });
           })
           .catch(() => {
             setTool('brush');
@@ -506,6 +513,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const picked = pickColorAt(x, y);
         if (picked) {
           setBrushColor(picked);
+          // Mostrar feedback visual del color seleccionado
+          toast({
+            description: `Color seleccionado: ${picked}`,
+            duration: 2000,
+          });
         }
         setTool('brush');
       }
