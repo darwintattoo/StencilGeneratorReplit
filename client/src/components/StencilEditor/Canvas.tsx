@@ -96,6 +96,37 @@ export default function Canvas({
   nativeSize,
   canvasSize
 }: CanvasProps) {
+
+  // Función para manejar Apple Pencil y touch events
+  const handlePointerDown = async (e: any) => {
+    if (tool === 'eyedropper') {
+      // Soporte nativo EyeDropper API si está disponible
+      if (typeof (window as any).EyeDropper === 'function') {
+        try {
+          const eyeDropper = new (window as any).EyeDropper();
+          const result = await eyeDropper.open();
+          setBrushColor(result.sRGBHex);
+        } catch (err) {
+          // User cancelled or error
+        }
+      } else {
+        // Fallback: muestrear color directamente del canvas
+        const stage = stageRef.current;
+        if (!stage) return;
+        const pos = stage.getPointerPosition();
+        if (!pos) return;
+        const canvas = stage.toCanvas();
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const data = ctx.getImageData(pos.x, pos.y, 1, 1).data;
+        const color = `#${((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1)}`;
+        setBrushColor(color);
+      }
+    } else {
+      // Delegar otros tools al handler original
+      handleMouseDown(e as any);
+    }
+  };
   
   // Función para cambiar color con HSL
   const adjustColor = useMemo(() => {
@@ -188,9 +219,9 @@ export default function Canvas({
       <Stage
         width={canvasSize.width < 640 ? canvasSize.width : (canvasSize.width - (isLayersOpen ? 320 : 0))}
         height={canvasSize.height}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onPointerDown={handlePointerDown}
+        onPointerMove={(e) => handleMouseMove(e as any)}
+        onPointerUp={handleMouseUp}
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

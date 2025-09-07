@@ -1,0 +1,111 @@
+diff --git a/client/src/components/StencilEditor/Toolbar.tsx b/client/src/components/StencilEditor/Toolbar.tsx
+index d917a98e54099c46ec5157c60208eb7bfc016b82..81b84472622f5ab894bec04742c8a08c5ffe0610 100644
+--- a/client/src/components/StencilEditor/Toolbar.tsx
++++ b/client/src/components/StencilEditor/Toolbar.tsx
+@@ -1,29 +1,29 @@
+ import React from 'react';
+ import { Button } from '@/components/ui/button';
+ import { Slider } from '@/components/ui/slider';
+-import { PenTool, Eraser, Layers, ArrowLeft, Move } from 'lucide-react';
++import { PenTool, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
+ import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
+ 
+ const COLORS = ['#000000', '#ef4444', '#3b82f6'];
+ 
+ interface ToolbarProps {
+   tool: Tool;
+   setTool: (tool: Tool) => void;
+   activeLayer: ActiveLayer;
+   setActiveLayer: (layer: ActiveLayer) => void;
+   brushColor: string;
+   setBrushColor: (color: string) => void;
+   layers: LayersState;
+   setOpacity: (key: string, opacity: number) => void;
+   viewTransform: Pick<ViewTransform, 'scale'>;
+   isLayersOpen: boolean;
+   setIsLayersOpen: (open: boolean) => void;
+   onBack: () => void;
+ }
+ 
+ export default function Toolbar({
+   tool,
+   setTool,
+   activeLayer,
+   setActiveLayer,
+   brushColor,
+diff --git a/client/src/components/StencilEditor/Toolbar.tsx b/client/src/components/StencilEditor/Toolbar.tsx
+index d917a98e54099c46ec5157c60208eb7bfc016b82..81b84472622f5ab894bec04742c8a08c5ffe0610 100644
+--- a/client/src/components/StencilEditor/Toolbar.tsx
++++ b/client/src/components/StencilEditor/Toolbar.tsx
+@@ -42,58 +42,69 @@ export default function Toolbar({
+         size="sm"
+         onClick={onBack}
+         style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }} className="hover:text-white shadow-sm text-gray-300 border-gray-600" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 35, 35, 0.95)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(45, 45, 45, 0.95)'}
+       >
+         <ArrowLeft className="w-4 h-4 mr-2 text-gray-400" />
+         Galería
+       </Button>
+ 
+       <div className="flex gap-2">
+         <Button
+           variant={tool === 'brush' ? 'default' : 'outline'}
+           size="sm"
+           onClick={() => setTool('brush')}
+           className={tool === 'brush' 
+             ? "bg-blue-500 hover:bg-blue-600 text-white shadow-sm border-blue-500" 
+             : "shadow-sm text-gray-300 border-gray-600"
+           }
+         >
+           <PenTool className={`w-4 h-4 ${tool === 'brush' ? 'text-white' : 'text-gray-400'}`} />
+         </Button>
+ 
+         <Button
+           variant={tool === 'eraser' ? 'default' : 'outline'}
+           size="sm"
+           onClick={() => setTool('eraser')}
+-          className={tool === 'eraser' 
+-            ? "bg-red-500 hover:bg-red-600 text-white shadow-sm border-red-500" 
++          className={tool === 'eraser'
++            ? "bg-red-500 hover:bg-red-600 text-white shadow-sm border-red-500"
+             : "shadow-sm text-gray-300 border-gray-600"
+           }
+         >
+           <Eraser className={`w-4 h-4 ${tool === 'eraser' ? 'text-white' : 'text-gray-400'}`} />
+         </Button>
+ 
++        <Button
++          variant={tool === 'eyedropper' ? 'default' : 'outline'}
++          size="sm"
++          onClick={() => setTool('eyedropper')}
++          className={tool === 'eyedropper'
++            ? "bg-yellow-500 hover:bg-yellow-600 text-white shadow-sm border-yellow-500"
++            : "shadow-sm text-gray-300 border-gray-600"}
++        >
++          <Pipette className={`w-4 h-4 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
++        </Button>
++
+         {tool === 'eraser' && (
+           <div className="flex gap-1 rounded-md p-1 shadow-sm border border-gray-600" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+             <Button
+               variant={activeLayer === 'drawing' ? 'default' : 'outline'}
+               size="sm"
+               onClick={() => setActiveLayer('drawing')}
+               className={`text-xs px-2 py-1 h-auto ${
+                 activeLayer === 'drawing' 
+                   ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                   : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
+               }`}
+             >
+               Dibujo
+             </Button>
+             <Button
+               variant={activeLayer === 'stencil' ? 'default' : 'outline'}
+               size="sm"
+               onClick={() => setActiveLayer('stencil')}
+               className={`text-xs px-2 py-1 h-auto ${
+                 activeLayer === 'stencil' 
+                   ? 'bg-gray-600 hover:bg-gray-500 text-white border-gray-600' 
+                   : 'bg-transparent hover:bg-gray-700 text-gray-300 border-gray-500'
+               }`}
+             >
+               Stencil

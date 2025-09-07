@@ -1,0 +1,56 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..c3c04018dc5623950e79fdff85511f3e2e5f88c0 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -600,50 +600,51 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+           viewTransform={viewTransform}
+           handleMouseDown={handleMouseDown}
+           handleMouseMove={handleMouseMove}
+           handleMouseUp={handleMouseUp}
+           handleWheel={handleWheel}
+           handleTouchStart={handleTouchStart}
+           handleTouchMove={handleTouchMove}
+           handleTouchEnd={handleTouchEnd}
+           handleDoubleTap={handleDoubleTap}
+           layers={layers}
+           originalImg={originalImg}
+           stencilImg={stencilImg}
+           filteredStencilImg={filteredStencilImg}
+           drawingLines={drawingLines}
+           stencilLines={stencilLines}
+           currentLineRef={currentLineRef}
+           drawingPointsRef={drawingPointsRef}
+           tempLineRef={tempLineRef}
+           isErasingStencil={isErasingStencil}
+           brushColor={brushColor}
+           tool={tool}
+           brushSize={brushSize}
+           setBrushSize={setBrushSize}
+           eraserSize={eraserSize}
+           setEraserSize={setEraserSize}
++          setBrushColor={setBrushColor}
+           nativeSize={nativeSize}
+           canvasSize={canvasSize}
+         />
+ 
+         <Toolbar
+           tool={tool}
+           setTool={setTool}
+           activeLayer={activeLayer}
+           setActiveLayer={setActiveLayer}
+           brushColor={brushColor}
+           setBrushColor={setBrushColor}
+           layers={layers}
+           setOpacity={setOpacity}
+           viewTransform={viewTransform}
+           isLayersOpen={isLayersOpen}
+           setIsLayersOpen={setIsLayersOpen}
+           onBack={() => setLocation('/')}
+         />
+       </div>
+ 
+       <LayerPanel
+         isOpen={isLayersOpen}
+         layers={layers}
+         toggleLayer={toggleLayer}
+         setOpacity={setOpacity}

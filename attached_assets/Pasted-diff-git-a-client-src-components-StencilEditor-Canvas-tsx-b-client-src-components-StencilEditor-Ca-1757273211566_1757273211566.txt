@@ -1,0 +1,130 @@
+diff --git a/client/src/components/StencilEditor/Canvas.tsx b/client/src/components/StencilEditor/Canvas.tsx
+index 9b1c7cd3ed69d13724c96ee835fa0d101ea47961..d50cca4676ca40b94e31b4e615038a00f7c65b73 100644
+--- a/client/src/components/StencilEditor/Canvas.tsx
++++ b/client/src/components/StencilEditor/Canvas.tsx
+@@ -20,93 +20,122 @@ interface CanvasProps {
+   viewTransform: ViewTransform;
+   handleMouseDown: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
+   handleMouseMove: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
+   handleMouseUp: () => void;
+   handleWheel: (e: KonvaWheelEvent) => void;
+   handleTouchStart: (e: KonvaTouchEvent) => void;
+   handleTouchMove: (e: KonvaTouchEvent) => void;
+   handleTouchEnd: (e: KonvaTouchEvent) => void;
+   handleDoubleTap: () => void;
+   layers: LayersState;
+   originalImg: HTMLImageElement | null;
+   stencilImg: HTMLImageElement | null;
+   filteredStencilImg: HTMLImageElement | null;
+   drawingLines: DrawingLine[];
+   stencilLines: DrawingLine[];
+   currentLineRef: React.RefObject<DrawingLine | null>;
+   drawingPointsRef: React.RefObject<number[]>;
+   tempLineRef: React.RefObject<LineRef>;
+   isErasingStencil: boolean;
+   brushColor: string;
+   tool: Tool;
+   brushSize: number;
+   setBrushSize: (size: number) => void;
+   eraserSize: number;
+   setEraserSize: (size: number) => void;
++  setBrushColor: (color: string) => void;
+   nativeSize: NativeSize;
+   canvasSize: NativeSize;
+ }
+ 
+ export default function Canvas({
+   stageRef,
+   isLayersOpen,
+   viewTransform,
+   handleMouseDown,
+   handleMouseMove,
+   handleMouseUp,
+   handleWheel,
+   handleTouchStart,
+   handleTouchMove,
+   handleTouchEnd,
+   handleDoubleTap,
+   layers,
+   originalImg,
+   stencilImg,
+   filteredStencilImg,
+   drawingLines,
+   stencilLines,
+   currentLineRef,
+   drawingPointsRef,
+   tempLineRef,
+   isErasingStencil,
+   brushColor,
+   tool,
+   brushSize,
+   setBrushSize,
+   eraserSize,
+   setEraserSize,
++  setBrushColor,
+   nativeSize,
+   canvasSize
+ }: CanvasProps) {
++  const handlePointerDown = async (e: any) => {
++    if (tool === 'eyedropper') {
++      if (typeof (window as any).EyeDropper === 'function') {
++        try {
++          const eyeDropper = new (window as any).EyeDropper();
++          const result = await eyeDropper.open();
++          setBrushColor(result.sRGBHex);
++        } catch (err) {
++          // User cancelled or error
++        }
++      } else {
++        const stage = stageRef.current;
++        if (!stage) return;
++        const pos = stage.getPointerPosition();
++        if (!pos) return;
++        const canvas = stage.toCanvas();
++        const ctx = canvas.getContext('2d');
++        if (!ctx) return;
++        const data = ctx.getImageData(pos.x, pos.y, 1, 1).data;
++        const color = `#${((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1)}`;
++        setBrushColor(color);
++      }
++    } else {
++      handleMouseDown(e as any);
++    }
++  };
++
+   return (
+     <>
+       <Stage
+         width={canvasSize.width - (isLayersOpen ? 320 : 0)}
+         height={canvasSize.height}
+-        onMouseDown={handleMouseDown}
+-        onMouseMove={handleMouseMove}
+-        onMouseUp={handleMouseUp}
++        onPointerDown={handlePointerDown}
++        onPointerMove={(e) => handleMouseMove(e as any)}
++        onPointerUp={handleMouseUp}
+         onWheel={handleWheel}
+         onTouchStart={handleTouchStart}
+         onTouchMove={handleTouchMove}
+         onTouchEnd={handleTouchEnd}
+         onDblTap={handleDoubleTap}
+         ref={stageRef}
+         scaleX={viewTransform.scale}
+         scaleY={viewTransform.scale}
+         x={viewTransform.x}
+         y={viewTransform.y}
+         rotation={viewTransform.rotation}
+       >
+         {/* Capa de fondo blanco */}
+         {layers.background.visible && (
+           <Layer opacity={layers.background.opacity / 100}>
+             <Rect
+               x={0}
+               y={0}
+               width={nativeSize.width}
+               height={nativeSize.height}
+               fill="white"
+             />
+           </Layer>
+         )}
+ 
