@@ -1,0 +1,114 @@
+diff --git a/client/src/components/StencilEditor/Canvas.tsx b/client/src/components/StencilEditor/Canvas.tsx
+index 9b1c7cd3ed69d13724c96ee835fa0d101ea47961..0e34056f7e0c60ecdd248b2a4359f7255628f8e8 100644
+--- a/client/src/components/StencilEditor/Canvas.tsx
++++ b/client/src/components/StencilEditor/Canvas.tsx
+@@ -100,103 +100,103 @@ export default function Canvas({
+         {/* Capa de fondo blanco */}
+         {layers.background.visible && (
+           <Layer opacity={layers.background.opacity / 100}>
+             <Rect
+               x={0}
+               y={0}
+               width={nativeSize.width}
+               height={nativeSize.height}
+               fill="white"
+             />
+           </Layer>
+         )}
+ 
+         {layers.original.visible && (
+           <Layer opacity={layers.original.opacity / 100}>
+             {originalImg && (
+               <KonvaImage
+                 image={originalImg}
+                 width={nativeSize.width}
+                 height={nativeSize.height}
+               />
+             )}
+           </Layer>
+         )}
+ 
+-        {layers.stencil.visible && (
+-          <Layer opacity={layers.stencil.opacity / 100}>
++          {layers.stencil.visible && (
++            <Layer name="stencil" opacity={layers.stencil.opacity / 100}>
+             {filteredStencilImg ? (
+               <KonvaImage
+                 image={filteredStencilImg}
+                 width={nativeSize.width}
+                 height={nativeSize.height}
+               />
+             ) : stencilImg ? (
+               <KonvaImage
+                 image={stencilImg}
+                 width={nativeSize.width}
+                 height={nativeSize.height}
+               />
+             ) : null}
+           </Layer>
+         )}
+ 
+-        {layers.drawing.visible && (
+-          <Layer opacity={layers.drawing.opacity / 100}>
++          {layers.drawing.visible && (
++            <Layer name="drawing" opacity={layers.drawing.opacity / 100}>
+             {drawingLines.map((line, i) => (
+               <Line
+                 key={i}
+                 points={line.points}
+                 stroke={line.color}
+                 strokeWidth={line.strokeWidth}
+                 tension={0.5}
+                 lineCap="round"
+                 lineJoin="round"
+                 globalCompositeOperation={line.globalCompositeOperation}
+                 perfectDrawEnabled={true}
+                 shadowForStrokeEnabled={false}
+               />
+             ))}
+             {currentLineRef.current?.layer === 'drawing' && !isErasingStencil && (
+               <Line
+                 ref={tempLineRef}
+                 points={drawingPointsRef.current || []}
+                 stroke={currentLineRef.current?.color}
+                 strokeWidth={currentLineRef.current?.strokeWidth}
+                 tension={0.5}
+                 lineCap="round"
+                 lineJoin="round"
+                 globalCompositeOperation={currentLineRef.current?.globalCompositeOperation}
+                 perfectDrawEnabled={true}
+                 shadowForStrokeEnabled={false}
+               />
+             )}
+           </Layer>
+         )}
+ 
+-        {layers.stencil.visible && (
+-          <Layer opacity={layers.stencil.opacity / 100}>
++          {layers.stencil.visible && (
++            <Layer name="stencil" opacity={layers.stencil.opacity / 100}>
+             {stencilImg && (
+               <KonvaImage
+                 image={stencilImg}
+                 width={nativeSize.width}
+                 height={nativeSize.height}
+               />
+             )}
+             {stencilLines.map((line, i) => (
+               <Line
+                 key={`stencil-${i}`}
+                 points={line.points}
+                 stroke={line.color}
+                 strokeWidth={line.strokeWidth}
+                 tension={0.5}
+                 lineCap="round"
+                 lineJoin="round"
+                 globalCompositeOperation={line.globalCompositeOperation}
+                 perfectDrawEnabled={true}
+                 shadowForStrokeEnabled={false}
+               />
+             ))}
+             {currentLineRef.current?.layer === 'stencil' && !isErasingStencil && (
+               <Line
+                 ref={tempLineRef}
+                 points={drawingPointsRef.current || []}

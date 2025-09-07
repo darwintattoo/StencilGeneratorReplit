@@ -1,0 +1,164 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..3f9573f50700270a48a6daf552234bab65f8fdb5 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -108,64 +108,66 @@ function useStencilCanvas() {
+   return {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+     toggleLayer,
+     setOpacity,
+     viewTransform,
+     handleGesture,
+     resetView
+   };
+ }
+ 
+ interface StencilEditorProps {
+   originalImage?: string;
+   stencilImage?: string;
++  onSave?: (editedImageUrl: string) => Promise<void>;
+ }
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<StageRef>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
+   const drawingPointsRef = useRef<number[]>([]);
+   const currentLineRef = useRef<DrawingLine | null>(null);
+   const frameRef = useRef<number>(0);
+   const tempLineRef = useRef<LineRef>(null);
++  const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ 
+   const updateTempLine = () => {
+     if (tempLineRef.current) {
+       tempLineRef.current.points(drawingPointsRef.current);
+       tempLineRef.current.getLayer()?.batchDraw();
+     }
+     frameRef.current = requestAnimationFrame(updateTempLine);
+   };
+   const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState<boolean>(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
+   const touchesRef = useRef<Touch[]>([]);
+   const lastPinchDistanceRef = useRef<number>(0);
+   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+   const lastAngleRef = useRef<number>(0);
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
+     width: window.innerWidth, 
+     height: window.innerHeight 
+   });
+ 
+   const {
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..3f9573f50700270a48a6daf552234bab65f8fdb5 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -416,68 +418,71 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+     currentLineRef.current = null;
+ 
+     // Finalizar borrado de stencil con restauración del contexto
+     if (isErasingStencil && stencilCanvas) {
+       // Restaurar contexto una sola vez al final
+       const ctx = stencilCanvas.getContext('2d');
+       if (ctx) {
+         ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
+       }
+       
+       // Actualización diferida para no bloquear
+       setTimeout(() => {
+         const newImg = new Image();
+         newImg.onload = () => {
+           setStencilImg(newImg);
+           if (stencilHue !== 0) {
+             setFilteredStencilImg(null);
+           }
+         };
+         newImg.src = stencilCanvas.toDataURL();
+       }, 0);
+       setIsErasingStencil(false);
+     }
+     
+     if (tool === 'eraser' && stageRef.current) {
+-      setTimeout(() => {
+-        if (stageRef.current) {
+-          const layers = stageRef.current.find('Layer');
+-          layers.forEach((layer: any) => {
+-            try {
+-              const hitCanvas = layer.getHitCanvas();
+-              if (hitCanvas) {
+-                const hitContext = hitCanvas.getContext('2d');
+-                hitContext.clearRect(0, 0, nativeSize.width, nativeSize.height);
+-                layer.clearHitCache();
+-              }
+-            } catch (e) {
+-              console.log('Error limpiando hit canvas:', e);
++      if (cleanupTimeoutRef.current) {
++        clearTimeout(cleanupTimeoutRef.current);
++      }
++      cleanupTimeoutRef.current = setTimeout(() => {
++        const stage = stageRef.current;
++        if (!stage) return;
++        const targetName = isErasingStencil ? 'stencil' : activeLayer;
++        const layers = stage.find(`Layer[name="${targetName}"]`);
++        layers.forEach((layer: any) => {
++          try {
++            const hitCanvas = layer.getHitCanvas();
++            if (hitCanvas) {
++              hitCanvas.width = 0;
++              hitCanvas.height = 0;
++              layer.clearHitCache();
+             }
+-            layer.batchDraw();
+-          });
+-          stageRef.current.batchDraw();
+-        }
++          } catch (e) {
++            console.log('Error limpiando hit canvas:', e);
++          }
++          layer.batchDraw();
++        });
+       }, 50);
+     }
+   };
+ 
+   const handleWheel = (e: KonvaWheelEvent) => {
+     e.evt.preventDefault();
+     const scaleBy = 1.1;
+     const stage = e.target.getStage();
+     if (!stage) return;
+     
+     const oldScale = viewTransform.scale;
+     const pointer = stage.getPointerPosition();
+     if (!pointer) return;
+ 
+     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+     handleGesture('pinch', {
+       scale: Math.max(0.1, Math.min(5, newScale)),
+       centerX: pointer.x,
+       centerY: pointer.y
+     });
+   };
+ 
+   // Funciones para gestos táctiles
+   const getDistance = (touch1: Touch, touch2: Touch): number => {
+     const dx = touch1.clientX - touch2.clientX;

@@ -182,6 +182,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
   const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+  const stencilCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
   const [filteredStencilImg, setFilteredStencilImg] = useState<StencilImage | null>(null);
   const [stencilVersion, setStencilVersion] = useState(0);
@@ -432,24 +433,17 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         }
         
         const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const radius = Math.min(
-              eraserSize,
-              x,
-              y,
-              nativeSize.width - x,
-              nativeSize.height - y
-            );
-            if (radius > 0) {
-              ctx.save();
-              ctx.globalCompositeOperation = 'destination-out';
-              ctx.beginPath();
-              ctx.arc(x, y, radius, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-              stencilLayerRef.current?.batchDraw();
-            }
-          }
+        if (ctx) {
+          // Cachear contexto y preconfigurar una sola vez
+          stencilCtxRef.current = ctx;
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.fillStyle = '#000';
+          
+          ctx.beginPath();
+          ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+          ctx.fill();
+          stencilLayerRef.current?.batchDraw();
+        }
         return;
       }
       
@@ -496,31 +490,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     const x = Math.max(0, Math.min(nativeSize.width, point.x));
     const y = Math.max(0, Math.min(nativeSize.height, point.y));
 
-    // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
-    if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
-      const ctx = stencilCanvas.getContext('2d');
-      
-      if (ctx) {
-        // Borrado inmediato sin operaciones bloqueantes
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = '#000';
-
-        // Borrado instantáneo con mínimo procesamiento
-        const radius = Math.min(
-          eraserSize,
-          x,
-          y,
-          nativeSize.width - x,
-          nativeSize.height - y
-        );
-        if (radius > 0) {
-          ctx.beginPath();
-          ctx.arc(x, y, radius, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-
-        // Sin restaurar contexto durante movimiento para máxima velocidad
-      }
+    // Si es borrador en capa stencil, usar contexto cacheado (ultra-rápido)
+    if (tool === 'eraser' && activeLayer === 'stencil' && isErasingStencil && stencilCtxRef.current) {
+      const ctx = stencilCtxRef.current;
+      // Borrado instantáneo con contexto preconfigurado
+      ctx.beginPath();
+      ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+      ctx.fill();
+      // Sin reconfigurar contexto para máxima velocidad
       return;
     }
     
@@ -545,10 +522,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     // Finalizar borrado de stencil con restauración del contexto
     if (isErasingStencil && stencilCanvas) {
-      // Restaurar contexto una sola vez al final
-      const ctx = stencilCanvas.getContext('2d');
-      if (ctx) {
-        ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
+      // Restaurar contexto cacheado una sola vez al final
+      if (stencilCtxRef.current) {
+        stencilCtxRef.current.globalCompositeOperation = 'source-over';
       }
       
       // Usar canvas directamente sin conversiones costosas
@@ -558,6 +534,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setFilteredStencilImg(null);
       }
       stencilLayerRef.current?.batchDraw();
+      stencilCtxRef.current = null; // Limpiar referencia cacheada
       setIsErasingStencil(false);
     }
     
