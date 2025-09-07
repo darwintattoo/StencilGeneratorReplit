@@ -61,12 +61,147 @@ export default function LayerPanel({
   setIsColorLinked,
   activeLayer,
   setActiveLayer,
+  stageRef,
+  originalImage,
+  stencilImage,
+  drawingLines,
   onClose
 }: LayerPanelProps) {
   const [isDrawingColorOpen, setIsDrawingColorOpen] = useState(false);
   const [isStencilColorOpen, setIsStencilColorOpen] = useState(false);
+  const [thumbnails, setThumbnails] = useState<{[key: string]: string}>({});
   
   if (!isOpen) return null;
+
+  // Función para generar miniatura de imagen
+  const generateImageThumbnail = (image: HTMLImageElement, size = 48): string => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx || !image) return '';
+
+    canvas.width = size;
+    canvas.height = size;
+    
+    // Calcular dimensiones para mantener proporción
+    const aspect = image.width / image.height;
+    let drawWidth = size;
+    let drawHeight = size;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (aspect > 1) {
+      drawHeight = size / aspect;
+      offsetY = (size - drawHeight) / 2;
+    } else {
+      drawWidth = size * aspect;
+      offsetX = (size - drawWidth) / 2;
+    }
+
+    // Fondo transparente con patrón de cuadrícula
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, size, size);
+    
+    // Patrón de cuadrícula
+    ctx.fillStyle = '#2a2a2a';
+    const checkSize = 4;
+    for (let x = 0; x < size; x += checkSize * 2) {
+      for (let y = 0; y < size; y += checkSize * 2) {
+        ctx.fillRect(x, y, checkSize, checkSize);
+        ctx.fillRect(x + checkSize, y + checkSize, checkSize, checkSize);
+      }
+    }
+
+    ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+    return canvas.toDataURL();
+  };
+
+  // Función para generar miniatura de dibujo
+  const generateDrawingThumbnail = (lines: DrawingLine[], size = 48): string => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx || !lines || lines.length === 0) return '';
+
+    canvas.width = size;
+    canvas.height = size;
+    
+    // Fondo transparente
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, size, size);
+
+    // Dibujar líneas escaladas
+    lines.forEach(line => {
+      if (line.layer === 'drawing') {
+        ctx.globalCompositeOperation = line.globalCompositeOperation;
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = Math.max(0.5, line.strokeWidth * 0.3); // Escalar grosor
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        for (let i = 0; i < line.points.length; i += 2) {
+          const x = (line.points[i] * size) / 800; // Escalar posición
+          const y = (line.points[i + 1] * size) / 600;
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+    });
+
+    return canvas.toDataURL();
+  };
+
+  // Actualizar miniaturas cuando cambien los datos
+  useEffect(() => {
+    const updateThumbnails = () => {
+      const newThumbnails: {[key: string]: string} = {};
+
+      // Miniatura para original
+      if (originalImage) {
+        newThumbnails.original = generateImageThumbnail(originalImage);
+      }
+
+      // Miniatura para stencil
+      if (stencilImage) {
+        newThumbnails.stencil = generateImageThumbnail(stencilImage);
+      }
+
+      // Miniatura para drawing
+      if (drawingLines && drawingLines.length > 0) {
+        newThumbnails.drawing = generateDrawingThumbnail(drawingLines);
+      }
+
+      setThumbnails(newThumbnails);
+    };
+
+    updateThumbnails();
+  }, [originalImage, stencilImage, drawingLines]);
+
+  // Componente de miniatura
+  const LayerThumbnail = ({ layerKey }: { layerKey: string }) => {
+    const thumbnail = thumbnails[layerKey];
+    
+    if (!thumbnail) {
+      return (
+        <div className="w-12 h-12 bg-gray-700 rounded border border-gray-600 flex items-center justify-center">
+          <div className="w-6 h-6 bg-gray-600 rounded"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-12 h-12 bg-gray-700 rounded border border-gray-600 overflow-hidden">
+        <img 
+          src={thumbnail} 
+          alt={`${layerKey} thumbnail`}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  };
 
   const renderColorControls = (
     type: 'drawing' | 'stencil',
