@@ -168,7 +168,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eyedropperPosition, setEyedropperPosition] = useState<Position | null>(null);
   const [previewColor, setPreviewColor] = useState<string | null>('#ffffff');
-  const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -270,39 +269,25 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   }, [originalImage]);
 
   const pickColorAt = (x: number, y: number): string | null => {
-    // Priorizar imagen filtrada si existe, sino usar original
     const sourceImg = filteredStencilImg || stencilImg;
-    if (!sourceImg) return '#ffffff';
+    if (!sourceImg) return brushColor;
     
-    try {
-      // Crear canvas temporal para muestreo rápido
-      const canvas = document.createElement('canvas');
-      canvas.width = sourceImg.width;
-      canvas.height = sourceImg.height;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) return '#ffffff';
-      ctx.drawImage(sourceImg, 0, 0);
-      
-      // Clampear coordenadas
-      const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
-      const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
-      
-      const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
-      const r = data[0];
-      const g = data[1];
-      const b = data[2];
-      const a = data[3];
-      
-      // Si es transparente o blanco puro, mantener blanco
-      if (a < 128 || (r > 240 && g > 240 && b > 240)) {
-        return '#ffffff';
+    const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
+    const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
+    
+    // Usar canvas existente si está disponible
+    if (sourceImg instanceof HTMLCanvasElement) {
+      const ctx = sourceImg.getContext('2d');
+      if (ctx) {
+        const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
+        const r = data[0], g = data[1], b = data[2], a = data[3];
+        if (a > 128 && !(r > 240 && g > 240 && b > 240)) {
+          return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+        }
       }
-      
-      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-    } catch (error) {
-      return '#ffffff';
     }
+    
+    return brushColor;
   };
 
   const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
@@ -481,22 +466,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    // Preview del eyedropper con throttling
+    // Preview del eyedropper - instantáneo
     if (tool === 'eyedropper' && !isPanning) {
       setEyedropperPosition(pos);
       
-      // Throttle el picking de colores para mejor rendimiento
-      if (throttleTimeoutRef.current) {
-        clearTimeout(throttleTimeoutRef.current);
-      }
-      
-      throttleTimeoutRef.current = setTimeout(() => {
-        const transform = stage.getAbsoluteTransform().copy().invert();
-        const { x, y } = transform.point(pos);
-        const color = pickColorAt(x, y);
-        setPreviewColor(color);
-      }, 16); // ~60fps throttling
-      
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
+      const color = pickColorAt(x, y);
+      setPreviewColor(color);
       return;
     }
 
