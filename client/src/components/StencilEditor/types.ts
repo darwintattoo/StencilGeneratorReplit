@@ -35,7 +35,7 @@ export interface LayersState {
   background: LayerState;
 }
 
-export interface TouchCenter {
+export interface PointerCenter {
   x: number;
   y: number;
 }
