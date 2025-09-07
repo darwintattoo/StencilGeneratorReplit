@@ -306,7 +306,10 @@ export default function Canvas({
 
       {tool === 'brush' && !isLayersOpen && (
         <div className="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 z-30">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
+          <div 
+            className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            style={{ touchAction: 'auto' }} // Permitir gestos normales en el control
+          >
             <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">
               <Slider
                 value={[brushSize]}
@@ -315,6 +318,7 @@ export default function Canvas({
                 min={1}
                 step={1}
                 className="w-24 sm:w-28 mb-2"
+                style={{ touchAction: 'auto' }} // Específicamente para el slider
               />
               <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
                 {brushSize}
@@ -326,7 +330,10 @@ export default function Canvas({
 
       {tool === 'eraser' && !isLayersOpen && (
         <div className="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 z-30">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200">
+          <div 
+            className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            style={{ touchAction: 'auto' }} // Permitir gestos normales en el control
+          >
             <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">
               <Slider
                 value={[eraserSize]}
@@ -335,6 +342,7 @@ export default function Canvas({
                 min={1}
                 step={1}
                 className="w-24 sm:w-28 mb-2"
+                style={{ touchAction: 'auto' }} // Específicamente para el slider
               />
               <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
                 {eraserSize}

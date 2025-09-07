@@ -12,7 +12,7 @@ import type {
   Tool,
   ActiveLayer,
   Position,
-  TouchCenter,
+  PointerCenter,
   NativeSize,
   KonvaPointerEvent,
   KonvaWheelEvent,
@@ -304,7 +304,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           
           if (px >= 0 && py >= 0 && px < canvas.width && py < canvas.height) {
             const { data } = ctx.getImageData(px, py, 1, 1);
-            const [r, g, b, a] = data;
+            const r = data[0];
+            const g = data[1];
+            const b = data[2];
+            const a = data[3];
             
             if (a > 0) { // Solo contar pixeles no transparentes
               totalR += r;
@@ -498,11 +501,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           .then((result: { sRGBHex: string }) => {
             setBrushColor(result.sRGBHex);
             setTool('brush');
-            // Mostrar feedback visual del color seleccionado
-            toast({
-              description: `Color seleccionado: ${result.sRGBHex}`,
-              duration: 2000,
-            });
+            // TODO: Agregar feedback visual del color seleccionado
+            // toast({
+            //   description: `Color seleccionado: ${result.sRGBHex}`,
+            //   duration: 2000,
+            // });
           })
           .catch(() => {
             setTool('brush');
@@ -513,11 +516,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const picked = pickColorAt(x, y);
         if (picked) {
           setBrushColor(picked);
-          // Mostrar feedback visual del color seleccionado
-          toast({
-            description: `Color seleccionado: ${picked}`,
-            duration: 2000,
-          });
+          // TODO: Agregar feedback visual del color seleccionado
+          // toast({
+          //   description: `Color seleccionado: ${picked}`,
+          //   duration: 2000,
+          // });
         }
         setTool('brush');
       }

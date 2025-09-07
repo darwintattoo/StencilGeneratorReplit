@@ -41,6 +41,11 @@ export interface PointerCenter {
   y: number;
 }
 
+export interface TouchCenter {
+  x: number;
+  y: number;
+}
+
 export interface Position {
   x: number;
   y: number;
