@@ -50,6 +50,8 @@ export interface NativeSize {
   height: number;
 }
 
+export type StencilImage = HTMLCanvasElement | HTMLImageElement;
+
 // Konva event types
 export type KonvaMouseEvent = KonvaEventObject<MouseEvent>;
 export type KonvaTouchEvent = KonvaEventObject<TouchEvent>;

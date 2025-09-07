@@ -12,7 +12,9 @@ import type {
   KonvaTouchEvent,
   KonvaWheelEvent,
   StageRef,
-  LineRef
+  LineRef,
+  LayerRef,
+  StencilImage
 } from './types';
 
 interface CanvasProps {
@@ -29,13 +31,14 @@ interface CanvasProps {
   handleDoubleTap: () => void;
   layers: LayersState;
   originalImg: HTMLImageElement | null;
-  stencilImg: HTMLImageElement | null;
-  filteredStencilImg: HTMLImageElement | null;
+  stencilImg: StencilImage | null;
+  filteredStencilImg: StencilImage | null;
   drawingLines: DrawingLine[];
   stencilLines: DrawingLine[];
   currentLineRef: React.RefObject<DrawingLine | null>;
   drawingPointsRef: React.RefObject<number[]>;
   tempLineRef: React.RefObject<LineRef>;
+  stencilLayerRef: React.RefObject<LayerRef>;
   isErasingStencil: boolean;
   brushColor: string;
   setBrushColor: (color: string) => void;
@@ -75,6 +78,7 @@ export default function Canvas({
   currentLineRef,
   drawingPointsRef,
   tempLineRef,
+  stencilLayerRef,
   isErasingStencil,
   brushColor,
   setBrushColor,
