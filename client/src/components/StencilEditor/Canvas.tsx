@@ -195,7 +195,7 @@ export default function Canvas({
         ref={stageRef}
         scaleX={viewTransform.scale}
         scaleY={viewTransform.scale}
-        x={viewTransform.x + (canvasSize.width < 640 ? 0 : (isLayersOpen ? 320 : 0))}
+        x={viewTransform.x}
         y={viewTransform.y}
         rotation={viewTransform.rotation}
         style={{ cursor: tool === 'eyedropper' ? 'crosshair' : 'default' }}
