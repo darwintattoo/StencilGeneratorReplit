@@ -269,8 +269,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     const stage = stageRef.current;
     if (!stage) return null;
     
-    console.log(`[Eyedropper] Sampling at coordinates: x=${x}, y=${y}`);
-    
     try {
       // Crear una región de muestreo más grande y capturar con pixelRatio completo
       const sampleSize = 10;
@@ -288,15 +286,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         pixelRatio: window.devicePixelRatio || 1
       });
       
-      console.log(`[Eyedropper] Canvas created: ${canvas.width}x${canvas.height}`);
-      
       const ctx = canvas.getContext('2d');
       if (!ctx) return null;
       
       // Leer múltiples pixeles y promediar para mejor resultado
       const centerX = Math.floor(canvas.width / 2);
       const centerY = Math.floor(canvas.height / 2);
-      const sampleArea = 3; // área 3x3 para promediar
       
       let totalR = 0, totalG = 0, totalB = 0, validPixels = 0;
       
@@ -324,13 +319,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const avgR = Math.round(totalR / validPixels);
         const avgG = Math.round(totalG / validPixels);
         const avgB = Math.round(totalB / validPixels);
-        const color = `#${((avgR << 16) | (avgG << 8) | avgB).toString(16).padStart(6, '0')}`;
-        console.log(`[Eyedropper] Color sampled: ${color} from ${validPixels} pixels`);
-        return color;
+        return `#${((avgR << 16) | (avgG << 8) | avgB).toString(16).padStart(6, '0')}`;
       }
       
       // Si no hay pixeles válidos, intentar fallback con imagen base
-      console.log('[Eyedropper] No valid pixels, trying fallback');
       const sourceImg = filteredStencilImg || stencilImg;
       if (sourceImg) {
         const tempCanvas = document.createElement('canvas');
@@ -343,17 +335,14 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
           const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
           const fallbackData = tempCtx.getImageData(clampedX, clampedY, 1, 1).data;
-          const fallbackColor = `#${((fallbackData[0] << 16) | (fallbackData[1] << 8) | fallbackData[2]).toString(16).padStart(6, '0')}`;
-          console.log(`[Eyedropper] Fallback color: ${fallbackColor}`);
-          return fallbackColor;
+          return `#${((fallbackData[0] << 16) | (fallbackData[1] << 8) | fallbackData[2]).toString(16).padStart(6, '0')}`;
         }
       }
       
-      console.log('[Eyedropper] No color found, defaulting to white');
       return '#ffffff'; // Blanco por defecto si no hay contenido
       
     } catch (error) {
-      console.error('[Eyedropper] Error picking color:', error);
+      console.warn('Error picking color from canvas, using fallback method');
       // Fallback a método anterior si falla
       const sourceImg = filteredStencilImg || stencilImg;
       if (!sourceImg) return null;
@@ -373,9 +362,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       const r = data[0];
       const g = data[1];
       const b = data[2];
-      const errorFallbackColor = `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-      console.log(`[Eyedropper] Error fallback color: ${errorFallbackColor}`);
-      return errorFallbackColor;
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
     }
   };
 
@@ -463,7 +450,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
   // Manejo unificado de pointer events (mouse, touch, Apple Pencil)
   const handlePointerDown = (e: KonvaPointerEvent) => {
-    console.log(`[DEBUG] handlePointerDown called with current tool: ${tool}`);
     const stage = stageRef.current;
     if (!stage) return;
     const pos = stage.getPointerPosition();
@@ -495,35 +481,30 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
 
-    if (tool === 'eyedropper') {
+    // También permitir eyedropper si el botón fue clickeado recientemente (handle async state)
+    const isEyedropperClick = tool === 'eyedropper' || 
+      (pointerEvent.target && (pointerEvent.target as Element).closest('[data-tool="eyedropper"]'));
+    
+    if (tool === 'eyedropper' || isEyedropperClick) {
       pointerEvent.preventDefault();
-      console.log('[Eyedropper] Tool activated, checking API availability');
       
       if (typeof (window as any).EyeDropper === 'function') {
-        console.log('[Eyedropper] Using native EyeDropper API');
         const eyeDropper = new (window as any).EyeDropper();
         eyeDropper
           .open()
           .then((result: { sRGBHex: string }) => {
-            console.log(`[Eyedropper] Native API color selected: ${result.sRGBHex}`);
             setBrushColor(result.sRGBHex);
             setTool('brush');
           })
-          .catch((error: any) => {
-            console.log('[Eyedropper] Native API cancelled or failed:', error);
+          .catch(() => {
             setTool('brush');
           });
       } else {
-        console.log('[Eyedropper] Using fallback color picker');
         const transform = stage.getAbsoluteTransform().copy().invert();
         const { x, y } = transform.point(pos);
-        console.log(`[Eyedropper] Transformed coordinates: x=${x}, y=${y}`);
         const picked = pickColorAt(x, y);
         if (picked) {
-          console.log(`[Eyedropper] Fallback color selected: ${picked}`);
           setBrushColor(picked);
-        } else {
-          console.log('[Eyedropper] No color could be picked');
         }
         setTool('brush');
       }
