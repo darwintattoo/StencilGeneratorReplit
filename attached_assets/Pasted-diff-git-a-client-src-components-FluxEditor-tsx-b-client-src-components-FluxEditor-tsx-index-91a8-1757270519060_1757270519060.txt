@@ -1,0 +1,100 @@
+diff --git a/client/src/components/FluxEditor.tsx b/client/src/components/FluxEditor.tsx
+index 91a81c084588d84227be7681fb617ad8122b8286..7bb243abb6e3ac0e33bdea74044c4fa49b8eeab5 100644
+--- a/client/src/components/FluxEditor.tsx
++++ b/client/src/components/FluxEditor.tsx
+@@ -1,32 +1,33 @@
+ import { useState } from "react";
+ import { useMutation } from "@tanstack/react-query";
+ import { Button } from "@/components/ui/button";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Slider } from "@/components/ui/slider";
+ import { useToast } from "@/hooks/use-toast";
+ import { Download, Save, RefreshCw, Layers, Palette, Settings } from "lucide-react";
++import StencilCanvas from "./StencilCanvas";
+ 
+ interface FluxProject {
+   id: string;
+   name: string;
+   description: string;
+   imageUrl?: string;
+   createdAt: string;
+ }
+ 
+ interface FluxEditorProps {
+   project: FluxProject;
+ }
+ 
+ export default function FluxEditor({ project }: FluxEditorProps) {
+   const [isEditing, setIsEditing] = useState(false);
+   const [brushSize, setBrushSize] = useState([20]);
+   const [opacity, setOpacity] = useState([100]);
+   const { toast } = useToast();
+ 
+   // Mutation for saving changes
+   const saveMutation = useMutation({
+     mutationFn: async (changes: any) => {
+       const response = await fetch(`/api/flux/projects/${project.id}`, {
+         method: 'PATCH',
+         headers: {
+diff --git a/client/src/components/FluxEditor.tsx b/client/src/components/FluxEditor.tsx
+index 91a81c084588d84227be7681fb617ad8122b8286..7bb243abb6e3ac0e33bdea74044c4fa49b8eeab5 100644
+--- a/client/src/components/FluxEditor.tsx
++++ b/client/src/components/FluxEditor.tsx
+@@ -236,53 +237,55 @@ export default function FluxEditor({ project }: FluxEditorProps) {
+         {/* Canvas Area */}
+         <div className={isEditing ? "lg:col-span-3" : "lg:col-span-4"}>
+           <Card className="bg-dark-gray border-medium-gray">
+             <CardContent className="p-4">
+               <div className="aspect-square bg-black rounded-lg border border-medium-gray overflow-hidden relative">
+                 {project.imageUrl ? (
+                   <img
+                     src={project.imageUrl}
+                     alt={project.name}
+                     className="w-full h-full object-cover"
+                     data-testid="img-design-canvas"
+                   />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center">
+                     <div className="text-center">
+                       <Palette className="h-16 w-16 text-light-gray mx-auto mb-4" />
+                       <p className="text-light-gray">
+                         Canvas de diseño
+                       </p>
+                       <p className="text-sm text-light-gray/60 mt-2">
+                         {project.description}
+                       </p>
+                     </div>
+                   </div>
+                 )}
+-                
++
++                {isEditing && <StencilCanvas brushSize={brushSize[0]} />}
++
+                 {isEditing && (
+-                  <div className="absolute inset-0 bg-white/5 backdrop-blur-sm flex items-center justify-center">
++                  <div className="absolute inset-0 bg-white/5 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+                     <div className="text-center text-white">
+                       <Settings className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                       <p className="text-sm">Modo de edición activo</p>
+                     </div>
+                   </div>
+                 )}
+               </div>
+             </CardContent>
+           </Card>
+         </div>
+       </div>
+ 
+       {/* Status Bar */}
+       <Card className="bg-dark-gray border-medium-gray">
+         <CardContent className="p-3">
+           <div className="flex items-center justify-between text-sm text-light-gray">
+             <div className="flex items-center space-x-4">
+               <span>Proyecto: {project.name}</span>
+               <span>•</span>
+               <span>Creado: {new Date(project.createdAt).toLocaleDateString()}</span>
+             </div>
+             
+             <div className="flex items-center space-x-4">
+               <span>Flux Kontext AI</span>
+               <span>•</span>
