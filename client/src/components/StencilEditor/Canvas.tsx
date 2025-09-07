@@ -183,7 +183,6 @@ export default function Canvas({
     <>
       <Stage
         width={canvasSize.width < 640 ? canvasSize.width : (canvasSize.width - (isLayersOpen ? 320 : 0))}
-        x={canvasSize.width < 640 ? 0 : (isLayersOpen ? 320 : 0)}
         height={canvasSize.height}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -196,7 +195,7 @@ export default function Canvas({
         ref={stageRef}
         scaleX={viewTransform.scale}
         scaleY={viewTransform.scale}
-        x={viewTransform.x}
+        x={viewTransform.x + (canvasSize.width < 640 ? 0 : (isLayersOpen ? 320 : 0))}
         y={viewTransform.y}
         rotation={viewTransform.rotation}
         style={{ cursor: tool === 'eyedropper' ? 'crosshair' : 'default' }}
