@@ -321,57 +321,64 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
 
-    // Herramienta gotero para copiar colores
+    // Herramienta gotero - SIMPLE Y DIRECTO
     if (tool === 'eyedropper') {
       e.evt.preventDefault();
       
-      // Capturar el stage completo para obtener todos los colores visibles
-      stage.toCanvas({
-        callback: (canvas: HTMLCanvasElement) => {
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            setTool('brush');
-            return;
-          }
-
-          try {
-            // Obtener coordenadas exactas del click ajustadas al transform del stage
-            const transform = stage.getAbsoluteTransform().copy().invert();
-            const localPos = transform.point(pos);
-            
-            const x = Math.round(localPos.x);
-            const y = Math.round(localPos.y);
-            
-            // Verificar que estamos dentro de los límites
-            if (x >= 0 && y >= 0 && x < canvas.width && y < canvas.height) {
-              // Obtener el pixel exacto
-              const imageData = ctx.getImageData(x, y, 1, 1);
-              const data = imageData.data;
-              const r = data[0];
-              const g = data[1];
-              const b = data[2];
-              const a = data[3];
+      // Obtener el contenedor del stage para las coordenadas
+      const container = stage.container();
+      const rect = container.getBoundingClientRect();
+      
+      // Coordenadas del mouse relativas al contenedor
+      const clientX = (e.evt as MouseEvent).clientX || ((e.evt as TouchEvent).touches?.[0]?.clientX);
+      const clientY = (e.evt as MouseEvent).clientY || ((e.evt as TouchEvent).touches?.[0]?.clientY);
+      
+      if (clientX && clientY) {
+        const canvasX = clientX - rect.left;
+        const canvasY = clientY - rect.top;
+        
+        // Crear un canvas temporal para capturar lo que está visible
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        if (tempCtx) {
+          // Copiar el contenido del stage al canvas temporal
+          stage.toCanvas({
+            callback: (stageCanvas) => {
+              tempCanvas.width = stageCanvas.width;
+              tempCanvas.height = stageCanvas.height;
+              tempCtx.drawImage(stageCanvas, 0, 0);
               
-              // Si hay contenido visible, cambiar el color
-              if (a > 10) {
-                const hex = "#" + [r, g, b].map(x => {
-                  const h = x.toString(16);
-                  return h.length === 1 ? "0" + h : h;
-                }).join("");
+              // Ajustar las coordenadas según la escala
+              const scaleX = stageCanvas.width / container.offsetWidth;
+              const scaleY = stageCanvas.height / container.offsetHeight;
+              
+              const pixelX = Math.floor(canvasX * scaleX);
+              const pixelY = Math.floor(canvasY * scaleY);
+              
+              // Obtener el color del pixel
+              if (pixelX >= 0 && pixelY >= 0 && pixelX < tempCanvas.width && pixelY < tempCanvas.height) {
+                const imageData = tempCtx.getImageData(pixelX, pixelY, 1, 1);
+                const [r, g, b, a] = imageData.data;
                 
-                setBrushColor(hex);
+                // Si el pixel tiene contenido visible
+                if (a > 10) {
+                  const hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+                  setBrushColor(hex);
+                }
               }
+              
+              // Cambiar automáticamente a brush
+              setTool('brush');
             }
-            
-            // Cambiar automáticamente a brush
-            setTool('brush');
-            
-          } catch (error) {
-            setTool('brush');
-          }
-        },
-        pixelRatio: 1
-      });
+          });
+        } else {
+          setTool('brush');
+        }
+      } else {
+        setTool('brush');
+      }
+      
       return;
     }
 
