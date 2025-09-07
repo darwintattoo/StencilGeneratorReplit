@@ -33,7 +33,7 @@ interface LayerPanelProps {
   setActiveLayer: (layer: ActiveLayer) => void;
   stageRef?: React.RefObject<StageRef>;
   originalImage?: HTMLImageElement | null;
-  stencilImage?: HTMLImageElement | null;
+  stencilImage?: HTMLImageElement | HTMLCanvasElement | null;
   drawingLines?: DrawingLine[];
   onClose: () => void;
 }

@@ -180,7 +180,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
-  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLCanvasElement | null>(null);
   const filterCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
     width: window.innerWidth, 
@@ -260,6 +260,44 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     }
   }, [originalImage]);
 
+  const pickColorAt = (x: number, y: number): string | null => {
+    let source: HTMLCanvasElement | null = stencilCanvas || filteredStencilImg;
+    if (!source && stencilImg) {
+      source = document.createElement('canvas');
+      source.width = stencilImg.width;
+      source.height = stencilImg.height;
+      const tempCtx = source.getContext('2d');
+      tempCtx?.drawImage(stencilImg, 0, 0);
+    }
+    if (!source) return null;
+    const ctx = source.getContext('2d');
+    if (!ctx) return null;
+    const { data } = ctx.getImageData(Math.round(x), Math.round(y), 1, 1);
+    const r = data[0];
+    const g = data[1];
+    const b = data[2];
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const [h, s, l] = rgbToHsl(r, g, b);
+      const newH = (h + hue / 360) % 1;
+      const [newR, newG, newB] = hslToRgb(newH, s, l);
+      data[i] = newR;
+      data[i + 1] = newG;
+      data[i + 2] = newB;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
+
   // Aplicar filtro de tono y saturación al stencil usando filtros nativos (mucho más rápido)
   useEffect(() => {
     if (stencilImg) {
@@ -291,12 +329,27 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Resetear filtro
         ctx.filter = 'none';
         
-        // Crear nueva imagen
-        const newImg = new Image();
-        newImg.onload = () => {
-          setFilteredStencilImg(newImg);
-        };
-        newImg.src = canvas.toDataURL();
+        // Actualizar canvas del stencil o crear uno nuevo
+        let targetCanvas = stencilCanvas;
+        if (targetCanvas) {
+          const tctx = targetCanvas.getContext('2d');
+          if (tctx) {
+            targetCanvas.width = canvas.width;
+            targetCanvas.height = canvas.height;
+            tctx.clearRect(0, 0, canvas.width, canvas.height);
+            tctx.drawImage(canvas, 0, 0);
+          }
+        } else {
+          targetCanvas = document.createElement('canvas');
+          targetCanvas.width = canvas.width;
+          targetCanvas.height = canvas.height;
+          const tctx = targetCanvas.getContext('2d');
+          tctx?.drawImage(canvas, 0, 0);
+          setStencilCanvas(targetCanvas);
+        }
+
+        // Usar el canvas resultante como imagen filtrada
+        setFilteredStencilImg(stencilHue !== 0 ? targetCanvas || null : null);
 
         // Guardar referencia del canvas para reutilización
         if (!filterCanvasRef.current) {
@@ -333,32 +386,12 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           })
           .catch(() => setTool('brush'));
       } else {
-        // Usar la imagen filtrada si está disponible, sino la original del stage
+        // Usar la nueva función pickColorAt
         const transform = stage.getAbsoluteTransform().copy().invert();
         const { x, y } = transform.point(pos);
-        const sampleImg = filteredStencilImg || stencilImg;
-        
-        if (sampleImg && x >= 0 && y >= 0 && x < nativeSize.width && y < nativeSize.height) {
-          // Crear canvas temporal con la imagen correcta (filtrada o original)
-          const canvas = document.createElement('canvas');
-          canvas.width = sampleImg.width;
-          canvas.height = sampleImg.height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(sampleImg, 0, 0);
-            const pixel = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
-            const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
-            setBrushColor(color);
-          }
-        } else {
-          // Fallback al método original si no hay imagen específica
-          const canvas = stage.toCanvas();
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const pixel = ctx.getImageData(x, y, 1, 1).data;
-            const color = `#${((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16).padStart(6, '0')}`;
-            setBrushColor(color);
-          }
+        const picked = pickColorAt(x, y);
+        if (picked) {
+          setBrushColor(picked);
         }
         setTool('brush');
       }
@@ -371,11 +404,22 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       if (pointerEvent.pointerType === 'touch') {
         return;
       }
-      setIsDrawing(true);
+
       const transform = stage.getAbsoluteTransform().copy().invert();
       const point = transform.point(pos);
       const x = Math.max(0, Math.min(nativeSize.width, point.x));
       const y = Math.max(0, Math.min(nativeSize.height, point.y));
+
+      // Alt+click para gotero
+      if (mouseEvent.altKey) {
+        const picked = pickColorAt(x, y);
+        if (picked) {
+          setBrushColor(picked);
+        }
+        return;
+      }
+
+      setIsDrawing(true);
 
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
@@ -520,8 +564,13 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const newImg = new Image();
         newImg.onload = () => {
           setStencilImg(newImg);
-          if (stencilHue !== 0 || stencilSaturation !== 100) {
-            setFilteredStencilImg(null);
+          if (stencilCanvas) {
+            if (stencilHue !== 0) {
+              applyHue(stencilCanvas, stencilHue);
+              setFilteredStencilImg(stencilCanvas);
+            } else {
+              setFilteredStencilImg(null);
+            }
           }
         };
         newImg.src = stencilCanvas.toDataURL();
