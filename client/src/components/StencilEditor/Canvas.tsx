@@ -183,6 +183,7 @@ export default function Canvas({
     <>
       <Stage
         width={canvasSize.width < 640 ? canvasSize.width : (canvasSize.width - (isLayersOpen ? 320 : 0))}
+        x={canvasSize.width < 640 ? 0 : (isLayersOpen ? 320 : 0)}
         height={canvasSize.height}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
