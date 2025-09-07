@@ -92,6 +92,18 @@ export default function Toolbar({
         >
           <Move className={`w-4 h-4 ${tool === 'move' ? 'text-white' : 'text-gray-400'}`} />
         </Button>
+
+        <Button
+          variant={tool === 'eyedropper' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setTool('eyedropper')}
+          className={`h-8 sm:h-9 px-2 sm:px-3 ${tool === 'eyedropper' 
+            ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm border-orange-500" 
+            : "shadow-sm text-gray-300 border-gray-600"
+          }`}
+        >
+          <Pipette className={`w-4 h-4 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
+        </Button>
       </div>
 
       {/* CENTRO: Menú simple */}
@@ -117,19 +129,6 @@ export default function Toolbar({
               />
             ))}
             
-            <div className="w-px h-6 bg-gray-600 mx-1"></div>
-            
-            <Button
-              variant={tool === 'eyedropper' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTool('eyedropper')}
-              className={`h-6 sm:h-7 px-1 sm:px-2 ${tool === 'eyedropper' 
-                ? "bg-gray-600 hover:bg-gray-500 text-white shadow-sm border-gray-600" 
-                : "shadow-sm text-gray-300 border-gray-600"
-              }`}
-            >
-              <Pipette className={`w-4 h-4 ${tool === 'eyedropper' ? 'text-white' : 'text-gray-400'}`} />
-            </Button>
           </div>
         )}
 
