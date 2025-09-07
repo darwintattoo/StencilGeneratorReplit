@@ -167,7 +167,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const stencilLayerRef = useRef<LayerRef>(null);
   const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eyedropperPosition, setEyedropperPosition] = useState<Position | null>(null);
-  const [previewColor, setPreviewColor] = useState<string | null>(null);
+  const [previewColor, setPreviewColor] = useState<string | null>('#ffffff');
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -269,28 +269,73 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   }, [originalImage]);
 
   const pickColorAt = (x: number, y: number): string | null => {
-    // Priorizar imagen filtrada si existe, sino usar original
-    const sourceImg = filteredStencilImg || stencilImg;
-    if (!sourceImg) return null;
+    const stage = stageRef.current;
+    if (!stage) return null;
     
-    // Crear canvas temporal para muestreo
-    const canvas = document.createElement('canvas');
-    canvas.width = sourceImg.width;
-    canvas.height = sourceImg.height;
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) return null;
-    ctx.drawImage(sourceImg, 0, 0);
-    
-    // Clampear coordenadas
-    const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
-    const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
-    
-    const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
-    const r = data[0];
-    const g = data[1];
-    const b = data[2];
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    try {
+      // Renderizar el stage completo a un canvas temporal
+      const canvas = document.createElement('canvas');
+      canvas.width = nativeSize.width;
+      canvas.height = nativeSize.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return null;
+      
+      // Configurar fondo blanco
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Renderizar cada capa visible
+      const layers = stage.find('Layer');
+      
+      layers.forEach((layer: any) => {
+        if (layer.visible() && layer.opacity() > 0) {
+          // Crear canvas temporal para esta capa
+          const layerCanvas = document.createElement('canvas');
+          layerCanvas.width = nativeSize.width;
+          layerCanvas.height = nativeSize.height;
+          
+          // Renderizar la capa al canvas temporal
+          layer.toCanvas(layerCanvas, {
+            x: 0,
+            y: 0,
+            width: nativeSize.width,
+            height: nativeSize.height,
+            pixelRatio: 1
+          });
+          
+          // Aplicar la opacidad de la capa
+          ctx.globalAlpha = layer.opacity();
+          ctx.drawImage(layerCanvas, 0, 0);
+          ctx.globalAlpha = 1;
+        }
+      });
+      
+      // Clampear coordenadas con más precisión
+      const clampedX = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
+      const clampedY = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
+      
+      // Muestrear área de 3x3 píxeles para mejor precisión
+      const imageData = ctx.getImageData(clampedX - 1, clampedY - 1, 3, 3);
+      const { data } = imageData;
+      
+      // Tomar el píxel central
+      const centerIndex = 4 * 4; // Centro del área 3x3
+      const r = data[centerIndex];
+      const g = data[centerIndex + 1];
+      const b = data[centerIndex + 2];
+      const a = data[centerIndex + 3];
+      
+      // Si es transparente, usar blanco
+      if (a < 128) {
+        return '#ffffff';
+      }
+      
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    } catch (error) {
+      console.log('Error en pickColorAt:', error);
+      return '#ffffff';
+    }
   };
 
   const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
@@ -592,7 +637,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const handleMouseLeave = () => {
     if (tool === 'eyedropper') {
       setEyedropperPosition(null);
-      setPreviewColor(null);
+      setPreviewColor('#ffffff');
       document.body.style.cursor = 'auto'; // Restaurar cursor
     }
   };
@@ -601,8 +646,11 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   useEffect(() => {
     if (tool !== 'eyedropper') {
       setEyedropperPosition(null);
-      setPreviewColor(null);
+      setPreviewColor('#ffffff');
       document.body.style.cursor = 'auto';
+    } else {
+      // Inicializar con blanco cuando se selecciona eyedropper
+      setPreviewColor('#ffffff');
     }
   }, [tool]);
 
