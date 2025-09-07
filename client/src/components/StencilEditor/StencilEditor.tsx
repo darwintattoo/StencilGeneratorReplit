@@ -266,28 +266,71 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   }, [originalImage]);
 
   const pickColorAt = (x: number, y: number): string | null => {
-    // Priorizar imagen filtrada si existe, sino usar original
-    const sourceImg = filteredStencilImg || stencilImg;
-    if (!sourceImg) return null;
+    const stage = stageRef.current;
+    if (!stage) return null;
     
-    // Crear canvas temporal para muestreo
-    const canvas = document.createElement('canvas');
-    canvas.width = sourceImg.width;
-    canvas.height = sourceImg.height;
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) return null;
-    ctx.drawImage(sourceImg, 0, 0);
-    
-    // Clampear coordenadas
-    const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
-    const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
-    
-    const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
-    const r = data[0];
-    const g = data[1];
-    const b = data[2];
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    try {
+      // Capturar toda la composición del stage (todas las capas visibles)
+      const canvas = stage.toCanvas({
+        x: Math.floor(x) - 2, // Pequeño buffer para evitar bordes
+        y: Math.floor(y) - 2,
+        width: 5,
+        height: 5,
+        pixelRatio: 1
+      });
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      
+      // Leer el pixel central de la muestra 5x5
+      const { data } = ctx.getImageData(2, 2, 1, 1);
+      const [r, g, b, a] = data;
+      
+      // Si el pixel es transparente, intentar fallback con imagen base
+      if (a === 0) {
+        const sourceImg = filteredStencilImg || stencilImg;
+        if (sourceImg) {
+          // Crear canvas temporal para muestreo de imagen base
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = sourceImg.width;
+          tempCanvas.height = sourceImg.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (tempCtx) {
+            tempCtx.drawImage(sourceImg, 0, 0);
+            const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
+            const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
+            const fallbackData = tempCtx.getImageData(clampedX, clampedY, 1, 1).data;
+            return `#${((fallbackData[0] << 16) | (fallbackData[1] << 8) | fallbackData[2]).toString(16).padStart(6, '0')}`;
+          }
+        }
+        return '#ffffff'; // Blanco por defecto si no hay contenido
+      }
+      
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    } catch (error) {
+      console.warn('Error picking color:', error);
+      // Fallback a método anterior si falla
+      const sourceImg = filteredStencilImg || stencilImg;
+      if (!sourceImg) return null;
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = sourceImg.width;
+      canvas.height = sourceImg.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return null;
+      ctx.drawImage(sourceImg, 0, 0);
+      
+      const clampedX = Math.max(0, Math.min(sourceImg.width - 1, Math.round(x)));
+      const clampedY = Math.max(0, Math.min(sourceImg.height - 1, Math.round(y)));
+      
+      const { data } = ctx.getImageData(clampedX, clampedY, 1, 1);
+      const r = data[0];
+      const g = data[1];
+      const b = data[2];
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    }
   };
 
   const applyHue = (canvas: HTMLCanvasElement, hue: number) => {
