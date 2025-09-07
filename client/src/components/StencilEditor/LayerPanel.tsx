@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -69,136 +69,79 @@ export default function LayerPanel({
 }: LayerPanelProps) {
   const [isDrawingColorOpen, setIsDrawingColorOpen] = useState(false);
   const [isStencilColorOpen, setIsStencilColorOpen] = useState(false);
-  const [thumbnails, setThumbnails] = useState<{[key: string]: string}>({});
-  
-  if (!isOpen) return null;
 
-  // Función para generar miniatura de imagen
-  const generateImageThumbnail = (image: HTMLImageElement, size = 48): string => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx || !image) return '';
-
-    canvas.width = size;
-    canvas.height = size;
-    
-    // Calcular dimensiones para mantener proporción
-    const aspect = image.width / image.height;
-    let drawWidth = size;
-    let drawHeight = size;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if (aspect > 1) {
-      drawHeight = size / aspect;
-      offsetY = (size - drawHeight) / 2;
-    } else {
-      drawWidth = size * aspect;
-      offsetX = (size - drawWidth) / 2;
-    }
-
-    // Fondo transparente con patrón de cuadrícula
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, size, size);
-    
-    // Patrón de cuadrícula
-    ctx.fillStyle = '#2a2a2a';
-    const checkSize = 4;
-    for (let x = 0; x < size; x += checkSize * 2) {
-      for (let y = 0; y < size; y += checkSize * 2) {
-        ctx.fillRect(x, y, checkSize, checkSize);
-        ctx.fillRect(x + checkSize, y + checkSize, checkSize, checkSize);
-      }
-    }
-
-    ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
-    return canvas.toDataURL();
-  };
-
-  // Función para generar miniatura de dibujo
-  const generateDrawingThumbnail = (lines: DrawingLine[], size = 48): string => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx || !lines || lines.length === 0) return '';
-
-    canvas.width = size;
-    canvas.height = size;
-    
-    // Fondo transparente
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, size, size);
-
-    // Dibujar líneas escaladas
-    lines.forEach(line => {
-      if (line.layer === 'drawing') {
-        ctx.globalCompositeOperation = line.globalCompositeOperation;
-        ctx.strokeStyle = line.color;
-        ctx.lineWidth = Math.max(0.5, line.strokeWidth * 0.3); // Escalar grosor
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        ctx.beginPath();
-        for (let i = 0; i < line.points.length; i += 2) {
-          const x = (line.points[i] * size) / 800; // Escalar posición
-          const y = (line.points[i + 1] * size) / 600;
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-      }
-    });
-
-    return canvas.toDataURL();
-  };
-
-  // Actualizar miniaturas cuando cambien los datos
-  useEffect(() => {
-    const updateThumbnails = () => {
-      const newThumbnails: {[key: string]: string} = {};
-
-      // Miniatura para original
-      if (originalImage) {
-        newThumbnails.original = generateImageThumbnail(originalImage);
-      }
-
-      // Miniatura para stencil
-      if (stencilImage) {
-        newThumbnails.stencil = generateImageThumbnail(stencilImage);
-      }
-
-      // Miniatura para drawing
-      if (drawingLines && drawingLines.length > 0) {
-        newThumbnails.drawing = generateDrawingThumbnail(drawingLines);
-      }
-
-      setThumbnails(newThumbnails);
-    };
-
-    updateThumbnails();
-  }, [originalImage, stencilImage, drawingLines]);
-
-  // Componente de miniatura
+  // Componente de miniatura simplificado
   const LayerThumbnail = ({ layerKey }: { layerKey: string }) => {
-    const thumbnail = thumbnails[layerKey];
+    let content;
     
-    if (!thumbnail) {
-      return (
-        <div className="w-12 h-12 bg-gray-700 rounded border border-gray-600 flex items-center justify-center">
-          <div className="w-6 h-6 bg-gray-600 rounded"></div>
-        </div>
-      );
+    if (layerKey === 'original' && originalImage) {
+      // Crear miniatura de imagen original
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        canvas.width = 48;
+        canvas.height = 48;
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, 48, 48);
+        
+        const aspect = originalImage.width / originalImage.height;
+        let drawWidth = 48;
+        let drawHeight = 48;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (aspect > 1) {
+          drawHeight = 48 / aspect;
+          offsetY = (48 - drawHeight) / 2;
+        } else {
+          drawWidth = 48 * aspect;
+          offsetX = (48 - drawWidth) / 2;
+        }
+
+        ctx.drawImage(originalImage, offsetX, offsetY, drawWidth, drawHeight);
+        content = <img src={canvas.toDataURL()} alt="original" className="w-full h-full object-cover" />;
+      }
+    } else if (layerKey === 'stencil' && stencilImage) {
+      // Crear miniatura de stencil
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        canvas.width = 48;
+        canvas.height = 48;
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, 48, 48);
+        
+        const aspect = stencilImage.width / stencilImage.height;
+        let drawWidth = 48;
+        let drawHeight = 48;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (aspect > 1) {
+          drawHeight = 48 / aspect;
+          offsetY = (48 - drawHeight) / 2;
+        } else {
+          drawWidth = 48 * aspect;
+          offsetX = (48 - drawWidth) / 2;
+        }
+
+        ctx.drawImage(stencilImage, offsetX, offsetY, drawWidth, drawHeight);
+        content = <img src={canvas.toDataURL()} alt="stencil" className="w-full h-full object-cover" />;
+      }
+    } else if (layerKey === 'drawing' && drawingLines && drawingLines.length > 0) {
+      // Mostrar color del dibujo o placeholder
+      content = <div className="w-6 h-6 bg-red-500 rounded" style={{ backgroundColor: brushColor }}></div>;
+    }
+    
+    if (!content) {
+      content = <div className="w-6 h-6 bg-gray-600 rounded"></div>;
     }
 
     return (
-      <div className="w-12 h-12 bg-gray-700 rounded border border-gray-600 overflow-hidden">
-        <img 
-          src={thumbnail} 
-          alt={`${layerKey} thumbnail`}
-          className="w-full h-full object-cover"
-        />
+      <div className="w-12 h-12 bg-gray-700 rounded border border-gray-600 flex items-center justify-center overflow-hidden">
+        {content}
       </div>
     );
   };
@@ -302,6 +245,8 @@ export default function LayerPanel({
       </div>
     </div>
   );
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 sm:fixed sm:inset-auto sm:right-0 sm:top-0 sm:bottom-0 sm:h-full w-full sm:w-80 sm:border-l border-gray-600 p-3 sm:p-4 overflow-y-auto z-50 bg-black/90 sm:bg-[rgba(26,26,26,0.98)]" style={{ backgroundColor: 'rgba(26, 26, 26, 0.98)' }}>
