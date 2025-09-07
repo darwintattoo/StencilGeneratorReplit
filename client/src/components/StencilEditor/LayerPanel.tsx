@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette } from 'lucide-react';
-import type { LayersState, ActiveLayer } from './types';
+import type { LayersState, ActiveLayer, DrawingLine, StageRef } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
 
@@ -31,6 +31,10 @@ interface LayerPanelProps {
   setIsColorLinked: (linked: boolean) => void;
   activeLayer: ActiveLayer;
   setActiveLayer: (layer: ActiveLayer) => void;
+  stageRef?: React.RefObject<StageRef>;
+  originalImage?: HTMLImageElement | null;
+  stencilImage?: HTMLImageElement | null;
+  drawingLines?: DrawingLine[];
   onClose: () => void;
 }
 

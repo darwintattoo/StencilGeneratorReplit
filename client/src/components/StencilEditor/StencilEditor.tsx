@@ -724,6 +724,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setIsColorLinked={setIsColorLinked}
         activeLayer={activeLayer}
         setActiveLayer={setActiveLayer}
+        stageRef={stageRef}
+        originalImage={originalImg}
+        stencilImage={filteredStencilImg || stencilImg}
+        drawingLines={drawingLines}
         onClose={() => setIsLayersOpen(false)}
       />
     </div>
