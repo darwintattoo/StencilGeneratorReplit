@@ -57,7 +57,7 @@ export default function LayerPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 sm:absolute sm:right-0 sm:top-0 sm:h-full w-full sm:w-80 sm:border-l border-gray-600 p-3 sm:p-4 overflow-y-auto z-50 bg-black/90 sm:bg-transparent" style={{ backgroundColor: 'rgba(26, 26, 26, 0.98)' }}>
+    <div className="fixed inset-0 sm:absolute sm:right-0 sm:top-0 sm:h-full w-full sm:max-w-80 sm:border-l border-gray-600 p-3 sm:p-4 overflow-y-auto z-50 bg-black/90 sm:bg-transparent" style={{ backgroundColor: 'rgba(26, 26, 26, 0.98)' }}>
       <div className="flex items-center justify-between mb-4 sticky top-0 pb-2 z-50" style={{ backgroundColor: 'rgba(26, 26, 26, 0.98)' }}>
         <h3 className="text-white font-medium">Capas</h3>
         <Button
