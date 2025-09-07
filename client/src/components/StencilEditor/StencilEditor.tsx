@@ -355,7 +355,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       }
       setIsDrawing(true);
       const transform = stage.getAbsoluteTransform().copy().invert();
-      const { x, y } = transform.point(pos);
+      const point = transform.point(pos);
+      const x = Math.max(0, Math.min(nativeSize.width, point.x));
+      const y = Math.max(0, Math.min(nativeSize.height, point.y));
 
       // Si es borrador en capa stencil, preparar canvas para edición
       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
@@ -377,12 +379,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         if (stencilCanvas) {
           const ctx = stencilCanvas.getContext('2d');
           if (ctx) {
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.restore();
+            const radius = Math.min(
+              eraserSize,
+              x,
+              y,
+              nativeSize.width - x,
+              nativeSize.height - y
+            );
+            if (radius > 0) {
+              ctx.save();
+              ctx.globalCompositeOperation = 'destination-out';
+              ctx.beginPath();
+              ctx.arc(x, y, radius, 0, 2 * Math.PI);
+              ctx.fill();
+              ctx.restore();
+            }
           }
         }
         return;
@@ -427,7 +438,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       return;
     }
     const transform = stage.getAbsoluteTransform().copy().invert();
-    const { x, y } = transform.point(pos);
+    const point = transform.point(pos);
+    const x = Math.max(0, Math.min(nativeSize.width, point.x));
+    const y = Math.max(0, Math.min(nativeSize.height, point.y));
 
     // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
@@ -437,12 +450,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Borrado inmediato sin operaciones bloqueantes
         ctx.globalCompositeOperation = 'destination-out';
         ctx.fillStyle = '#000';
-        
+
         // Borrado instantáneo con mínimo procesamiento
-        ctx.beginPath();
-        ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
-        ctx.fill();
-        
+        const radius = Math.min(
+          eraserSize,
+          x,
+          y,
+          nativeSize.width - x,
+          nativeSize.height - y
+        );
+        if (radius > 0) {
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+
         // Sin restaurar contexto durante movimiento para máxima velocidad
       }
       return;
