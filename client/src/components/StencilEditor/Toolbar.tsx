@@ -41,7 +41,7 @@ export default function Toolbar({
   onBack
 }: ToolbarProps) {
   return (
-    <div className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 flex items-center justify-between z-50">
+    <div className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 flex items-center justify-between z-50" style={{ touchAction: 'manipulation' }}>
       {/* IZQUIERDA: Gallery + Herramientas principales */}
       <div className="flex items-center gap-1 sm:gap-2">
         <Button
