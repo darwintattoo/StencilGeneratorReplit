@@ -55,6 +55,7 @@ export type StencilImage = HTMLCanvasElement | HTMLImageElement;
 // Konva event types
 export type KonvaMouseEvent = KonvaEventObject<MouseEvent>;
 export type KonvaTouchEvent = KonvaEventObject<TouchEvent>;
+export type KonvaPointerEvent = KonvaEventObject<PointerEvent>;
 export type KonvaWheelEvent = KonvaEventObject<WheelEvent>;
 
 // Konva element refs

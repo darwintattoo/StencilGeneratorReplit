@@ -1,0 +1,573 @@
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..d7dc4de6e5299ab292f0e96d6578326c38030868 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -1,42 +1,41 @@
+ import React, { useState, useRef, useEffect } from 'react';
+ import { useLocation } from 'wouter';
+ import Canvas from './Canvas';
+ import LayerPanel from './LayerPanel';
+ import Toolbar from './Toolbar';
+ import { rgbToHsl, hslToRgb } from '@/lib/color';
+ import type {
+   DrawingLine,
+   ViewTransform,
+   LayersState,
+   Tool,
+   ActiveLayer,
+   Position,
+   TouchCenter,
+   NativeSize,
+-  KonvaMouseEvent,
+-  KonvaTouchEvent,
++  KonvaPointerEvent,
+   KonvaWheelEvent,
+   StageRef,
+   LineRef,
+   PanGestureData,
+   PinchGestureData,
+   RotateGestureData
+ } from './types';
+ 
+ // Colores disponibles para el dibujo - solo negro, rojo y azul
+ const DRAWING_COLORS = [
+   '#000000', // Negro
+   '#ef4444', // Rojo
+   '#3b82f6', // Azul
+ ];
+ 
+ // Hook personalizado para manejar la lógica del canvas
+ function useStencilCanvas() {
+   const [tool, setTool] = useState<Tool>('brush');
+   const [brushSize, setBrushSize] = useState<number>(4);
+   const [eraserSize, setEraserSize] = useState<number>(10);
+   const [activeLayer, setActiveLayer] = useState<ActiveLayer>('drawing');
+   const [brushColor, setBrushColor] = useState<string>('#ef4444'); // Rojo por defecto
+   const [stencilHue, setStencilHue] = useState<number>(0); // Control de tono para stencil
+   const [layers, setLayers] = useState<LayersState>({
+     drawing: { visible: true, opacity: 100 },
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..d7dc4de6e5299ab292f0e96d6578326c38030868 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -134,51 +133,51 @@ interface StencilEditorProps {
+ 
+ export default function StencilEditor({ originalImage, stencilImage }: StencilEditorProps) {
+   const [location, setLocation] = useLocation();
+   const stageRef = useRef<StageRef>(null);
+   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
+   const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+   const [isDrawing, setIsDrawing] = useState<boolean>(false);
+   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
+   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
+   const drawingPointsRef = useRef<number[]>([]);
+   const currentLineRef = useRef<DrawingLine | null>(null);
+   const frameRef = useRef<number>(0);
+   const tempLineRef = useRef<LineRef>(null);
+ 
+   const updateTempLine = () => {
+     if (tempLineRef.current) {
+       tempLineRef.current.points(drawingPointsRef.current);
+       tempLineRef.current.getLayer()?.batchDraw();
+     }
+     frameRef.current = requestAnimationFrame(updateTempLine);
+   };
+   const [nativeSize, setNativeSize] = useState<NativeSize>({ width: 800, height: 600 });
+   const [isPanning, setIsPanning] = useState<boolean>(false);
+   const [lastPointerPosition, setLastPointerPosition] = useState<Position>({ x: 0, y: 0 });
+   const [isLayersOpen, setIsLayersOpen] = useState<boolean>(false);
+-  const touchesRef = useRef<Touch[]>([]);
++  const pointersRef = useRef<Map<number, Position>>(new Map());
+   const lastPinchDistanceRef = useRef<number>(0);
+   const lastTouchCenterRef = useRef<TouchCenter>({ x: 0, y: 0 });
+   const lastAngleRef = useRef<number>(0);
+   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
+   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
+   const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
+     width: window.innerWidth, 
+     height: window.innerHeight 
+   });
+ 
+   const {
+     tool,
+     setTool,
+     brushSize,
+     setBrushSize,
+     eraserSize,
+     setEraserSize,
+     activeLayer,
+     setActiveLayer,
+     brushColor,
+     setBrushColor,
+     stencilHue,
+     setStencilHue,
+     layers,
+diff --git a/client/src/components/StencilEditor/StencilEditor.tsx b/client/src/components/StencilEditor/StencilEditor.tsx
+index 08d0002581831b066b3e4f58e4d43da6a7f7024b..d7dc4de6e5299ab292f0e96d6578326c38030868 100644
+--- a/client/src/components/StencilEditor/StencilEditor.tsx
++++ b/client/src/components/StencilEditor/StencilEditor.tsx
+@@ -260,373 +259,325 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
+             const newH = (h + stencilHue / 360) % 1;
+             
+             // Convertir de vuelta a RGB
+             const [newR, newG, newB] = hslToRgb(newH, s, l);
+             
+             data[i] = newR;
+             data[i + 1] = newG;
+             data[i + 2] = newB;
+           }
+           
+           // Aplicar datos modificados
+           ctx.putImageData(imageData, 0, 0);
+         }
+         
+         // Crear nueva imagen
+         const newImg = new Image();
+         newImg.onload = () => {
+           setFilteredStencilImg(newImg);
+         };
+         newImg.src = canvas.toDataURL();
+       }
+     }
+   }, [stencilImg, stencilHue]);
+ 
+   // Manejo de gestos táctiles y mouse
+-  const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
++  const handlePointerDown = (e: KonvaPointerEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+-    
+-    const mouseEvent = e.evt as MouseEvent;
+-    if (tool === 'move' || mouseEvent.button === 1 || mouseEvent.button === 2) { // Move tool, middle click or right click for panning
+-      e.evt.preventDefault();
++
++    const pointerEvent = e.evt;
++    if (pointerEvent.pointerType === 'touch') {
++      pointersRef.current.set(pointerEvent.pointerId, {
++        x: pointerEvent.clientX,
++        y: pointerEvent.clientY,
++      });
++      if (pointersRef.current.size === 2) {
++        const [p1, p2] = Array.from(pointersRef.current.values());
++        lastPinchDistanceRef.current = getDistance(p1, p2);
++        lastTouchCenterRef.current = getCenter(p1, p2);
++        lastAngleRef.current = getAngle(p1, p2);
++        setIsPanning(false);
++        setIsDrawing(false);
++        return;
++      }
++    }
++
++    if (tool === 'move' || pointerEvent.button === 1 || pointerEvent.button === 2) {
++      pointerEvent.preventDefault();
+       setIsPanning(true);
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (tool === 'brush' || tool === 'eraser') {
+-      // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+-      const pointerEvent = e.evt as any;
+-      if (pointerEvent.pointerType === 'touch') {
+-        return;
+-      }
+       setIsDrawing(true);
+       const transform = stage.getAbsoluteTransform().copy().invert();
+       const { x, y } = transform.point(pos);
+ 
+-      // Si es borrador en capa stencil, preparar canvas para edición
+       if (tool === 'eraser' && activeLayer === 'stencil' && stencilImg) {
+         setIsErasingStencil(true);
+-        
+-        // Crear canvas de trabajo si no existe
+         if (!stencilCanvas) {
+           const canvas = document.createElement('canvas');
+           canvas.width = stencilImg.width;
+           canvas.height = stencilImg.height;
+           const ctx = canvas.getContext('2d');
+           if (ctx) {
+             ctx.drawImage(stencilImg, 0, 0);
+             setStencilCanvas(canvas);
+           }
+         }
+-        
+-        // Aplicar borrado inicial
+         if (stencilCanvas) {
+           const ctx = stencilCanvas.getContext('2d');
+           if (ctx) {
+             ctx.save();
+             ctx.globalCompositeOperation = 'destination-out';
+             ctx.beginPath();
+             ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+             ctx.fill();
+             ctx.restore();
+           }
+         }
+         return;
+       }
+-      
+-      const color = tool === 'brush'
+-        ? (activeLayer === 'stencil' ? '#ef4444' : brushColor)
+-        : '#ffffff';
++
++      const color =
++        tool === 'brush'
++          ? activeLayer === 'stencil'
++            ? '#ef4444'
++            : brushColor
++          : '#ffffff';
+       currentLineRef.current = {
+         tool,
+         points: [],
+         strokeWidth: tool === 'brush' ? brushSize : eraserSize,
+-        globalCompositeOperation: tool === 'eraser' ? 'destination-out' : 'source-over',
++        globalCompositeOperation:
++          tool === 'eraser' ? 'destination-out' : 'source-over',
+         layer: activeLayer,
+-        color
++        color,
+       };
+       drawingPointsRef.current = [x, y];
+       frameRef.current = requestAnimationFrame(updateTempLine);
+     }
+   };
+ 
+-  const handleMouseMove = (e: KonvaMouseEvent | KonvaTouchEvent) => {
++  const handlePointerMove = (e: KonvaPointerEvent) => {
+     const stage = stageRef.current;
+     if (!stage) return;
+     const pos = stage.getPointerPosition();
+     if (!pos) return;
+ 
++    const pointerEvent = e.evt;
++    if (pointerEvent.pointerType === 'touch') {
++      pointerEvent.preventDefault();
++      pointersRef.current.set(pointerEvent.pointerId, {
++        x: pointerEvent.clientX,
++        y: pointerEvent.clientY,
++      });
++      if (pointersRef.current.size === 2) {
++        const [p1, p2] = Array.from(pointersRef.current.values());
++        const distance = getDistance(p1, p2);
++        const center = getCenter(p1, p2);
++        const angle = getAngle(p1, p2);
++        if (lastPinchDistanceRef.current > 0) {
++          const scale = distance / lastPinchDistanceRef.current;
++          const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
++          const deltaX = center.x - lastTouchCenterRef.current.x;
++          const deltaY = center.y - lastTouchCenterRef.current.y;
++          const deltaRotation = angle - lastAngleRef.current;
++          handleGesture('pinch', { scale: newScale, centerX: center.x, centerY: center.y });
++          handleGesture('pan', { deltaX, deltaY });
++          handleGesture('rotate', { deltaRotation, centerX: center.x, centerY: center.y });
++        }
++        lastPinchDistanceRef.current = distance;
++        lastTouchCenterRef.current = center;
++        lastAngleRef.current = angle;
++        return;
++      }
++    }
++
+     if (isPanning) {
+       const deltaX = pos.x - lastPointerPosition.x;
+       const deltaY = pos.y - lastPointerPosition.y;
+       handleGesture('pan', { deltaX, deltaY });
+       setLastPointerPosition(pos);
+       return;
+     }
+ 
+     if (!isDrawing) return;
+-    
+-    // Ignorar gestos de dibujo/borrado si el pointerType es 'touch'
+-    const pointerEvent = e.evt as any;
+-    if (pointerEvent.pointerType === 'touch') {
+-      return;
+-    }
++
+     const transform = stage.getAbsoluteTransform().copy().invert();
+     const { x, y } = transform.point(pos);
+ 
+-    // Si es borrador en capa stencil, usar técnica de borrado inmediato ultra-rápido
+     if (tool === 'eraser' && activeLayer === 'stencil' && stencilCanvas && isErasingStencil) {
+       const ctx = stencilCanvas.getContext('2d');
+-      
+       if (ctx) {
+-        // Borrado inmediato sin operaciones bloqueantes
+         ctx.globalCompositeOperation = 'destination-out';
+         ctx.fillStyle = '#000';
+-        
+-        // Borrado instantáneo con mínimo procesamiento
+         ctx.beginPath();
+         ctx.arc(x, y, eraserSize, 0, 2 * Math.PI);
+         ctx.fill();
+-        
+-        // Sin restaurar contexto durante movimiento para máxima velocidad
+       }
+       return;
+     }
+-    
++
+     drawingPointsRef.current.push(x, y);
+   };
+ 
+-  const handleMouseUp = () => {
++  const handlePointerUp = (e: KonvaPointerEvent) => {
++    const pointerEvent = e.evt;
++    if (pointerEvent.pointerType === 'touch') {
++      pointersRef.current.delete(pointerEvent.pointerId);
++      if (pointersRef.current.size < 2) {
++        lastPinchDistanceRef.current = 0;
++        lastAngleRef.current = 0;
++      }
++      if (pointersRef.current.size > 0) {
++        return;
++      }
++    }
++
+     setIsDrawing(false);
+     setIsPanning(false);
+ 
+     if (currentLineRef.current) {
+       const newLine = { ...currentLineRef.current, points: [...drawingPointsRef.current] };
+       if (currentLineRef.current.layer === 'drawing') {
+         setDrawingLines(prev => [...prev, newLine]);
+       } else {
+         setStencilLines(prev => [...prev, newLine]);
+       }
+     }
+     cancelAnimationFrame(frameRef.current);
+     drawingPointsRef.current = [];
+     currentLineRef.current = null;
+ 
+-    // Finalizar borrado de stencil con restauración del contexto
+     if (isErasingStencil && stencilCanvas) {
+-      // Restaurar contexto una sola vez al final
+       const ctx = stencilCanvas.getContext('2d');
+       if (ctx) {
+-        ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
++        ctx.globalCompositeOperation = 'source-over';
+       }
+-      
+-      // Actualización diferida para no bloquear
+       setTimeout(() => {
+         const newImg = new Image();
+         newImg.onload = () => {
+           setStencilImg(newImg);
+           if (stencilHue !== 0) {
+             setFilteredStencilImg(null);
+           }
+         };
+         newImg.src = stencilCanvas.toDataURL();
+       }, 0);
+       setIsErasingStencil(false);
+     }
+-    
++
+     if (tool === 'eraser' && stageRef.current) {
+       setTimeout(() => {
+         if (stageRef.current) {
+           const layers = stageRef.current.find('Layer');
+           layers.forEach((layer: any) => {
+             try {
+               const hitCanvas = layer.getHitCanvas();
+               if (hitCanvas) {
+                 const hitContext = hitCanvas.getContext('2d');
+                 hitContext.clearRect(0, 0, nativeSize.width, nativeSize.height);
+                 layer.clearHitCache();
+               }
+             } catch (e) {
+               console.log('Error limpiando hit canvas:', e);
+             }
+             layer.batchDraw();
+           });
+           stageRef.current.batchDraw();
+         }
+       }, 50);
+     }
+   };
+ 
+   const handleWheel = (e: KonvaWheelEvent) => {
+     e.evt.preventDefault();
+     const scaleBy = 1.1;
+     const stage = e.target.getStage();
+     if (!stage) return;
+     
+     const oldScale = viewTransform.scale;
+     const pointer = stage.getPointerPosition();
+     if (!pointer) return;
+ 
+     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+     handleGesture('pinch', {
+       scale: Math.max(0.1, Math.min(5, newScale)),
+       centerX: pointer.x,
+       centerY: pointer.y
+     });
+   };
+ 
+   // Funciones para gestos táctiles
+-  const getDistance = (touch1: Touch, touch2: Touch): number => {
+-    const dx = touch1.clientX - touch2.clientX;
+-    const dy = touch1.clientY - touch2.clientY;
++  const getDistance = (p1: Position, p2: Position): number => {
++    const dx = p1.x - p2.x;
++    const dy = p1.y - p2.y;
+     return Math.sqrt(dx * dx + dy * dy);
+   };
+ 
+-  const getCenter = (touch1: Touch, touch2: Touch): TouchCenter => {
++  const getCenter = (p1: Position, p2: Position): TouchCenter => {
+     return {
+-      x: (touch1.clientX + touch2.clientX) / 2,
+-      y: (touch1.clientY + touch2.clientY) / 2
++      x: (p1.x + p2.x) / 2,
++      y: (p1.y + p2.y) / 2,
+     };
+   };
+ 
+-  const getAngle = (touch1: Touch, touch2: Touch): number => {
+-    const dx = touch2.clientX - touch1.clientX;
+-    const dy = touch2.clientY - touch1.clientY;
++  const getAngle = (p1: Position, p2: Position): number => {
++    const dx = p2.x - p1.x;
++    const dy = p2.y - p1.y;
+     return (Math.atan2(dy, dx) * 180) / Math.PI;
+   };
+ 
+-  const handleTouchStart = (e: KonvaTouchEvent) => {
+-    const touchList = Array.from(e.evt.touches) as Touch[];
+-    touchesRef.current = touchList;
+-
+-    if (touchList.length === 2) {
+-      // Inicio de pinch/rotación
+-      const distance = getDistance(touchList[0], touchList[1]);
+-      const center = getCenter(touchList[0], touchList[1]);
+-      const angle = getAngle(touchList[0], touchList[1]);
+-      lastPinchDistanceRef.current = distance;
+-      lastTouchCenterRef.current = center;
+-      lastAngleRef.current = angle;
+-      setIsPanning(false);
+-      setIsDrawing(false);
+-    } else if (touchList.length === 1) {
+-      // Toque único - dibujo o pan
+-      handleMouseDown(e);
+-    }
+-  };
+-
+-  const handleTouchMove = (e: KonvaTouchEvent) => {
+-    e.evt.preventDefault();
+-    const touchList = Array.from(e.evt.touches) as Touch[];
+-    touchesRef.current = touchList;
+-
+-    if (touchList.length === 2) {
+-      // Pinch zoom, pan y rotación con dos dedos
+-      const distance = getDistance(touchList[0], touchList[1]);
+-      const center = getCenter(touchList[0], touchList[1]);
+-      const angle = getAngle(touchList[0], touchList[1]);
+-
+-      if (lastPinchDistanceRef.current > 0) {
+-        // Zoom
+-        const scale = distance / lastPinchDistanceRef.current;
+-        const newScale = Math.max(0.1, Math.min(5, viewTransform.scale * scale));
+-        
+-        // Pan
+-        const deltaX = center.x - lastTouchCenterRef.current.x;
+-        const deltaY = center.y - lastTouchCenterRef.current.y;
+-
+-        // Rotación
+-        const deltaRotation = angle - lastAngleRef.current;
+-
+-        handleGesture('pinch', {
+-          scale: newScale,
+-          centerX: center.x,
+-          centerY: center.y
+-        });
+-
+-        handleGesture('pan', { deltaX, deltaY });
+-        handleGesture('rotate', {
+-          deltaRotation,
+-          centerX: center.x,
+-          centerY: center.y
+-        });
+-      }
+-
+-      lastPinchDistanceRef.current = distance;
+-      lastTouchCenterRef.current = center;
+-      lastAngleRef.current = angle;
+-    } else if (touchList.length === 1 && (tool === 'brush' || tool === 'eraser') && isDrawing) {
+-      // Dibujo con un dedo
+-      handleMouseMove(e);
+-    }
+-  };
+-
+-  const handleTouchEnd = (e: KonvaTouchEvent) => {
+-    const touchList = Array.from(e.evt.touches) as Touch[];
+-    touchesRef.current = touchList;
+-
+-    if (touchList.length < 2) {
+-      lastPinchDistanceRef.current = 0;
+-      lastAngleRef.current = 0;
+-    }
+-
+-    if (touchList.length === 0) {
+-      handleMouseUp();
+-    }
+-  };
+-
+   // Doble tap para reset
+   const handleDoubleTap = () => {
+     resetView();
+   };
+ 
+   return (
+     <div className="h-screen relative flex" style={{
+       backgroundColor: '#2a2a2a',
+       backgroundImage: `
+         linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+         linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+       `,
+       backgroundSize: '24px 24px'
+     }}>
+       {/* Canvas principal */}
+       <div className="flex-1 relative">
+         <Canvas
+           stageRef={stageRef}
+           isLayersOpen={isLayersOpen}
+           viewTransform={viewTransform}
+-          handleMouseDown={handleMouseDown}
+-          handleMouseMove={handleMouseMove}
+-          handleMouseUp={handleMouseUp}
++          handlePointerDown={handlePointerDown}
++          handlePointerMove={handlePointerMove}
++          handlePointerUp={handlePointerUp}
+           handleWheel={handleWheel}
+-          handleTouchStart={handleTouchStart}
+-          handleTouchMove={handleTouchMove}
+-          handleTouchEnd={handleTouchEnd}
+           handleDoubleTap={handleDoubleTap}
+           layers={layers}
+           originalImg={originalImg}
+           stencilImg={stencilImg}
+           filteredStencilImg={filteredStencilImg}
+           drawingLines={drawingLines}
+           stencilLines={stencilLines}
+           currentLineRef={currentLineRef}
+           drawingPointsRef={drawingPointsRef}
+           tempLineRef={tempLineRef}
+           isErasingStencil={isErasingStencil}
+           brushColor={brushColor}
+           tool={tool}
+           brushSize={brushSize}
+           setBrushSize={setBrushSize}
+           eraserSize={eraserSize}
+           setEraserSize={setEraserSize}
+           nativeSize={nativeSize}
+           canvasSize={canvasSize}
+         />
+ 
+         <Toolbar
+           tool={tool}
+           setTool={setTool}
+           activeLayer={activeLayer}
