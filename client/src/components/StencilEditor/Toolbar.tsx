@@ -124,7 +124,7 @@ export default function Toolbar({
               size="sm"
               onClick={() => setTool('eyedropper')}
               className={`h-6 sm:h-7 px-1 sm:px-2 ${tool === 'eyedropper' 
-                ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm border-orange-500" 
+                ? "bg-gray-600 hover:bg-gray-500 text-white shadow-sm border-gray-600" 
                 : "shadow-sm text-gray-300 border-gray-600"
               }`}
             >
