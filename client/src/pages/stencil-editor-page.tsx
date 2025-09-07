@@ -92,8 +92,7 @@ export default function StencilEditorPage() {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="container mx-auto py-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-sm font-medium text-white">Stencil Editor</h1>
+          <div className="mb-1">
           </div>
           
           <div className="max-w-md mx-auto mt-32">
@@ -126,17 +125,15 @@ export default function StencilEditorPage() {
   // Si tenemos las imágenes, mostrar el editor
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1a1a1a' }}>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-sm font-medium text-white">Stencil Editor</h1>
+      <div className="container mx-auto py-2">
+        <div className="flex justify-end mb-1">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={resetEditor} 
-            className="text-gray-400 hover:text-white h-6 px-2 text-xs"
+            className="text-gray-500 hover:text-white h-5 px-1 text-xs opacity-50 hover:opacity-100"
           >
-            <ArrowLeft className="mr-1 h-3 w-3" />
-            New
+            <ArrowLeft className="h-3 w-3" />
           </Button>
         </div>
         
