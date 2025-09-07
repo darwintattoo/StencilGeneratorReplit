@@ -14,7 +14,8 @@ import type {
   StageRef,
   LineRef,
   LayerRef,
-  StencilImage
+  StencilImage,
+  Position
 } from './types';
 
 interface CanvasProps {
@@ -24,6 +25,8 @@ interface CanvasProps {
   handleMouseDown: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
   handleMouseMove: (e: KonvaMouseEvent | KonvaTouchEvent) => void;
   handleMouseUp: () => void;
+  handleMouseEnter?: () => void;
+  handleMouseLeave?: () => void;
   handleWheel: (e: KonvaWheelEvent) => void;
   handleTouchStart: (e: KonvaTouchEvent) => void;
   handleTouchMove: (e: KonvaTouchEvent) => void;
@@ -55,6 +58,8 @@ interface CanvasProps {
   stencilBrightness: number;
   nativeSize: NativeSize;
   canvasSize: NativeSize;
+  eyedropperPosition?: Position | null;
+  previewColor?: string | null;
 }
 
 export default function Canvas({
@@ -64,6 +69,8 @@ export default function Canvas({
   handleMouseDown,
   handleMouseMove,
   handleMouseUp,
+  handleMouseEnter,
+  handleMouseLeave,
   handleWheel,
   handleTouchStart,
   handleTouchMove,
@@ -94,7 +101,9 @@ export default function Canvas({
   stencilSaturation,
   stencilBrightness,
   nativeSize,
-  canvasSize
+  canvasSize,
+  eyedropperPosition,
+  previewColor
 }: CanvasProps) {
   
   // Función para cambiar color con HSL
@@ -191,6 +200,8 @@ export default function Canvas({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -202,7 +213,7 @@ export default function Canvas({
         x={viewTransform.x}
         y={viewTransform.y}
         rotation={viewTransform.rotation}
-        style={{ cursor: tool === 'eyedropper' ? 'crosshair' : 'default' }}
+        style={{ cursor: tool === 'eyedropper' ? 'none' : 'default' }}
       >
         {/* Capa de fondo blanco */}
         {layers.background.visible && (
@@ -309,6 +320,39 @@ export default function Canvas({
         )}
 
       </Stage>
+
+      {/* Círculo del eyedropper */}
+      {tool === 'eyedropper' && eyedropperPosition && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: eyedropperPosition.x - 20,
+            top: eyedropperPosition.y - 20,
+            width: 40,
+            height: 40,
+          }}
+        >
+          <div className="relative w-full h-full">
+            {/* Círculo exterior */}
+            <div 
+              className="absolute inset-0 rounded-full border-2 border-black"
+              style={{ backgroundColor: 'transparent' }}
+            />
+            {/* Círculo interior con el color */}
+            <div 
+              className="absolute inset-1 rounded-full border border-white"
+              style={{ backgroundColor: previewColor || '#ffffff' }}
+            />
+            {/* Cruz central */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-4 h-px bg-black"></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-px h-4 bg-black"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {tool === 'brush' && !isLayersOpen && (
         <div className="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 z-30">

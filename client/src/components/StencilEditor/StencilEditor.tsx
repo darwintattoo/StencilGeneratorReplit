@@ -166,6 +166,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const tempLineRef = useRef<LineRef>(null);
   const stencilLayerRef = useRef<LayerRef>(null);
   const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [eyedropperPosition, setEyedropperPosition] = useState<Position | null>(null);
+  const [previewColor, setPreviewColor] = useState<string | null>(null);
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -370,25 +372,21 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
 
     if (tool === 'eyedropper') {
       e.evt.preventDefault();
-      if (typeof (window as any).EyeDropper === 'function') {
-        const eyeDropper = new (window as any).EyeDropper();
-        eyeDropper
-          .open()
-          .then((result: { sRGBHex: string }) => {
-            setBrushColor(result.sRGBHex);
-            setTool('brush');
-          })
-          .catch(() => setTool('brush'));
-      } else {
-        // Usar la nueva función pickColorAt
-        const transform = stage.getAbsoluteTransform().copy().invert();
-        const { x, y } = transform.point(pos);
-        const picked = pickColorAt(x, y);
-        if (picked) {
-          setBrushColor(picked);
-        }
-        setTool('brush');
+      
+      // Obtener posición transformada para picking
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
+      
+      // Seleccionar color y cambiar a brush
+      const picked = pickColorAt(x, y);
+      if (picked) {
+        setBrushColor(picked);
       }
+      
+      // Limpiar preview y cambiar herramienta
+      setEyedropperPosition(null);
+      setPreviewColor(null);
+      setTool('brush');
       return;
     }
 
@@ -470,6 +468,20 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
+
+    // Preview del eyedropper
+    if (tool === 'eyedropper' && !isPanning) {
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const { x, y } = transform.point(pos);
+      
+      // Actualizar posición del preview
+      setEyedropperPosition(pos);
+      
+      // Obtener color en tiempo real
+      const color = pickColorAt(x, y);
+      setPreviewColor(color);
+      return;
+    }
 
     if (isPanning) {
       const deltaX = pos.x - lastPointerPosition.x;
@@ -570,6 +582,29 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
       }, 50);
     }
   };
+
+  const handleMouseEnter = () => {
+    if (tool === 'eyedropper') {
+      document.body.style.cursor = 'none'; // Ocultar cursor por defecto
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (tool === 'eyedropper') {
+      setEyedropperPosition(null);
+      setPreviewColor(null);
+      document.body.style.cursor = 'auto'; // Restaurar cursor
+    }
+  };
+
+  // Limpiar cursor cuando cambie herramienta
+  useEffect(() => {
+    if (tool !== 'eyedropper') {
+      setEyedropperPosition(null);
+      setPreviewColor(null);
+      document.body.style.cursor = 'auto';
+    }
+  }, [tool]);
 
   const handleWheel = (e: KonvaWheelEvent) => {
     e.evt.preventDefault();
@@ -712,6 +747,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           handleMouseDown={handleMouseDown}
           handleMouseMove={handleMouseMove}
           handleMouseUp={handleMouseUp}
+          handleMouseEnter={handleMouseEnter}
+          handleMouseLeave={handleMouseLeave}
           handleWheel={handleWheel}
           handleTouchStart={handleTouchStart}
           handleTouchMove={handleTouchMove}
@@ -743,6 +780,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           stencilBrightness={stencilBrightness}
           nativeSize={nativeSize}
           canvasSize={canvasSize}
+          eyedropperPosition={eyedropperPosition}
+          previewColor={previewColor}
         />
 
         <Toolbar
