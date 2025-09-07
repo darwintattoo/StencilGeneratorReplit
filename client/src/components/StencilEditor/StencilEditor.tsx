@@ -18,6 +18,8 @@ import type {
   KonvaWheelEvent,
   StageRef,
   LineRef,
+  LayerRef,
+  StencilImage,
   PanGestureData,
   PinchGestureData,
   RotateGestureData
@@ -154,7 +156,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const [location, setLocation] = useLocation();
   const stageRef = useRef<StageRef>(null);
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
-  const [stencilImg, setStencilImg] = useState<HTMLImageElement | null>(null);
+  const [stencilImg, setStencilImg] = useState<StencilImage | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [drawingLines, setDrawingLines] = useState<DrawingLine[]>([]);
   const [stencilLines, setStencilLines] = useState<DrawingLine[]>([]);
@@ -162,6 +164,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const currentLineRef = useRef<DrawingLine | null>(null);
   const frameRef = useRef<number>(0);
   const tempLineRef = useRef<LineRef>(null);
+  const stencilLayerRef = useRef<LayerRef>(null);
 
   const updateTempLine = () => {
     if (tempLineRef.current) {
@@ -180,7 +183,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   const lastAngleRef = useRef<number>(0);
   const [stencilCanvas, setStencilCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isErasingStencil, setIsErasingStencil] = useState<boolean>(false);
-  const [filteredStencilImg, setFilteredStencilImg] = useState<HTMLImageElement | null>(null);
+  const [filteredStencilImg, setFilteredStencilImg] = useState<StencilImage | null>(null);
+  const [stencilVersion, setStencilVersion] = useState(0);
   const filterCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<NativeSize>({ 
     width: window.innerWidth, 
@@ -335,12 +339,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Resetear filtro
         ctx.filter = 'none';
         
-        // Crear nueva imagen desde el canvas filtrado
-        const newImg = new Image();
-        newImg.onload = () => {
-          setFilteredStencilImg(newImg);
-        };
-        newImg.src = canvas.toDataURL();
+        // Usar canvas directamente sin conversión costosa
+        setFilteredStencilImg(canvas);
+        stencilLayerRef.current?.batchDraw();
 
         // Guardar referencia del canvas para reutilización
         if (!filterCanvasRef.current) {
@@ -348,7 +349,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         }
       }
     }
-  }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness]);
+  }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness, stencilVersion]);
 
   // Manejo de gestos táctiles y mouse
   const handleMouseDown = (e: KonvaMouseEvent | KonvaTouchEvent) => {
@@ -417,20 +418,20 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setIsErasingStencil(true);
         
         // Crear canvas de trabajo si no existe
-        if (!stencilCanvas) {
-          const canvas = document.createElement('canvas');
+        let canvas = stencilCanvas;
+        if (!canvas) {
+          canvas = document.createElement('canvas');
           canvas.width = stencilImg.width;
           canvas.height = stencilImg.height;
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(stencilImg, 0, 0);
-            setStencilCanvas(canvas);
           }
+          setStencilCanvas(canvas);
+          setStencilImg(canvas);
         }
         
-        // Aplicar borrado inicial
-        if (stencilCanvas) {
-          const ctx = stencilCanvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
           if (ctx) {
             const radius = Math.min(
               eraserSize,
@@ -446,9 +447,9 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
               ctx.arc(x, y, radius, 0, 2 * Math.PI);
               ctx.fill();
               ctx.restore();
+              stencilLayerRef.current?.batchDraw();
             }
           }
-        }
         return;
       }
       
@@ -550,35 +551,13 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         ctx.globalCompositeOperation = 'source-over'; // Restaurar modo normal
       }
       
-      // Actualización diferida para no bloquear
-      setTimeout(() => {
-        const newImg = new Image();
-        newImg.onload = () => {
-          setStencilImg(newImg);
-          // Regenerar imagen filtrada si hay cambios de hue
-          if (stencilHue !== 0) {
-            // Recrear imagen filtrada después del borrado
-            const canvas = document.createElement('canvas');
-            canvas.width = newImg.width;
-            canvas.height = newImg.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              const saturationValue = stencilSaturation / 100;
-              const brightnessValue = stencilBrightness / 100;
-              ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
-              ctx.drawImage(newImg, 0, 0);
-              ctx.filter = 'none';
-              
-              const filteredImg = new Image();
-              filteredImg.onload = () => setFilteredStencilImg(filteredImg);
-              filteredImg.src = canvas.toDataURL();
-            }
-          } else {
-            setFilteredStencilImg(null);
-          }
-        };
-        newImg.src = stencilCanvas.toDataURL();
-      }, 0);
+      // Usar canvas directamente sin conversiones costosas
+      if (stencilHue !== 0 || stencilSaturation !== 100 || stencilBrightness !== 100) {
+        setStencilVersion(v => v + 1); // Forzar recálculo de filtros
+      } else {
+        setFilteredStencilImg(null);
+      }
+      stencilLayerRef.current?.batchDraw();
       setIsErasingStencil(false);
     }
     
@@ -760,6 +739,7 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
           currentLineRef={currentLineRef}
           drawingPointsRef={drawingPointsRef}
           tempLineRef={tempLineRef}
+          stencilLayerRef={stencilLayerRef}
           isErasingStencil={isErasingStencil}
           brushColor={brushColor}
           setBrushColor={setBrushColor}
