@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette } from 'lucide-react';
-import type { LayersState } from './types';
+import type { LayersState, ActiveLayer } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
 
@@ -29,6 +29,8 @@ interface LayerPanelProps {
   setStencilBrightness: (brightness: number) => void;
   isColorLinked: boolean;
   setIsColorLinked: (linked: boolean) => void;
+  activeLayer: ActiveLayer;
+  setActiveLayer: (layer: ActiveLayer) => void;
   onClose: () => void;
 }
 
@@ -53,6 +55,8 @@ export default function LayerPanel({
   setStencilBrightness,
   isColorLinked,
   setIsColorLinked,
+  activeLayer,
+  setActiveLayer,
   onClose
 }: LayerPanelProps) {
   const [isDrawingColorOpen, setIsDrawingColorOpen] = useState(false);
@@ -176,12 +180,25 @@ export default function LayerPanel({
 
 
       <div className="space-y-4">
-        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
+        <div 
+          className={`rounded-lg p-3 cursor-pointer transition-colors ${
+            activeLayer === 'drawing' 
+              ? 'bg-blue-900/50 border border-blue-500/30' 
+              : 'hover:bg-gray-700/50'
+          }`} 
+          style={{ 
+            backgroundColor: activeLayer === 'drawing' 
+              ? 'rgba(59, 130, 246, 0.2)' 
+              : '#2d2d2d' 
+          }}
+          onClick={() => setActiveLayer('drawing')}
+        >
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.drawing.visible}
               onCheckedChange={(checked) => toggleLayer('drawing', checked)}
+              onClick={(e) => e.stopPropagation()}
             />
             <span className="text-white text-sm font-medium flex-1">Drawing</span>
             <span className="text-gray-300 text-xs">N</span>
@@ -223,12 +240,25 @@ export default function LayerPanel({
           </div>
         </div>
 
-        <div className="rounded-lg p-3" style={{ backgroundColor: '#2d2d2d' }}>
+        <div 
+          className={`rounded-lg p-3 cursor-pointer transition-colors ${
+            activeLayer === 'stencil' 
+              ? 'bg-blue-900/50 border border-blue-500/30' 
+              : 'hover:bg-gray-700/50'
+          }`} 
+          style={{ 
+            backgroundColor: activeLayer === 'stencil' 
+              ? 'rgba(59, 130, 246, 0.2)' 
+              : '#2d2d2d' 
+          }}
+          onClick={() => setActiveLayer('stencil')}
+        >
           <div className="flex items-center gap-3 mb-2">
             <GripVertical className="w-4 h-4 text-gray-300" />
             <Switch
               checked={layers.stencil.visible}
               onCheckedChange={(checked) => toggleLayer('stencil', checked)}
+              onClick={(e) => e.stopPropagation()}
             />
             <span className="text-white text-sm font-medium flex-1">Stencil</span>
             <span className="text-gray-300 text-xs">N</span>

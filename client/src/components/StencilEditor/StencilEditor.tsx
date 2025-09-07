@@ -722,6 +722,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         setStencilBrightness={setStencilBrightness}
         isColorLinked={isColorLinked}
         setIsColorLinked={setIsColorLinked}
+        activeLayer={activeLayer}
+        setActiveLayer={setActiveLayer}
         onClose={() => setIsLayersOpen(false)}
       />
     </div>
