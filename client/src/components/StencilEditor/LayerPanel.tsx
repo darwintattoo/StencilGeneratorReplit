@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { GripVertical, Eye, EyeOff, Link, Unlink } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { GripVertical, Eye, EyeOff, Link, Unlink, ChevronDown, Palette } from 'lucide-react';
 import type { LayersState } from './types';
 
 const DRAWING_COLORS = ['#000000', '#ef4444', '#3b82f6'];
@@ -54,7 +55,110 @@ export default function LayerPanel({
   setIsColorLinked,
   onClose
 }: LayerPanelProps) {
+  const [isDrawingColorOpen, setIsDrawingColorOpen] = useState(false);
+  const [isStencilColorOpen, setIsStencilColorOpen] = useState(false);
+  
   if (!isOpen) return null;
+
+  const renderColorControls = (
+    type: 'drawing' | 'stencil',
+    hue: number,
+    setHue: (value: number) => void,
+    saturation: number,
+    setSaturation: (value: number) => void,
+    brightness: number,
+    setBrightness: (value: number) => void,
+    showLinkButton = false
+  ) => (
+    <div>
+      <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+        {showLinkButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsColorLinked(!isColorLinked)}
+            className={`w-3 h-3 p-0 ${
+              isColorLinked 
+                ? 'text-blue-400 hover:text-blue-300' 
+                : 'text-gray-500 hover:text-gray-400'
+            }`}
+          >
+            {isColorLinked ? <Link className="w-2 h-2" /> : <Unlink className="w-2 h-2" />}
+          </Button>
+        )}
+        <span>Hue:</span>
+        <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(hue)}</span>
+      </div>
+      <div className="relative mb-4">
+        <div className="h-3 rounded-full" style={{
+          background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
+        }}></div>
+        <Slider
+          value={[hue]}
+          onValueChange={([value]) => {
+            setHue(value);
+            if (isColorLinked && type === 'drawing') {
+              setStencilHue(value);
+            } else if (isColorLinked && type === 'stencil') {
+              setDrawingHue(value);
+            }
+          }}
+          max={360}
+          min={0}
+          step={1}
+          className="absolute inset-0 opacity-75"
+        />
+      </div>
+      <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+        <span>Saturation:</span>
+        <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(saturation)}</span>
+      </div>
+      <div className="relative mb-4">
+        <div className="h-3 rounded-full" style={{
+          background: 'linear-gradient(to right, #808080, #ff0000)'
+        }}></div>
+        <Slider
+          value={[saturation]}
+          onValueChange={([value]) => {
+            setSaturation(value);
+            if (isColorLinked && type === 'drawing') {
+              setStencilSaturation(value);
+            } else if (isColorLinked && type === 'stencil') {
+              setDrawingSaturation(value);
+            }
+          }}
+          max={200}
+          min={0}
+          step={1}
+          className="absolute inset-0 opacity-75"
+        />
+      </div>
+      <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+        <span>Brightness:</span>
+        <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(brightness)}</span>
+      </div>
+      <div className="relative">
+        <div className="h-3 rounded-full" style={{
+          background: 'linear-gradient(to right, #000000, #ffffff)'
+        }}></div>
+        <Slider
+          value={[brightness]}
+          onValueChange={([value]) => {
+            setBrightness(value);
+            if (isColorLinked && type === 'drawing') {
+              setStencilBrightness(value);
+            } else if (isColorLinked && type === 'stencil') {
+              setDrawingBrightness(value);
+            }
+          }}
+          max={200}
+          min={0}
+          step={1}
+          className="absolute inset-0 opacity-75"
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 sm:fixed sm:inset-auto sm:right-0 sm:top-0 sm:bottom-0 sm:h-full w-full sm:w-80 sm:border-l border-gray-600 p-3 sm:p-4 overflow-y-auto z-50 bg-black/90 sm:bg-[rgba(26,26,26,0.98)]" style={{ backgroundColor: 'rgba(26, 26, 26, 0.98)' }}>
@@ -87,87 +191,35 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
-          <div className="ml-7 space-y-3">
-            <div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
+          
+          <div className="ml-7">
+            <Collapsible open={isDrawingColorOpen} onOpenChange={setIsDrawingColorOpen}>
+              <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsColorLinked(!isColorLinked)}
-                  className={`w-3 h-3 p-0 ${
-                    isColorLinked 
-                      ? 'text-blue-400 hover:text-blue-300' 
-                      : 'text-gray-500 hover:text-gray-400'
-                  }`}
+                  className="flex items-center gap-2 w-full justify-start p-0 h-6 text-gray-300 hover:text-white"
                 >
-                  {isColorLinked ? <Link className="w-2 h-2" /> : <Unlink className="w-2 h-2" />}
+                  <Palette className="w-3 h-3" />
+                  <span className="text-xs">Color Controls</span>
+                  <ChevronDown 
+                    className={`w-3 h-3 transition-transform ${isDrawingColorOpen ? 'rotate-180' : ''}`} 
+                  />
                 </Button>
-                <span>Hue:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingHue)}</span>
-              </div>
-              <div className="relative mb-4">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
-                }}></div>
-                <Slider
-                  value={[drawingHue]}
-                  onValueChange={([value]) => {
-                    setDrawingHue(value);
-                    if (isColorLinked) {
-                      setStencilHue(value);
-                    }
-                  }}
-                  max={360}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Saturation:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingSaturation)}</span>
-              </div>
-              <div className="relative mb-4">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #808080, #ff0000)'
-                }}></div>
-                <Slider
-                  value={[drawingSaturation]}
-                  onValueChange={([value]) => {
-                    setDrawingSaturation(value);
-                    if (isColorLinked) {
-                      setStencilSaturation(value);
-                    }
-                  }}
-                  max={200}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Brightness:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(drawingBrightness)}</span>
-              </div>
-              <div className="relative">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #000000, #ffffff)'
-                }}></div>
-                <Slider
-                  value={[drawingBrightness]}
-                  onValueChange={([value]) => {
-                    setDrawingBrightness(value);
-                    if (isColorLinked) {
-                      setStencilBrightness(value);
-                    }
-                  }}
-                  max={200}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-            </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                {renderColorControls(
+                  'drawing',
+                  drawingHue,
+                  setDrawingHue,
+                  drawingSaturation,
+                  setDrawingSaturation,
+                  drawingBrightness,
+                  setDrawingBrightness,
+                  true
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
 
@@ -186,75 +238,35 @@ export default function LayerPanel({
               <EyeOff className="w-4 h-4 text-gray-300" />
             )}
           </div>
-          <div className="ml-7 mt-2 space-y-3">
-            <div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Hue:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilHue)}</span>
-              </div>
-              <div className="relative mb-4">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
-                }}></div>
-                <Slider
-                  value={[stencilHue]}
-                  onValueChange={([value]) => {
-                    setStencilHue(value);
-                    if (isColorLinked) {
-                      setDrawingHue(value);
-                    }
-                  }}
-                  max={360}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Saturation:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilSaturation)}</span>
-              </div>
-              <div className="relative mb-4">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #808080, #ff0000)'
-                }}></div>
-                <Slider
-                  value={[stencilSaturation]}
-                  onValueChange={([value]) => {
-                    setStencilSaturation(value);
-                    if (isColorLinked) {
-                      setDrawingSaturation(value);
-                    }
-                  }}
-                  max={200}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-              <div className="text-xs text-gray-300 mb-2 flex items-center gap-2">
-                <span>Brightness:</span>
-                <span className="text-white bg-gray-600 px-2 py-1 text-xs rounded">{Math.round(stencilBrightness)}</span>
-              </div>
-              <div className="relative">
-                <div className="h-3 rounded-full" style={{
-                  background: 'linear-gradient(to right, #000000, #ffffff)'
-                }}></div>
-                <Slider
-                  value={[stencilBrightness]}
-                  onValueChange={([value]) => {
-                    setStencilBrightness(value);
-                    if (isColorLinked) {
-                      setDrawingBrightness(value);
-                    }
-                  }}
-                  max={200}
-                  min={0}
-                  step={1}
-                  className="absolute inset-0 opacity-75"
-                />
-              </div>
-            </div>
+          
+          <div className="ml-7">
+            <Collapsible open={isStencilColorOpen} onOpenChange={setIsStencilColorOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 w-full justify-start p-0 h-6 text-gray-300 hover:text-white"
+                >
+                  <Palette className="w-3 h-3" />
+                  <span className="text-xs">Color Controls</span>
+                  <ChevronDown 
+                    className={`w-3 h-3 transition-transform ${isStencilColorOpen ? 'rotate-180' : ''}`} 
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                {renderColorControls(
+                  'stencil',
+                  stencilHue,
+                  setStencilHue,
+                  stencilSaturation,
+                  setStencilSaturation,
+                  stencilBrightness,
+                  setStencilBrightness,
+                  false
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
 
