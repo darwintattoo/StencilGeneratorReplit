@@ -13,10 +13,10 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
   const [saturation, setSaturation] = useState(100);
   const [brightness, setBrightness] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragType, setDragType] = useState<'wheel' | 'center' | null>(null);
+  const [dragType, setDragType] = useState<'wheel' | 'square' | null>(null);
 
-  // Convertir hex a HSB
-  const hexToHsb = useCallback((hex: string) => {
+  // Convertir hex a HSV
+  const hexToHsv = useCallback((hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16) / 255;
     const g = parseInt(hex.slice(3, 5), 16) / 255;
     const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -37,39 +37,32 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       }
     }
 
-    return { h: h * 360, s: s * 100, b: v * 100 };
+    return { h: h * 360, s: s * 100, v: v * 100 };
   }, []);
 
-  // Convertir HSB a RGB
-  const hsbToRgb = useCallback((h: number, s: number, b: number) => {
-    h = h / 360;
+  // Convertir HSV a RGB según la documentación
+  const hsvToRgb = useCallback((h: number, s: number, v: number) => {
+    h = h / 60;
     s = s / 100;
-    b = b / 100;
-
-    const c = b * s;
-    const x = c * (1 - Math.abs((h * 6) % 2 - 1));
-    const m = b - c;
-
-    let r, g, bl;
+    v = v / 100;
     
-    if (h >= 0 && h < 1/6) {
-      r = c; g = x; bl = 0;
-    } else if (h >= 1/6 && h < 2/6) {
-      r = x; g = c; bl = 0;
-    } else if (h >= 2/6 && h < 3/6) {
-      r = 0; g = c; bl = x;
-    } else if (h >= 3/6 && h < 4/6) {
-      r = 0; g = x; bl = c;
-    } else if (h >= 4/6 && h < 5/6) {
-      r = x; g = 0; bl = c;
-    } else {
-      r = c; g = 0; bl = x;
-    }
-
+    const c = v * s;
+    const x = c * (1 - Math.abs((h % 2) - 1));
+    const m = v - c;
+    
+    let r, g, b;
+    
+    if (h < 1) { r = c; g = x; b = 0; }
+    else if (h < 2) { r = x; g = c; b = 0; }
+    else if (h < 3) { r = 0; g = c; b = x; }
+    else if (h < 4) { r = 0; g = x; b = c; }
+    else if (h < 5) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+    
     return {
       r: Math.round((r + m) * 255),
       g: Math.round((g + m) * 255),
-      b: Math.round((bl + m) * 255)
+      b: Math.round((b + m) * 255)
     };
   }, []);
 
@@ -85,14 +78,14 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
   // Inicializar con color actual
   useEffect(() => {
     if (color && isOpen) {
-      const hsb = hexToHsb(color);
-      setHue(hsb.h);
-      setSaturation(hsb.s);
-      setBrightness(hsb.b);
+      const hsv = hexToHsv(color);
+      setHue(hsv.h);
+      setSaturation(hsv.s);
+      setBrightness(hsv.v);
     }
-  }, [color, isOpen, hexToHsb]);
+  }, [color, isOpen, hexToHsv]);
 
-  // Dibujar la rueda de color
+  // Dibujar la rueda de color según la documentación
   useEffect(() => {
     if (!isOpen) return;
     
@@ -104,55 +97,80 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const outerRadius = Math.min(centerX, centerY) - 20;
-    const ringInnerRadius = outerRadius * 0.75;  // Borde interior del aro
-    const innerRadius = outerRadius * 0.65;      // Radio de la esfera central (más pequeño para dejar espacio)
+    const outerRadius = Math.min(centerX, centerY) - 15;
+    const ringInnerRadius = outerRadius * 0.78;
+    const squareSize = ringInnerRadius * 1.4; // Tamaño del cuadrado central
 
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar el anillo exterior con colores HSB (el aro de colores)
-    // Ajustar para que 0° (rojo) esté arriba
-    for (let angle = 0; angle < 360; angle += 0.5) {
-      // Rotar -90 grados para que el rojo esté arriba
-      const drawAngle = angle - 90;
-      const startAngle = (drawAngle - 0.5) * Math.PI / 180;
-      const endAngle = (drawAngle + 0.5) * Math.PI / 180;
-      
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle, false);
-      ctx.arc(centerX, centerY, ringInnerRadius, endAngle, startAngle, true);
-      ctx.closePath();
-      
-      const rgb = hsbToRgb(angle, 100, 100);
-      ctx.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-      ctx.fill();
+    // 1. Dibujar el anillo exterior con todos los colores (hue wheel)
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+    const data = imageData.data;
+
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Solo dibujar píxeles dentro del anillo
+        if (distance >= ringInnerRadius && distance <= outerRadius) {
+          // Calcular el ángulo para el hue
+          let angle = Math.atan2(dy, dx);
+          // Convertir a grados (0-360)
+          let hueAngle = ((angle + Math.PI) / (2 * Math.PI)) * 360;
+          
+          const rgb = hsvToRgb(hueAngle, 100, 100);
+          
+          const index = (y * canvas.width + x) * 4;
+          data[index] = rgb.r;
+          data[index + 1] = rgb.g;
+          data[index + 2] = rgb.b;
+          data[index + 3] = 255;
+        }
+      }
     }
+    
+    ctx.putImageData(imageData, 0, 0);
 
-    // Dibujar el área central con gradiente de saturación y brillo
-    // Primero crear un gradiente radial de blanco a color
-    const gradient1 = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
-    gradient1.addColorStop(0, `hsl(${hue}, 0%, 100%)`);
-    gradient1.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+    // 2. Dibujar el cuadrado central con gradiente de saturación/brillo
+    // Según la documentación: horizontal = saturación, vertical = brillo
+    ctx.save();
     
+    // Crear área de recorte circular
     ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.fillStyle = gradient1;
-    ctx.fill();
-    
-    // Luego agregar el gradiente vertical de brillo
-    const gradient2 = ctx.createLinearGradient(centerX, centerY - innerRadius, centerX, centerY + innerRadius);
-    gradient2.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    gradient2.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
-    gradient2.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-    
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.fillStyle = gradient2;
-    ctx.fill();
+    ctx.arc(centerX, centerY, ringInnerRadius - 5, 0, Math.PI * 2);
+    ctx.clip();
 
-    // Dibujar indicador en el anillo exterior (hue)
-    const hueAngle = (hue - 90) * Math.PI / 180;
+    // Calcular límites del cuadrado
+    const halfSquare = squareSize / 2;
+    const squareLeft = centerX - halfSquare;
+    const squareTop = centerY - halfSquare;
+
+    // Gradiente horizontal de saturación (izquierda a derecha: gris a color puro)
+    const satGradient = ctx.createLinearGradient(squareLeft, centerY, squareLeft + squareSize, centerY);
+    satGradient.addColorStop(0, `hsl(${hue}, 0%, 50%)`);
+    satGradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+    
+    ctx.fillStyle = satGradient;
+    ctx.fillRect(squareLeft, squareTop, squareSize, squareSize);
+    
+    // Gradiente vertical de brillo (arriba a abajo: blanco a negro)
+    const brightGradient = ctx.createLinearGradient(centerX, squareTop, centerX, squareTop + squareSize);
+    brightGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    brightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+    brightGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+    brightGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    
+    ctx.fillStyle = brightGradient;
+    ctx.fillRect(squareLeft, squareTop, squareSize, squareSize);
+    
+    ctx.restore();
+
+    // 3. Dibujar indicadores
+    // Indicador en el anillo de hue
+    const hueAngle = (hue * Math.PI / 180);
     const hueRadius = (outerRadius + ringInnerRadius) / 2;
     const hueX = centerX + Math.cos(hueAngle) * hueRadius;
     const hueY = centerY + Math.sin(hueAngle) * hueRadius;
@@ -161,43 +179,38 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     ctx.arc(hueX, hueY, 10, 0, Math.PI * 2);
     ctx.fillStyle = 'white';
     ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
     ctx.stroke();
     
-    const hueRgb = hsbToRgb(hue, 100, 100);
+    const hueRgb = hsvToRgb(hue, 100, 100);
     ctx.beginPath();
     ctx.arc(hueX, hueY, 7, 0, Math.PI * 2);
     ctx.fillStyle = `rgb(${hueRgb.r}, ${hueRgb.g}, ${hueRgb.b})`;
     ctx.fill();
 
-    // Dibujar indicador en el área central (saturación/brillo)
-    const satX = centerX - innerRadius + (saturation / 100) * innerRadius * 2;
-    const brightY = centerY - innerRadius + ((100 - brightness) / 100) * innerRadius * 2;
+    // Indicador en el cuadrado de saturación/brillo
+    const satX = squareLeft + (saturation / 100) * squareSize;
+    const brightY = squareTop + ((100 - brightness) / 100) * squareSize;
     
     // Verificar que está dentro del círculo
     const dx = satX - centerX;
     const dy = brightY - centerY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (dist <= innerRadius) {
+    if (dist <= ringInnerRadius - 5) {
       ctx.beginPath();
       ctx.arc(satX, brightY, 8, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      ctx.strokeStyle = '#333';
+      ctx.strokeStyle = 'white';
       ctx.lineWidth = 2;
       ctx.stroke();
-      
-      const currentRgb = hsbToRgb(hue, saturation, brightness);
-      ctx.beginPath();
-      ctx.arc(satX, brightY, 5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgb(${currentRgb.r}, ${currentRgb.g}, ${currentRgb.b})`;
-      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
-  }, [hue, saturation, brightness, hsbToRgb, isOpen]);
+  }, [hue, saturation, brightness, hsvToRgb, isOpen]);
 
-  // Manejar clics y arrastre
+  // Manejar clics según la documentación
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -209,27 +222,29 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-    const outerRadius = Math.min(centerX, centerY) - 20;
-    const ringInnerRadius = outerRadius * 0.75;
-    const innerRadius = outerRadius * 0.65;
+    const outerRadius = Math.min(centerX, centerY) - 15;
+    const ringInnerRadius = outerRadius * 0.78;
+    const squareSize = ringInnerRadius * 1.4;
 
     setIsDragging(true);
 
-    if (distance > ringInnerRadius && distance < outerRadius) {
-      // Click en el anillo exterior (hue)
+    if (distance >= ringInnerRadius && distance <= outerRadius) {
+      // Click en el anillo de hue
       setDragType('wheel');
       const angle = Math.atan2(y - centerY, x - centerX);
-      // Convertir a grados y ajustar para que 0° (rojo) esté arriba
-      let degrees = (angle * 180 / Math.PI) + 90;
-      if (degrees < 0) degrees += 360;
+      const degrees = ((angle + Math.PI) / (2 * Math.PI)) * 360;
       setHue(degrees);
-    } else if (distance <= innerRadius) {
-      // Click en el área central (saturación/brillo)
-      setDragType('center');
-      const s = ((x - (centerX - innerRadius)) / (innerRadius * 2)) * 100;
-      const b = (1 - ((y - (centerY - innerRadius)) / (innerRadius * 2))) * 100;
-      setSaturation(Math.max(0, Math.min(100, s)));
-      setBrightness(Math.max(0, Math.min(100, b)));
+    } else if (distance < ringInnerRadius - 5) {
+      // Click en el cuadrado central
+      setDragType('square');
+      const halfSquare = squareSize / 2;
+      const squareLeft = centerX - halfSquare;
+      const squareTop = centerY - halfSquare;
+      
+      const s = Math.max(0, Math.min(100, ((x - squareLeft) / squareSize) * 100));
+      const b = Math.max(0, Math.min(100, (1 - ((y - squareTop) / squareSize)) * 100));
+      setSaturation(s);
+      setBrightness(b);
     }
   }, []);
 
@@ -245,21 +260,23 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const outerRadius = Math.min(centerX, centerY) - 20;
-    const ringInnerRadius = outerRadius * 0.75;
-    const innerRadius = outerRadius * 0.65;
+    const outerRadius = Math.min(centerX, centerY) - 15;
+    const ringInnerRadius = outerRadius * 0.78;
+    const squareSize = ringInnerRadius * 1.4;
 
     if (dragType === 'wheel') {
       const angle = Math.atan2(y - centerY, x - centerX);
-      // Convertir a grados y ajustar para que 0° (rojo) esté arriba
-      let degrees = (angle * 180 / Math.PI) + 90;
-      if (degrees < 0) degrees += 360;
+      const degrees = ((angle + Math.PI) / (2 * Math.PI)) * 360;
       setHue(degrees);
-    } else if (dragType === 'center') {
-      const s = ((x - (centerX - innerRadius)) / (innerRadius * 2)) * 100;
-      const b = (1 - ((y - (centerY - innerRadius)) / (innerRadius * 2))) * 100;
-      setSaturation(Math.max(0, Math.min(100, s)));
-      setBrightness(Math.max(0, Math.min(100, b)));
+    } else if (dragType === 'square') {
+      const halfSquare = squareSize / 2;
+      const squareLeft = centerX - halfSquare;
+      const squareTop = centerY - halfSquare;
+      
+      const s = Math.max(0, Math.min(100, ((x - squareLeft) / squareSize) * 100));
+      const b = Math.max(0, Math.min(100, (1 - ((y - squareTop) / squareSize)) * 100));
+      setSaturation(s);
+      setBrightness(b);
     }
   }, [isDragging, dragType]);
 
@@ -270,12 +287,12 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
   // Actualizar color cuando cambian los valores
   useEffect(() => {
-    const rgb = hsbToRgb(hue, saturation, brightness);
+    const rgb = hsvToRgb(hue, saturation, brightness);
     const newColor = rgbToHex(rgb.r, rgb.g, rgb.b);
     if (newColor !== color) {
       onChange(newColor);
     }
-  }, [hue, saturation, brightness, onChange, color, hsbToRgb, rgbToHex]);
+  }, [hue, saturation, brightness, onChange, color, hsvToRgb, rgbToHex]);
 
   if (!isOpen) return null;
 
@@ -306,8 +323,8 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
           {/* Rueda de color */}
           <canvas
             ref={canvasRef}
-            width={260}
-            height={260}
+            width={280}
+            height={280}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
