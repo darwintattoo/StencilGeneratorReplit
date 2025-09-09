@@ -105,7 +105,8 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const outerRadius = Math.min(centerX, centerY) - 20;
-    const innerRadius = outerRadius * 0.7;
+    const ringInnerRadius = outerRadius * 0.75;  // Borde interior del aro
+    const innerRadius = outerRadius * 0.65;      // Radio de la esfera central (más pequeño para dejar espacio)
 
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -117,7 +118,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       
       ctx.beginPath();
       ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle, false);
-      ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
+      ctx.arc(centerX, centerY, ringInnerRadius, endAngle, startAngle, true);
       ctx.closePath();
       
       const rgb = hsbToRgb(angle, 100, 100);
@@ -149,7 +150,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
     // Dibujar indicador en el anillo exterior (hue)
     const hueAngle = (hue - 90) * Math.PI / 180;
-    const hueRadius = (outerRadius + innerRadius) / 2;
+    const hueRadius = (outerRadius + ringInnerRadius) / 2;
     const hueX = centerX + Math.cos(hueAngle) * hueRadius;
     const hueY = centerY + Math.sin(hueAngle) * hueRadius;
     
@@ -206,11 +207,12 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerY = canvas.height / 2;
     const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
     const outerRadius = Math.min(centerX, centerY) - 20;
-    const innerRadius = outerRadius * 0.7;
+    const ringInnerRadius = outerRadius * 0.75;
+    const innerRadius = outerRadius * 0.65;
 
     setIsDragging(true);
 
-    if (distance > innerRadius && distance < outerRadius) {
+    if (distance > ringInnerRadius && distance < outerRadius) {
       // Click en el anillo exterior (hue)
       setDragType('wheel');
       const angle = Math.atan2(y - centerY, x - centerX);
@@ -239,7 +241,8 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const outerRadius = Math.min(centerX, centerY) - 20;
-    const innerRadius = outerRadius * 0.7;
+    const ringInnerRadius = outerRadius * 0.75;
+    const innerRadius = outerRadius * 0.65;
 
     if (dragType === 'wheel') {
       const angle = Math.atan2(y - centerY, x - centerX);
