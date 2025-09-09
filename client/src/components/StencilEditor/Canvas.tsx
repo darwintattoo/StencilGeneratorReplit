@@ -305,13 +305,24 @@ export default function Canvas({
       </Stage>
 
       {tool === 'brush' && !isLayersOpen && (
-        <div className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-30">
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-4 h-48 w-16 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            className="bg-gray-800/90 backdrop-blur-sm rounded-full px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
             style={{ touchAction: 'manipulation' }}
           >
-            <div className="text-xs font-semibold text-gray-600 mb-2">Pincel</div>
-            <div className="flex-1 flex flex-col items-center justify-center w-full">
+            {/* Indicador superior */}
+            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+              <div 
+                className="bg-white rounded-full transition-all duration-150"
+                style={{
+                  width: `${Math.max(2, Math.min(20, brushSize * 0.6))}px`,
+                  height: `${Math.max(2, Math.min(20, brushSize * 0.6))}px`
+                }}
+              />
+            </div>
+            
+            {/* Slider vertical */}
+            <div className="flex-1 flex flex-col items-center justify-center w-full py-4">
               <Slider
                 value={[brushSize]}
                 onValueChange={([value]) => setBrushSize(value)}
@@ -319,7 +330,7 @@ export default function Canvas({
                 min={1}
                 step={1}
                 orientation="vertical"
-                className="h-28 w-4"
+                className="h-48 w-4 slider-dark"
                 style={{ 
                   touchAction: 'manipulation',
                   WebkitTouchCallout: 'none',
@@ -328,7 +339,9 @@ export default function Canvas({
                 }}
               />
             </div>
-            <div className="text-xs font-bold text-gray-800 mt-2 bg-gray-100 rounded px-2 py-1">
+            
+            {/* Indicador numérico */}
+            <div className="text-xs font-medium text-white bg-gray-700 rounded-full w-8 h-6 flex items-center justify-center">
               {brushSize}
             </div>
           </div>
@@ -336,13 +349,24 @@ export default function Canvas({
       )}
 
       {tool === 'eraser' && !isLayersOpen && (
-        <div className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-30">
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-4 h-48 w-16 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            className="bg-gray-800/90 backdrop-blur-sm rounded-full px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
             style={{ touchAction: 'manipulation' }}
           >
-            <div className="text-xs font-semibold text-gray-600 mb-2">Borrar</div>
-            <div className="flex-1 flex flex-col items-center justify-center w-full">
+            {/* Indicador superior */}
+            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+              <div 
+                className="bg-white rounded-full transition-all duration-150"
+                style={{
+                  width: `${Math.max(3, Math.min(22, eraserSize * 0.2))}px`,
+                  height: `${Math.max(3, Math.min(22, eraserSize * 0.2))}px`
+                }}
+              />
+            </div>
+            
+            {/* Slider vertical */}
+            <div className="flex-1 flex flex-col items-center justify-center w-full py-4">
               <Slider
                 value={[eraserSize]}
                 onValueChange={([value]) => setEraserSize(value)}
@@ -350,7 +374,7 @@ export default function Canvas({
                 min={5}
                 step={2}
                 orientation="vertical"
-                className="h-28 w-4"
+                className="h-48 w-4 slider-dark"
                 style={{ 
                   touchAction: 'manipulation',
                   WebkitTouchCallout: 'none',
@@ -359,7 +383,9 @@ export default function Canvas({
                 }}
               />
             </div>
-            <div className="text-xs font-bold text-gray-800 mt-2 bg-gray-100 rounded px-2 py-1">
+            
+            {/* Indicador numérico */}
+            <div className="text-xs font-medium text-white bg-gray-700 rounded-full w-8 h-6 flex items-center justify-center">
               {eraserSize}
             </div>
           </div>

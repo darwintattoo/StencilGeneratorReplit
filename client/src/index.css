@@ -102,3 +102,32 @@
 .progress-container .bg-blue-500 {
   background-color: #3b82f6 !important;
 }
+
+/* Estilos para slider oscuro estilo Procreate */
+.slider-dark [data-radix-slider-track] {
+  background-color: rgb(55, 65, 81) !important; /* gray-700 */
+  border: 1px solid rgb(75, 85, 99); /* gray-600 */
+}
+
+.slider-dark [data-radix-slider-range] {
+  background-color: rgb(156, 163, 175) !important; /* gray-400 */
+}
+
+.slider-dark [data-radix-slider-thumb] {
+  background-color: white !important;
+  border: 2px solid rgb(156, 163, 175) !important; /* gray-400 */
+  width: 16px !important;
+  height: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.slider-dark [data-radix-slider-thumb]:hover {
+  background-color: rgb(243, 244, 246) !important; /* gray-100 */
+  transform: scale(1.1);
+  transition: all 150ms ease;
+}
+
+.slider-dark [data-radix-slider-thumb]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
