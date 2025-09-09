@@ -283,44 +283,52 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="absolute top-full left-0 mt-2 bg-gray-800 rounded-lg p-4 shadow-xl border border-gray-600 z-50"
-      onClick={(e) => e.stopPropagation()}
-      style={{ transform: 'translateX(-50px)' }}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-white font-medium text-lg">Colors</h3>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white text-2xl leading-none px-2"
-        >
-          ×
-        </button>
-      </div>
+    <>
+      {/* Overlay para cerrar al hacer click fuera */}
+      <div 
+        className="fixed inset-0 z-40" 
+        onClick={onClose}
+      />
+      
+      <div 
+        className="absolute top-full left-0 mt-2 bg-gray-800 rounded-lg p-4 shadow-xl border border-gray-600 z-50"
+        onClick={(e) => e.stopPropagation()}
+        style={{ transform: 'translateX(-50px)' }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-white font-medium text-lg">Colors</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl leading-none px-2"
+          >
+            ×
+          </button>
+        </div>
 
-      <div className="flex flex-col items-center space-y-3">
-        {/* Rueda de color */}
-        <canvas
-          ref={canvasRef}
-          width={260}
-          height={260}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className="cursor-crosshair"
-          style={{ touchAction: 'none' }}
-        />
-
-        {/* Preview del color actual */}
-        <div className="flex items-center gap-3 w-full bg-gray-700 rounded p-2">
-          <div 
-            className="w-10 h-10 rounded-full border-2 border-white shadow-md"
-            style={{ backgroundColor: color }}
+        <div className="flex flex-col items-center space-y-3">
+          {/* Rueda de color */}
+          <canvas
+            ref={canvasRef}
+            width={260}
+            height={260}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="cursor-crosshair"
+            style={{ touchAction: 'none' }}
           />
-          <div className="text-white font-mono text-sm uppercase">{color}</div>
+
+          {/* Preview del color actual */}
+          <div className="flex items-center gap-3 w-full bg-gray-700 rounded p-2">
+            <div 
+              className="w-10 h-10 rounded-full border-2 border-white shadow-md"
+              style={{ backgroundColor: color }}
+            />
+            <div className="text-white font-mono text-sm uppercase">{color}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

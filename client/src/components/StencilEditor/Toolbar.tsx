@@ -43,25 +43,6 @@ export default function Toolbar({
 }: ToolbarProps) {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
-  // Cerrar color picker al hacer click fuera
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isColorPickerOpen) {
-        setIsColorPickerOpen(false);
-      }
-    };
-
-    if (isColorPickerOpen) {
-      // Usar setTimeout para evitar que se cierre inmediatamente
-      setTimeout(() => {
-        document.addEventListener('click', handleClickOutside);
-      }, 100);
-    }
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [isColorPickerOpen]);
 
   return (
     <div className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 flex items-center justify-between z-50" style={{ touchAction: 'manipulation' }}>
