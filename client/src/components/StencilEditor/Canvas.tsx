@@ -305,48 +305,62 @@ export default function Canvas({
       </Stage>
 
       {tool === 'brush' && !isLayersOpen && (
-        <div className="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 z-30">
+        <div className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200"
-            style={{ touchAction: 'auto' }} // Permitir gestos normales en el control
+            className="bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-4 h-48 w-16 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            style={{ touchAction: 'manipulation' }}
           >
-            <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">
+            <div className="text-xs font-semibold text-gray-600 mb-2">Pincel</div>
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
               <Slider
                 value={[brushSize]}
                 onValueChange={([value]) => setBrushSize(value)}
                 max={30}
                 min={1}
                 step={1}
-                className="w-24 sm:w-28 mb-2"
-                style={{ touchAction: 'auto' }} // Específicamente para el slider
+                orientation="vertical"
+                className="h-28 w-4"
+                style={{ 
+                  touchAction: 'manipulation',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  userSelect: 'none'
+                }}
               />
-              <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
-                {brushSize}
-              </div>
+            </div>
+            <div className="text-xs font-bold text-gray-800 mt-2 bg-gray-100 rounded px-2 py-1">
+              {brushSize}
             </div>
           </div>
         </div>
       )}
 
       {tool === 'eraser' && !isLayersOpen && (
-        <div className="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 z-30">
+        <div className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-36 sm:h-44 w-12 sm:w-14 flex flex-col items-center justify-center shadow-lg border border-gray-200"
-            style={{ touchAction: 'auto' }} // Permitir gestos normales en el control
+            className="bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-4 h-48 w-16 flex flex-col items-center justify-center shadow-lg border border-gray-200"
+            style={{ touchAction: 'manipulation' }}
           >
-            <div className="transform -rotate-90 w-24 sm:w-28 flex flex-col items-center">
+            <div className="text-xs font-semibold text-gray-600 mb-2">Borrar</div>
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
               <Slider
                 value={[eraserSize]}
                 onValueChange={([value]) => setEraserSize(value)}
                 max={100}
-                min={1}
-                step={1}
-                className="w-24 sm:w-28 mb-2"
-                style={{ touchAction: 'auto' }} // Específicamente para el slider
+                min={5}
+                step={2}
+                orientation="vertical"
+                className="h-28 w-4"
+                style={{ 
+                  touchAction: 'manipulation',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none',
+                  userSelect: 'none'
+                }}
               />
-              <div className="text-xs font-medium text-gray-700 transform rotate-90 whitespace-nowrap">
-                {eraserSize}
-              </div>
+            </div>
+            <div className="text-xs font-bold text-gray-800 mt-2 bg-gray-100 rounded px-2 py-1">
+              {eraserSize}
             </div>
           </div>
         </div>
