@@ -126,41 +126,26 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     }
 
     // Dibujar el área central con gradiente de saturación y brillo
-    // Crear imagen pixel por pixel para el área central
-    const imageData = ctx.createImageData(canvas.width, canvas.height);
-    const data = imageData.data;
-
-    for (let x = 0; x < canvas.width; x++) {
-      for (let y = 0; y < canvas.height; y++) {
-        const dx = x - centerX;
-        const dy = y - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance <= innerRadius) {
-          // Mapear x a saturación (izquierda = 0, derecha = 100)
-          const s = ((x - (centerX - innerRadius)) / (innerRadius * 2)) * 100;
-          
-          // Mapear y a brillo (arriba = 100, abajo = 0)
-          const b = (1 - ((y - (centerY - innerRadius)) / (innerRadius * 2))) * 100;
-          
-          const rgb = hsbToRgb(hue, Math.max(0, Math.min(100, s)), Math.max(0, Math.min(100, b)));
-          
-          const index = (y * canvas.width + x) * 4;
-          data[index] = rgb.r;
-          data[index + 1] = rgb.g;
-          data[index + 2] = rgb.b;
-          data[index + 3] = 255;
-        }
-      }
-    }
-
-    // Aplicar la imagen al área central
-    ctx.save();
+    // Primero crear un gradiente radial de blanco a color
+    const gradient1 = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
+    gradient1.addColorStop(0, `hsl(${hue}, 0%, 100%)`);
+    gradient1.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+    
     ctx.beginPath();
     ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.putImageData(imageData, 0, 0);
-    ctx.restore();
+    ctx.fillStyle = gradient1;
+    ctx.fill();
+    
+    // Luego agregar el gradiente vertical de brillo
+    const gradient2 = ctx.createLinearGradient(centerX, centerY - innerRadius, centerX, centerY + innerRadius);
+    gradient2.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    gradient2.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
+    gradient2.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient2;
+    ctx.fill();
 
     // Dibujar indicador en el anillo exterior (hue)
     const hueAngle = (hue - 90) * Math.PI / 180;
