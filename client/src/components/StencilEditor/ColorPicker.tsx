@@ -99,7 +99,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerY = canvas.height / 2;
     const outerRadius = Math.min(centerX, centerY) - 15;
     const ringInnerRadius = outerRadius * 0.78;
-    const squareSize = ringInnerRadius * 1.4; // Tamaño del cuadrado central
+    const circleRadius = ringInnerRadius - 5; // Radio del círculo central
 
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -134,39 +134,28 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     
     ctx.putImageData(imageData, 0, 0);
 
-    // 2. Dibujar el cuadrado central con gradiente de saturación/brillo
-    // Según la documentación: horizontal = saturación, vertical = brillo
-    ctx.save();
+    // 2. Dibujar el círculo central con gradiente de saturación/brillo
     
-    // Crear área de recorte circular
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, ringInnerRadius - 5, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Calcular límites del cuadrado
-    const halfSquare = squareSize / 2;
-    const squareLeft = centerX - halfSquare;
-    const squareTop = centerY - halfSquare;
-
-    // Gradiente horizontal de saturación (izquierda a derecha: gris a color puro)
-    const satGradient = ctx.createLinearGradient(squareLeft, centerY, squareLeft + squareSize, centerY);
-    satGradient.addColorStop(0, `hsl(${hue}, 0%, 50%)`);
+    // Gradiente radial de saturación (centro blanco a borde con color)
+    const satGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, circleRadius);
+    satGradient.addColorStop(0, `hsl(${hue}, 0%, 100%)`);
     satGradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
     
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
     ctx.fillStyle = satGradient;
-    ctx.fillRect(squareLeft, squareTop, squareSize, squareSize);
+    ctx.fill();
     
-    // Gradiente vertical de brillo (arriba a abajo: blanco a negro)
-    const brightGradient = ctx.createLinearGradient(centerX, squareTop, centerX, squareTop + squareSize);
-    brightGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    brightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+    // Gradiente vertical de brillo (arriba blanco a abajo negro)
+    const brightGradient = ctx.createLinearGradient(centerX, centerY - circleRadius, centerX, centerY + circleRadius);
+    brightGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
     brightGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-    brightGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+    brightGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
     
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
     ctx.fillStyle = brightGradient;
-    ctx.fillRect(squareLeft, squareTop, squareSize, squareSize);
-    
-    ctx.restore();
+    ctx.fill();
 
     // 3. Dibujar indicadores
     // Indicador en el anillo de hue
@@ -189,25 +178,21 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     ctx.fillStyle = `rgb(${hueRgb.r}, ${hueRgb.g}, ${hueRgb.b})`;
     ctx.fill();
 
-    // Indicador en el cuadrado de saturación/brillo
-    const satX = squareLeft + (saturation / 100) * squareSize;
-    const brightY = squareTop + ((100 - brightness) / 100) * squareSize;
+    // Indicador en el círculo de saturación/brillo
+    // Mapear saturación y brillo a coordenadas polares
+    const angle = 0; // Por simplicidad, usar ángulo 0
+    const radius = (saturation / 100) * circleRadius;
+    const satX = centerX + Math.cos(angle) * radius;
+    const satY = centerY + Math.sin(angle) * radius;
     
-    // Verificar que está dentro del círculo
-    const dx = satX - centerX;
-    const dy = brightY - centerY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    if (dist <= ringInnerRadius - 5) {
-      ctx.beginPath();
-      ctx.arc(satX, brightY, 8, 0, Math.PI * 2);
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.arc(satX, satY, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }, [hue, saturation, brightness, hsvToRgb, isOpen]);
 
   // Manejar clics según la documentación
@@ -224,7 +209,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
     const outerRadius = Math.min(centerX, centerY) - 15;
     const ringInnerRadius = outerRadius * 0.78;
-    const squareSize = ringInnerRadius * 1.4;
+    const circleRadius = ringInnerRadius - 5;
 
     setIsDragging(true);
 
@@ -234,16 +219,15 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       const angle = Math.atan2(y - centerY, x - centerX);
       const degrees = ((angle + Math.PI) / (2 * Math.PI)) * 360;
       setHue(degrees);
-    } else if (distance < ringInnerRadius - 5) {
-      // Click en el cuadrado central
+    } else if (distance < circleRadius) {
+      // Click en el círculo central
       setDragType('square');
-      const halfSquare = squareSize / 2;
-      const squareLeft = centerX - halfSquare;
-      const squareTop = centerY - halfSquare;
-      
-      const s = Math.max(0, Math.min(100, ((x - squareLeft) / squareSize) * 100));
-      const b = Math.max(0, Math.min(100, (1 - ((y - squareTop) / squareSize)) * 100));
+      // Por ahora, mapear simplemente basado en distancia del centro
+      const s = Math.min(100, (distance / circleRadius) * 100);
       setSaturation(s);
+      // Brillo basado en posición vertical
+      const normalizedY = (y - centerY) / circleRadius;
+      const b = Math.max(0, Math.min(100, 50 - normalizedY * 50));
       setBrightness(b);
     }
   }, []);
@@ -262,21 +246,22 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerY = canvas.height / 2;
     const outerRadius = Math.min(centerX, centerY) - 15;
     const ringInnerRadius = outerRadius * 0.78;
-    const squareSize = ringInnerRadius * 1.4;
+    const circleRadius = ringInnerRadius - 5;
 
     if (dragType === 'wheel') {
       const angle = Math.atan2(y - centerY, x - centerX);
       const degrees = ((angle + Math.PI) / (2 * Math.PI)) * 360;
       setHue(degrees);
     } else if (dragType === 'square') {
-      const halfSquare = squareSize / 2;
-      const squareLeft = centerX - halfSquare;
-      const squareTop = centerY - halfSquare;
-      
-      const s = Math.max(0, Math.min(100, ((x - squareLeft) / squareSize) * 100));
-      const b = Math.max(0, Math.min(100, (1 - ((y - squareTop) / squareSize)) * 100));
-      setSaturation(s);
-      setBrightness(b);
+      const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+      if (distance <= circleRadius) {
+        const s = Math.min(100, (distance / circleRadius) * 100);
+        setSaturation(s);
+        // Brillo basado en posición vertical
+        const normalizedY = (y - centerY) / circleRadius;
+        const b = Math.max(0, Math.min(100, 50 - normalizedY * 50));
+        setBrightness(b);
+      }
     }
   }, [isDragging, dragType]);
 
