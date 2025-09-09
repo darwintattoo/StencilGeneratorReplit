@@ -94,6 +94,8 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
   // Dibujar la rueda de color
   useEffect(() => {
+    if (!isOpen) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -105,8 +107,9 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const outerRadius = Math.min(centerX, centerY) - 20;
     const innerRadius = outerRadius * 0.7;
 
-    // Limpiar canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Limpiar canvas y poner fondo
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Dibujar el anillo exterior con colores HSB
     for (let angle = 0; angle < 360; angle += 1) {
@@ -204,7 +207,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       ctx.fillStyle = `rgb(${currentRgb.r}, ${currentRgb.g}, ${currentRgb.b})`;
       ctx.fill();
     }
-  }, [hue, saturation, brightness, hsbToRgb]);
+  }, [hue, saturation, brightness, hsbToRgb, isOpen]);
 
   // Manejar clics y arrastre
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
