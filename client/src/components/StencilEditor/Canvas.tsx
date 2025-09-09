@@ -307,11 +307,11 @@ export default function Canvas({
       {tool === 'brush' && !isLayersOpen && (
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-gray-800/90 backdrop-blur-sm rounded-full px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
+            className="bg-gray-800/90 backdrop-blur-sm rounded-xl px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
             style={{ touchAction: 'manipulation' }}
           >
             {/* Indicador superior */}
-            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-gray-600 rounded-lg flex items-center justify-center">
               <div 
                 className="bg-white rounded-full transition-all duration-150"
                 style={{
@@ -341,7 +341,7 @@ export default function Canvas({
             </div>
             
             {/* Indicador numérico */}
-            <div className="text-xs font-medium text-white bg-gray-700 rounded-full w-8 h-6 flex items-center justify-center">
+            <div className="text-xs font-medium text-white bg-gray-700 rounded-md w-8 h-6 flex items-center justify-center">
               {brushSize}
             </div>
           </div>
@@ -351,11 +351,11 @@ export default function Canvas({
       {tool === 'eraser' && !isLayersOpen && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-30">
           <div 
-            className="bg-gray-800/90 backdrop-blur-sm rounded-full px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
+            className="bg-gray-800/90 backdrop-blur-sm rounded-xl px-2 py-6 h-80 w-12 flex flex-col items-center justify-between shadow-xl border border-gray-600"
             style={{ touchAction: 'manipulation' }}
           >
             {/* Indicador superior */}
-            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-gray-600 rounded-lg flex items-center justify-center">
               <div 
                 className="bg-white rounded-full transition-all duration-150"
                 style={{
@@ -385,7 +385,7 @@ export default function Canvas({
             </div>
             
             {/* Indicador numérico */}
-            <div className="text-xs font-medium text-white bg-gray-700 rounded-full w-8 h-6 flex items-center justify-center">
+            <div className="text-xs font-medium text-white bg-gray-700 rounded-md w-8 h-6 flex items-center justify-center">
               {eraserSize}
             </div>
           </div>
