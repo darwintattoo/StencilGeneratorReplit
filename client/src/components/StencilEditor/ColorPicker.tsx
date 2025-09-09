@@ -121,10 +121,11 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     ctx.fillStyle = satGradient;
     ctx.fill();
 
-    // Gradiente de brillo (transparente a negro)
-    const brightGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
-    brightGradient.addColorStop(0, `rgba(0, 0, 0, ${(100 - brightness) / 100 * 0.3})`);
-    brightGradient.addColorStop(1, `rgba(0, 0, 0, ${(100 - brightness) / 100})`);
+    // Gradiente vertical de brillo (sombra negra desde abajo)
+    const brightGradient = ctx.createLinearGradient(centerX, centerY - innerRadius, centerX, centerY + innerRadius);
+    brightGradient.addColorStop(0, `rgba(0, 0, 0, ${(100 - brightness) / 100 * 0.1})`); // Arriba más claro
+    brightGradient.addColorStop(0.6, `rgba(0, 0, 0, ${(100 - brightness) / 100 * 0.3})`); // Medio
+    brightGradient.addColorStop(1, `rgba(0, 0, 0, ${(100 - brightness) / 100 * 0.8})`); // Abajo más oscuro
     
     ctx.beginPath();
     ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
