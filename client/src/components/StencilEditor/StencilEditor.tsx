@@ -393,14 +393,17 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   // Aplicar filtro de tono y saturación al stencil usando filtros nativos (mucho más rápido)
   useEffect(() => {
     if (stencilImg) {
+      console.log('Aplicando filtros de stencil:', { stencilHue, stencilSaturation, stencilBrightness });
+      
       // Si no hay cambios, usar imagen original
       if (stencilHue === 0 && stencilSaturation === 100 && stencilBrightness === 100) {
+        console.log('Sin cambios, usando imagen original');
         setFilteredStencilImg(null);
         return;
       }
 
-      // Reutilizar canvas o crear uno nuevo
-      const canvas = filterCanvasRef.current ?? document.createElement('canvas');
+      // Crear nuevo canvas para cada aplicación para evitar problemas de referencia
+      const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
@@ -413,7 +416,10 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         // Aplicar filtros nativos del canvas (mucho más rápido que píxel a píxel)
         const saturationValue = stencilSaturation / 100;
         const brightnessValue = stencilBrightness / 100;
-        ctx.filter = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
+        const filterString = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
+        console.log('Aplicando filtro:', filterString);
+        
+        ctx.filter = filterString;
         
         // Dibujar imagen con filtros aplicados
         ctx.drawImage(stencilImg, 0, 0);
@@ -423,15 +429,18 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         
         // Usar canvas directamente sin conversión costosa
         setFilteredStencilImg(canvas);
-        stencilLayerRef.current?.batchDraw();
+        console.log('Imagen filtrada creada exitosamente');
+        
+        // Forzar redibujado del layer
+        setTimeout(() => {
+          stencilLayerRef.current?.batchDraw();
+        }, 10);
 
-        // Guardar referencia del canvas para reutilización
-        if (!filterCanvasRef.current) {
-          filterCanvasRef.current = canvas;
-        }
+        // Limpiar referencia anterior para evitar reutilización problemática
+        filterCanvasRef.current = null;
       }
     }
-  }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness, stencilVersion]);
+  }, [stencilImg, stencilHue, stencilSaturation, stencilBrightness]);
 
   // Funciones auxiliares para gestos
   const getDistance = (p1: Position, p2: Position): number => {
