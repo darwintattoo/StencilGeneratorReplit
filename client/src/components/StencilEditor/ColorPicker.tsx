@@ -107,17 +107,16 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const outerRadius = Math.min(centerX, centerY) - 20;
     const innerRadius = outerRadius * 0.7;
 
-    // Limpiar canvas y poner fondo
-    ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar el anillo exterior con colores HSB
-    for (let angle = 0; angle < 360; angle += 1) {
-      const startAngle = (angle - 1) * Math.PI / 180;
-      const endAngle = angle * Math.PI / 180;
+    // Dibujar el anillo exterior con colores HSB (el aro de colores)
+    for (let angle = 0; angle < 360; angle += 0.5) {
+      const startAngle = (angle - 0.5) * Math.PI / 180;
+      const endAngle = (angle + 0.5) * Math.PI / 180;
       
       ctx.beginPath();
-      ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle);
+      ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle, false);
       ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
       ctx.closePath();
       
