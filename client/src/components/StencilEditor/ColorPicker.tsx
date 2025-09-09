@@ -190,47 +190,46 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       className="absolute top-full right-0 mt-2 bg-gray-800 rounded-lg p-4 min-w-[280px] shadow-xl border border-gray-600 z-50"
       onClick={(e) => e.stopPropagation()}
     >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-medium">Colors</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
-            ×
-          </button>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-white font-medium">Colors</h3>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-white"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center space-y-4">
+        {/* Rueda de color */}
+        <canvas
+          ref={canvasRef}
+          width={200}
+          height={200}
+          onClick={handleCanvasClick}
+          className="cursor-pointer"
+        />
+
+        {/* Slider de brillo */}
+        <div className="w-full">
+          <div className="text-xs text-gray-300 mb-2">Brightness</div>
+          <Slider
+            value={[brightness]}
+            onValueChange={([value]) => setBrightness(value)}
+            max={100}
+            min={0}
+            step={1}
+            className="w-full"
+          />
         </div>
 
-        <div className="flex flex-col items-center space-y-4">
-          {/* Rueda de color */}
-          <canvas
-            ref={canvasRef}
-            width={200}
-            height={200}
-            onClick={handleCanvasClick}
-            className="cursor-pointer"
+        {/* Preview del color actual */}
+        <div className="flex items-center gap-3 w-full">
+          <div 
+            className="w-12 h-12 rounded border-2 border-white"
+            style={{ backgroundColor: color }}
           />
-
-          {/* Slider de brillo */}
-          <div className="w-full">
-            <div className="text-xs text-gray-300 mb-2">Brightness</div>
-            <Slider
-              value={[brightness]}
-              onValueChange={([value]) => setBrightness(value)}
-              max={100}
-              min={0}
-              step={1}
-              className="w-full"
-            />
-          </div>
-
-          {/* Preview del color actual */}
-          <div className="flex items-center gap-3 w-full">
-            <div 
-              className="w-12 h-12 rounded border-2 border-white"
-              style={{ backgroundColor: color }}
-            />
-            <div className="text-white font-mono text-sm">{color.toUpperCase()}</div>
-          </div>
+          <div className="text-white font-mono text-sm">{color.toUpperCase()}</div>
         </div>
       </div>
     </div>
