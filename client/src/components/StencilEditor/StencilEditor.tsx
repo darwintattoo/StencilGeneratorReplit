@@ -393,11 +393,8 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
   // Aplicar filtro de tono y saturación al stencil usando filtros nativos (mucho más rápido)
   useEffect(() => {
     if (stencilImg) {
-      console.log('Aplicando filtros de stencil:', { stencilHue, stencilSaturation, stencilBrightness });
-      
       // Si no hay cambios, usar imagen original
       if (stencilHue === 0 && stencilSaturation === 100 && stencilBrightness === 100) {
-        console.log('Sin cambios, usando imagen original');
         setFilteredStencilImg(null);
         return;
       }
@@ -417,7 +414,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         const saturationValue = stencilSaturation / 100;
         const brightnessValue = stencilBrightness / 100;
         const filterString = `hue-rotate(${stencilHue}deg) saturate(${saturationValue}) brightness(${brightnessValue})`;
-        console.log('Aplicando filtro:', filterString);
         
         ctx.filter = filterString;
         
@@ -429,7 +425,6 @@ export default function StencilEditor({ originalImage, stencilImage }: StencilEd
         
         // Usar canvas directamente sin conversión costosa
         setFilteredStencilImg(canvas);
-        console.log('Imagen filtrada creada exitosamente');
         
         // Forzar redibujado del layer
         setTimeout(() => {
