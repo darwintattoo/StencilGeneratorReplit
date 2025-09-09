@@ -315,11 +315,19 @@ export default function LayerPanel({
             />
             <span className="text-white text-sm font-medium flex-1">Drawing</span>
             <span className="text-gray-300 text-xs">N</span>
-            {layers.drawing.visible ? (
-              <Eye className="w-4 h-4 text-gray-300" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-gray-300" />
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLayer('drawing', !layers.drawing.visible);
+              }}
+              className="p-1 hover:bg-gray-600 rounded transition-colors"
+            >
+              {layers.drawing.visible ? (
+                <Eye className="w-4 h-4 text-gray-300 hover:text-white" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-gray-300 hover:text-white" />
+              )}
+            </button>
           </div>
           
           <div className="ml-16">
@@ -376,11 +384,19 @@ export default function LayerPanel({
             />
             <span className="text-white text-sm font-medium flex-1">Stencil</span>
             <span className="text-gray-300 text-xs">N</span>
-            {layers.stencil.visible ? (
-              <Eye className="w-4 h-4 text-gray-300" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-gray-300" />
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLayer('stencil', !layers.stencil.visible);
+              }}
+              className="p-1 hover:bg-gray-600 rounded transition-colors"
+            >
+              {layers.stencil.visible ? (
+                <Eye className="w-4 h-4 text-gray-300 hover:text-white" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-gray-300 hover:text-white" />
+              )}
+            </button>
           </div>
           
           <div className="ml-16">
@@ -424,11 +440,19 @@ export default function LayerPanel({
             />
             <span className="text-white text-sm font-medium flex-1">Original</span>
             <span className="text-gray-400 text-xs">N</span>
-            {layers.original.visible ? (
-              <Eye className="w-4 h-4 text-gray-400" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-gray-400" />
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLayer('original', !layers.original.visible);
+              }}
+              className="p-1 hover:bg-gray-600 rounded transition-colors"
+            >
+              {layers.original.visible ? (
+                <Eye className="w-4 h-4 text-gray-400 hover:text-white" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-gray-400 hover:text-white" />
+              )}
+            </button>
           </div>
           <div className="ml-16 mt-2">
             <Slider
@@ -452,11 +476,19 @@ export default function LayerPanel({
             />
             <span className="text-white text-sm font-medium flex-1">Color de fondo</span>
             <span className="text-gray-300 text-xs">N</span>
-            {layers.background.visible ? (
-              <Eye className="w-4 h-4 text-gray-300" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-gray-300" />
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLayer('background', !layers.background.visible);
+              }}
+              className="p-1 hover:bg-gray-600 rounded transition-colors"
+            >
+              {layers.background.visible ? (
+                <Eye className="w-4 h-4 text-gray-300 hover:text-white" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-gray-300 hover:text-white" />
+              )}
+            </button>
           </div>
           <div className="ml-16 mt-2">
             <Slider
