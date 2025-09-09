@@ -186,11 +186,10 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div 
-        className="bg-gray-800 rounded-lg p-6 min-w-[320px]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div 
+      className="absolute top-full right-0 mt-2 bg-gray-800 rounded-lg p-4 min-w-[280px] shadow-xl border border-gray-600 z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-medium">Colors</h3>
           <button

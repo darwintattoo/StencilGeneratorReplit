@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Pencil, Eraser, Layers, ArrowLeft, Move, Pipette } from 'lucide-react';
 import type { LayersState, Tool, ActiveLayer, ViewTransform } from './types';
+import ColorPicker from './ColorPicker';
 
 const COLORS = [
   '#000000', // Negro
@@ -40,6 +41,7 @@ export default function Toolbar({
   setIsLayersOpen,
   onBack
 }: ToolbarProps) {
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   return (
     <div className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 flex items-center justify-between z-50" style={{ touchAction: 'manipulation' }}>
       {/* IZQUIERDA: Gallery + Herramientas principales */}
@@ -115,13 +117,14 @@ export default function Toolbar({
       {/* DERECHA: Layers + Controles + Colores */}
       <div className="flex items-center gap-1 sm:gap-2">
         {(tool === 'brush' || tool === 'eyedropper') && (
-          <div className="flex items-center gap-1 sm:gap-2 rounded-md px-2 sm:px-3 py-1 sm:py-2 shadow-sm border border-gray-600 h-8 sm:h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
+          <div className="relative flex items-center gap-1 sm:gap-2 rounded-md px-2 sm:px-3 py-1 sm:py-2 shadow-sm border border-gray-600 h-8 sm:h-10" style={{ backgroundColor: 'rgba(45, 45, 45, 0.95)' }}>
             {/* Indicador del color actual */}
             <div className="flex items-center gap-1 sm:gap-2">
-              <div 
-                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-lg ring-2 ring-blue-500 transition-all duration-300"
+              <button
+                onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-lg ring-2 ring-blue-500 transition-all duration-300 hover:scale-105 cursor-pointer"
                 style={{ backgroundColor: brushColor }}
-                title={`Color actual: ${brushColor}`}
+                title={`Color actual: ${brushColor} - Click para selector`}
               />
               <div className="w-px h-4 sm:h-5 bg-gray-500 mx-1"></div>
             </div>
@@ -140,6 +143,13 @@ export default function Toolbar({
                 title={['Negro', 'Rojo', 'Azul', 'Verde'][index]}
               />
             ))}
+            
+            <ColorPicker
+              color={brushColor}
+              onChange={setBrushColor}
+              isOpen={isColorPickerOpen}
+              onClose={() => setIsColorPickerOpen(false)}
+            />
           </div>
         )}
 
