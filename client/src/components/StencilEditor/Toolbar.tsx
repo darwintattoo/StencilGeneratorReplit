@@ -45,14 +45,17 @@ export default function Toolbar({
 
   // Cerrar color picker al hacer click fuera
   React.useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (isColorPickerOpen) {
         setIsColorPickerOpen(false);
       }
     };
 
     if (isColorPickerOpen) {
-      document.addEventListener('click', handleClickOutside);
+      // Usar setTimeout para evitar que se cierre inmediatamente
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
     }
 
     return () => {
@@ -139,7 +142,10 @@ export default function Toolbar({
             {/* Indicador del color actual */}
             <div className="flex items-center gap-1 sm:gap-2">
               <button
-                onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsColorPickerOpen(!isColorPickerOpen);
+                }}
                 className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-lg ring-2 ring-blue-500 transition-all duration-300 hover:scale-105 cursor-pointer"
                 style={{ backgroundColor: brushColor }}
                 title={`Color actual: ${brushColor} - Click para selector`}
