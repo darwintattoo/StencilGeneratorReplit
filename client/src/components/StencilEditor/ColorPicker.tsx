@@ -112,9 +112,12 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Dibujar el anillo exterior con colores HSB (el aro de colores)
+    // Ajustar para que 0° (rojo) esté arriba
     for (let angle = 0; angle < 360; angle += 0.5) {
-      const startAngle = (angle - 0.5) * Math.PI / 180;
-      const endAngle = (angle + 0.5) * Math.PI / 180;
+      // Rotar -90 grados para que el rojo esté arriba
+      const drawAngle = angle - 90;
+      const startAngle = (drawAngle - 0.5) * Math.PI / 180;
+      const endAngle = (drawAngle + 0.5) * Math.PI / 180;
       
       ctx.beginPath();
       ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle, false);
@@ -216,7 +219,9 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       // Click en el anillo exterior (hue)
       setDragType('wheel');
       const angle = Math.atan2(y - centerY, x - centerX);
-      const degrees = ((angle * 180 / Math.PI) + 90 + 360) % 360;
+      // Convertir a grados y ajustar para que 0° (rojo) esté arriba
+      let degrees = (angle * 180 / Math.PI) + 90;
+      if (degrees < 0) degrees += 360;
       setHue(degrees);
     } else if (distance <= innerRadius) {
       // Click en el área central (saturación/brillo)
@@ -246,7 +251,9 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
     if (dragType === 'wheel') {
       const angle = Math.atan2(y - centerY, x - centerX);
-      const degrees = ((angle * 180 / Math.PI) + 90 + 360) % 360;
+      // Convertir a grados y ajustar para que 0° (rojo) esté arriba
+      let degrees = (angle * 180 / Math.PI) + 90;
+      if (degrees < 0) degrees += 360;
       setHue(degrees);
     } else if (dragType === 'center') {
       const s = ((x - (centerX - innerRadius)) / (innerRadius * 2)) * 100;
