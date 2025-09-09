@@ -81,7 +81,7 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     }
   }, [color, isOpen, hexToHsb]);
 
-  // Dibujar la rueda de color
+  // Dibujar la rueda de color estilo Procreate
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -91,62 +91,82 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const outerRadius = Math.min(centerX, centerY) - 10;
-    const innerRadius = outerRadius * 0.7;
+    const outerRadius = Math.min(centerX, centerY) - 15;
+    const innerRadius = outerRadius * 0.65;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar rueda de hue
+    // Dibujar rueda de hue exterior
     for (let angle = 0; angle < 360; angle++) {
-      const startAngle = (angle - 1) * Math.PI / 180;
-      const endAngle = angle * Math.PI / 180;
+      const startAngle = (angle - 0.5) * Math.PI / 180;
+      const endAngle = (angle + 0.5) * Math.PI / 180;
       
       ctx.beginPath();
       ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle);
-      ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
+      ctx.arc(centerX, centerY, innerRadius + 5, endAngle, startAngle, true);
       ctx.closePath();
       
       ctx.fillStyle = `hsl(${angle}, 100%, 50%)`;
       ctx.fill();
     }
 
-    // Dibujar área de saturación/brillo
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
-    gradient.addColorStop(0, `hsl(${hue}, 0%, ${brightness}%)`);
-    gradient.addColorStop(1, `hsl(${hue}, 100%, ${brightness / 2}%)`);
+    // Área central - gradiente de saturación y brillo
+    // Primero el gradiente de saturación (blanco a color puro)
+    const satGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
+    satGradient.addColorStop(0, `hsl(${hue}, 0%, 100%)`); // Blanco en el centro
+    satGradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`); // Color puro en el borde
     
     ctx.beginPath();
     ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = satGradient;
     ctx.fill();
 
-    // Indicador de hue seleccionado
+    // Gradiente de brillo (transparente a negro)
+    const brightGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
+    brightGradient.addColorStop(0, `rgba(0, 0, 0, ${(100 - brightness) / 100 * 0.3})`);
+    brightGradient.addColorStop(1, `rgba(0, 0, 0, ${(100 - brightness) / 100})`);
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+    ctx.fillStyle = brightGradient;
+    ctx.fill();
+
+    // Indicador de hue en el anillo exterior
     const hueAngle = (hue - 90) * Math.PI / 180;
-    const hueX = centerX + Math.cos(hueAngle) * (outerRadius - (outerRadius - innerRadius) / 2);
-    const hueY = centerY + Math.sin(hueAngle) * (outerRadius - (outerRadius - innerRadius) / 2);
+    const hueRadius = (outerRadius + innerRadius + 5) / 2;
+    const hueX = centerX + Math.cos(hueAngle) * hueRadius;
+    const hueY = centerY + Math.sin(hueAngle) * hueRadius;
     
+    // Círculo exterior blanco
     ctx.beginPath();
-    ctx.arc(hueX, hueY, 8, 0, Math.PI * 2);
+    ctx.arc(hueX, hueY, 10, 0, Math.PI * 2);
     ctx.fillStyle = 'white';
     ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    
+    // Círculo interior del color
+    ctx.beginPath();
+    ctx.arc(hueX, hueY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+    ctx.fill();
 
-    // Indicador de saturación/brillo
-    const satRadius = (saturation / 100) * innerRadius;
-    const satAngle = 0; // En el centro para simplicidad
-    const satX = centerX + Math.cos(satAngle) * satRadius * 0.7;
-    const satY = centerY + Math.sin(satAngle) * satRadius * 0.7;
+    // Indicador de saturación/brillo en el área central
+    const satRadius = (saturation / 100) * innerRadius * 0.9;
+    const brightFactor = 1 - (brightness / 100) * 0.3; // Menos movimento vertical
+    const satX = centerX + Math.cos(0) * satRadius;
+    const satY = centerY + Math.sin(0) * satRadius + (innerRadius * (1 - brightness / 100) * 0.5);
     
+    // Círculo exterior blanco
     ctx.beginPath();
-    ctx.arc(satX, satY, 6, 0, Math.PI * 2);
+    ctx.arc(satX, satY, 8, 0, Math.PI * 2);
     ctx.fillStyle = 'white';
     ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }, [hue, saturation, brightness]);
+    
+    // Círculo interior con el color seleccionado
+    ctx.beginPath();
+    ctx.arc(satX, satY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = hsbToHex(hue, saturation, brightness);
+    ctx.fill();
+  }, [hue, saturation, brightness, hsbToHex]);
 
   // Manejar clics en la rueda
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -160,18 +180,23 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-    const outerRadius = Math.min(centerX, centerY) - 10;
-    const innerRadius = outerRadius * 0.7;
+    const outerRadius = Math.min(centerX, centerY) - 15;
+    const innerRadius = outerRadius * 0.65;
 
-    if (distance > innerRadius && distance < outerRadius) {
+    if (distance > innerRadius + 5 && distance < outerRadius) {
       // Clic en el anillo de hue
       const angle = Math.atan2(y - centerY, x - centerX);
       const degrees = ((angle * 180 / Math.PI) + 90 + 360) % 360;
       setHue(degrees);
     } else if (distance <= innerRadius) {
-      // Clic en el área de saturación
+      // Clic en el área central de saturación/brillo
       const newSaturation = Math.min(100, (distance / innerRadius) * 100);
       setSaturation(newSaturation);
+      
+      // Ajustar brillo basado en la posición vertical
+      const normalizedY = (y - centerY) / innerRadius;
+      const newBrightness = Math.max(10, Math.min(100, 100 - (normalizedY * 50 + 50)));
+      setBrightness(newBrightness);
     }
   }, []);
 
@@ -190,43 +215,32 @@ export default function ColorPicker({ color, onChange, isOpen, onClose }: ColorP
       className="absolute top-full right-0 mt-2 bg-gray-800 rounded-lg p-4 min-w-[280px] shadow-xl border border-gray-600 z-50"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-medium">Colors</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-white font-medium text-lg">Colors</h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white"
+          className="text-gray-400 hover:text-white text-xl"
         >
           ×
         </button>
       </div>
 
-      <div className="flex flex-col items-center space-y-4">
+      <div className="flex flex-col items-center space-y-3">
         {/* Rueda de color */}
-        <canvas
-          ref={canvasRef}
-          width={200}
-          height={200}
-          onClick={handleCanvasClick}
-          className="cursor-pointer"
-        />
-
-        {/* Slider de brillo */}
-        <div className="w-full">
-          <div className="text-xs text-gray-300 mb-2">Brightness</div>
-          <Slider
-            value={[brightness]}
-            onValueChange={([value]) => setBrightness(value)}
-            max={100}
-            min={0}
-            step={1}
-            className="w-full"
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={240}
+            height={240}
+            onClick={handleCanvasClick}
+            className="cursor-pointer"
           />
         </div>
 
         {/* Preview del color actual */}
-        <div className="flex items-center gap-3 w-full">
+        <div className="flex items-center gap-3 w-full bg-gray-700 rounded p-2">
           <div 
-            className="w-12 h-12 rounded border-2 border-white"
+            className="w-8 h-8 rounded-full border-2 border-white shadow-md"
             style={{ backgroundColor: color }}
           />
           <div className="text-white font-mono text-sm">{color.toUpperCase()}</div>
